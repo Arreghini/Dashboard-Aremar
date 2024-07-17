@@ -1,10 +1,23 @@
-
 const API_URL = 'https://api.example.com/users'; // URL del API de usuarios
 
 const getUsers = async () => {
     const response = await fetch(API_URL);
     if (!response.ok) {
         throw new Error('Error fetching users');
+    }
+    return response.json();
+};
+
+const createUser = async (userData) => {
+    const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(userData)
+    });
+    if (!response.ok) {
+        throw new Error('Error creating user');
     }
     return response.json();
 };
@@ -35,6 +48,7 @@ const updateUser = async (userId, updates) => {
 
 const userService = {
     getUsers,
+    createUser,
     deleteUser,
     updateUser,
 };
