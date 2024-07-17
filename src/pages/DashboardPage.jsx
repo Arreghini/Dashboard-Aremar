@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import RoomList from '../components/RoomList';
 import ReservationList from '../components/ReservationList';
 import UserList from '../components/UserList';
 import RoomForm from '../components/RoomForm';
 import ReservationForm from '../components/ReservationForm';
 import UserForm from '../components/UserForm';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 
 const DashboardPage = () => {
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -14,6 +16,15 @@ const DashboardPage = () => {
   const [showUsers, setShowUsers] = useState(false);
   const [showRooms, setShowRooms] = useState(false);
   const [showReservations, setShowReservations] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   const handleSave = () => {
     setSelectedRoom(null);
@@ -23,13 +34,25 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-200">
-      <div className="w-2/3 h-4/5 bg-yellow-200 shadow-md p-6">
-        <h1 className="font-bold text-xl mb-4 text-center">Dashboard del Administrador</h1>
+    <div className={`flex justify-center items-center h-screen ${darkMode ? 'bg-gray-800 text-white' : 'bg-gray-200 text-black'}`}>
+      <div className={`w-2/3 h-4/5 ${darkMode ? 'bg-gray-900' : 'bg-blue-200'} shadow-md p-6`}>
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className={`mb-4 px-4 py-2 rounded flex items-center ${darkMode ? 'text-white' : 'text-black'}`}
+        >
+          {!darkMode ? (
+            <LightModeIcon className="w-6 h-6 mr-2" />
+          ) : (
+            <DarkModeIcon className="w-6 h-6 mr-2" />
+          )}
+          {!darkMode ? 'Modo Claro' : 'Modo Oscuro'}
+        </button>
 
-        <div className="mb-4">
-          <h2 className="text-center font-bold text-xl mb-2">Usuarios</h2>
-          <div className="flex flex-col items-center">
+        <h1 className="font-bold text-2xl mb-4 text-center uppercase">DASHBOARD DEL ADMINISTRADOR</h1>
+
+        <div className="mb-8">
+          <h2 className="font-bold text-lg mb-2 text-left uppercase">USUARIOS</h2>
+          <div className="flex flex-col items-start">
             <button className="mb-2" onClick={() => setSelectedUser({})}>Crear Usuario</button>
             <button onClick={() => setShowUsers(!showUsers)} className="mb-2">
               {showUsers ? 'Ocultar Lista de Usuarios' : 'Lista de Usuarios'}
@@ -47,9 +70,9 @@ const DashboardPage = () => {
           )}
         </div>
 
-        <div className="mb-4">
-          <h2 className="font-bold text-xl text-center mb-2">Habitaciones</h2>
-          <div className="flex flex-col items-center">
+        <div className="mb-8">
+          <h2 className="font-bold text-lg mb-2 text-left uppercase">HABITACIONES</h2>
+          <div className="flex flex-col items-start">
             <button className="mb-2" onClick={() => setSelectedRoom({})}>Crear Habitación</button>
             <button onClick={() => setShowRooms(!showRooms)} className="mb-2">
               {showRooms ? 'Ocultar Lista de Habitaciones' : 'Lista de Habitaciones'}
@@ -67,9 +90,9 @@ const DashboardPage = () => {
           )}
         </div>
 
-        <div className="mb-4">
-          <h2 className="font-bold text-xl text-center mb-2">Reservas</h2>
-          <div className="flex flex-col items-center">
+        <div className="mb-8">
+          <h2 className="font-bold text-lg mb-2 text-left uppercase">RESERVAS</h2>
+          <div className="flex flex-col items-start">
             <button className="mb-2" onClick={() => setSelectedReservation({})}>Crear Reserva</button>
             <button onClick={() => setShowReservations(!showReservations)} className="mb-2">
               {showReservations ? 'Ocultar Lista de Reservas' : 'Lista de Reservas'}

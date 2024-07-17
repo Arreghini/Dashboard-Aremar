@@ -1,41 +1,35 @@
 import React, { useEffect, useState } from 'react';
+import roomService from '../services/roomService';
 
-function RoomList() {
+const RoomList = ({ onEdit, onDelete }) => {
   const [rooms, setRooms] = useState([]);
 
   useEffect(() => {
-    // Simulación de obtención de datos de un API
-    fetchRooms().then(data => {
-      if (Array.isArray(data)) {
-        setRooms(data);
-      } else {
-        console.error('Rooms data is not an array:', data);
-        setRooms([]);
-      }
-    }).catch(error => {
-      console.error('Error fetching rooms:', error);
-      setRooms([]);
-    });
+    const fetchRooms = async () => {
+      const data = await roomService.getRooms();
+      setRooms(data);
+    };
+    fetchRooms();
   }, []);
+
+  const handleDelete = async (roomId) => {
+    await roomService.deleteRoom(roomId);
+    onDelete();
+  };
 
   return (
     <div>
-      <h2>Room List</h2>
-      <ul>
-        {rooms.map(room => (
-          <li key={room.id}>{room.name}</li>
-        ))}
-      </ul>
+      {rooms.map((room) => (
+        <div key={room.id} className="flex justify-between items-center my-2">
+          <span>{room.name} - {room.capacity}</span>
+          <div>
+            <button onClick={() => onEdit(room)} className="mx-1">Editar</button>
+            <button onClick={() => handleDelete(room.id)} className="mx-1">Eliminar</button>
+          </div>
+        </div>
+      ))}
     </div>
   );
-}
-
-async function fetchRooms() {
-  // Aquí deberías tener la lógica para obtener los datos de las habitaciones
-  return [
-    { id: 1, name: 'Room 1' },
-    { id: 2, name: 'Room 2' }
-  ]; // Simulación de datos
-}
+};
 
 export default RoomList;
