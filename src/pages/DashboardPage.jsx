@@ -35,7 +35,7 @@ const DashboardPage = () => {
 
   return (
     <div className={`flex justify-center items-center h-screen ${darkMode ? 'bg-gray-800 text-white' : 'bg-gray-200 text-black'}`}>
-      <div className={`w-2/3 h-4/5 ${darkMode ? 'bg-gray-900' : 'bg-blue-200'} shadow-md p-6`}>
+      <div className={`w-2/3 h-4/5 rounded-lg ${darkMode ? 'bg-gray-900' : 'bg-blue-200'} shadow-md p-6`}>
         <button
           onClick={() => setDarkMode(!darkMode)}
           className={`mb-4 px-4 py-2 rounded flex items-center ${darkMode ? 'text-white' : 'text-black'}`}
@@ -45,13 +45,12 @@ const DashboardPage = () => {
           ) : (
             <DarkModeIcon className="w-6 h-6 mr-2" />
           )}
-          {!darkMode ? 'Modo Claro' : 'Modo Oscuro'}
         </button>
 
         <h1 className="font-bold text-2xl mb-4 text-center uppercase">DASHBOARD DEL ADMINISTRADOR</h1>
 
         <div className="mb-8">
-          <h2 className="font-bold text-lg mb-2 text-left uppercase">USUARIOS</h2>
+          <h2 className="font-bold text-lg mb-2 text-left uppercase mt-10">USUARIOS</h2>
           <div className="flex flex-col items-start">
             <button className="mb-2" onClick={() => setSelectedUser({})}>Crear Usuario</button>
             <button onClick={() => setShowUsers(!showUsers)} className="mb-2">
