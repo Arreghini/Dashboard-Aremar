@@ -1,27 +1,31 @@
 import axios from 'axios';
 
+const api = axios.create({
+  baseURL: 'http://localhost:3000/api'
+});
+
 const getRooms = async () => {
-  const response = await axios.get('/api/rooms');
+  const response = await api.get('/rooms');
   return response.data;
 };
 
 const getRoom = async (id) => {
-  const response = await axios.get(`/api/rooms/${id}`);
+  const response = await api.get(`/rooms/${id}`);
   return response.data;
 };
 
 const createRoom = async (roomData) => {
-  const response = await axios.post('/api/rooms', roomData);
+  const response = await api.post('/rooms', roomData);
   return response.data;
 };
 
 const updateRoom = async (id, roomData) => {
-  const response = await axios.put(`/api/rooms/${id}`, roomData);
+  const response = await api.put(`/rooms/${id}`, roomData);
   return response.data;
 };
 
 const deleteRoom = async (id) => {
-  const response = await axios.delete(`/api/rooms/${id}`);
+  const response = await api.delete(`/rooms/${id}`);
   return response.data;
 };
 
