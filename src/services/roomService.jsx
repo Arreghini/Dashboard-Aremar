@@ -5,7 +5,7 @@ const api = axios.create({
 });
 
 const getRooms = async () => {
-  const response = await api.get('/rooms');
+  const response = await api.get('/rooms/all');
   return response.data;
 };
 

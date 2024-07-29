@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import roomService from '../services/roomService';
 
@@ -9,6 +10,7 @@ const RoomForm = () => {
     detailRoom: '',
     photoRoom: '',
   });
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,7 +32,13 @@ const RoomForm = () => {
         detailRoom: '',
         photoRoom: '',
       });
+      setError(''); // Clear any previous error
     } catch (error) {
+      if (error.response && error.response.status === 400) {
+        setError('Room with this ID already exists.');
+      } else {
+        setError('Error creating room.');
+      }
       console.error('Error creating room:', error);
     }
   };
@@ -38,6 +46,7 @@ const RoomForm = () => {
   return (
     <form onSubmit={handleSubmit}>
       <h1>Create New Room</h1>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       <label>
         ID:
         <input
