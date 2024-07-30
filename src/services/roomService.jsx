@@ -20,7 +20,7 @@ const createRoom = async (roomData) => {
 };
 
 const updateRoom = async (id, roomData) => {
-  const response = await api.put(`/rooms/${id}`, roomData);
+  const response = await api.patch(`/rooms/${id}`, roomData);
   return response.data;
 };
 

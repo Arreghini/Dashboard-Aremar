@@ -8,7 +8,9 @@ const RoomForm = () => {
     description: '',
     typeRoom: '',
     detailRoom: '',
+    price: '',
     photoRoom: '',
+    status: '',
   });
   const [error, setError] = useState('');
 
@@ -30,7 +32,9 @@ const RoomForm = () => {
         description: '',
         typeRoom: '',
         detailRoom: '',
+        price: '',
         photoRoom: '',
+        status: '',
       });
       setError(''); // Clear any previous error
     } catch (error) {
@@ -87,12 +91,33 @@ const RoomForm = () => {
         />
       </label>
       <label>
+        Price:
+        <input
+          type="number"
+          name="price"
+          value={formData.price}
+          onChange={handleChange}
+          required
+        />
+      </label>
+      <label>
         Photo Room:
         <input
           type="text"
           name="photoRoom"
           value={formData.photoRoom}
           onChange={handleChange}
+          required
+        />
+      </label>
+      <label>
+        Status:
+        <input
+          type="text"
+          name="status"
+          value={formData.status}
+          onChange={handleChange}
+          required
         />
       </label>
       <button type="submit">Create Room</button>
