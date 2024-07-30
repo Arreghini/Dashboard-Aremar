@@ -91,6 +91,7 @@ const RoomList = () => {
           <div className="w-1/6 p-2">{room.description}</div>
           <div className="w-1/6 p-2">{room.typeRoom}</div>
           <div className="w-1/6 p-2">{room.detailRoom}</div>
+          <div className='w-1/6 p-2'>{room.price}</div>
           <div className="w-1/6 p-2">{room.status}</div>
           <div className="w-1/12 p-2 flex items-center justify-center">
             <button
