@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { FaEdit, FaTrash } from 'react-icons/fa';
+import { useAuth0 } from '@auth0/auth0-react';
 import roomService from '../services/roomService';
 import Modal from './Modal';
 
 const RoomList = () => {
+  const { getAccessTokenSilently } = useAuth0();
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -16,22 +18,24 @@ const RoomList = () => {
     status: '',
   });
 
-  useEffect(() => {
-    const fetchRooms = async () => {
-      try {
-        const response = await roomService.getRooms();
-        setRooms(response);
-      } catch (error) {
-        console.error('Error fetching rooms:', error);
-      }
-    };
+  const fetchRooms = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+      const rooms = await roomService.getRooms(token);
+      setRooms(rooms);
+    } catch (error) {
+      console.error('Error fetching rooms:', error);
+    }
+  };
 
+  useEffect(() => {
     fetchRooms();
-  }, []);
+  }, [getAccessTokenSilently]);
 
   const handleEdit = async (id) => {
     try {
-      const room = await roomService.getRoom(id);
+      const token = await getAccessTokenSilently();
+      const room = await roomService.getRoom(id, token);
       setSelectedRoom(room);
       setFormData({
         description: room.description,
@@ -50,9 +54,9 @@ const RoomList = () => {
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar esta habitación?')) {
       try {
-        await roomService.deleteRoom(id);
-        const updatedRooms = await roomService.getRooms();
-        setRooms(updatedRooms);
+        const token = await getAccessTokenSilently();
+        await roomService.deleteRoom(id, token);
+        fetchRooms();
       } catch (error) {
         console.error('Error deleting room:', error);
       }
@@ -74,116 +78,132 @@ const RoomList = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await roomService.updateRoom(selectedRoom.id, formData);
-      const updatedRooms = await roomService.getRooms();
-      setRooms(updatedRooms);
+      const token = await getAccessTokenSilently();
+      if (selectedRoom) {
+        await roomService.updateRoom(selectedRoom.id, formData, token);
+      } else {
+        await roomService.createRoom(formData, token);
+      }
+      fetchRooms();
       handleCloseModal();
     } catch (error) {
-      console.error('Error updating room:', error);
+      console.error('Error saving room:', error);
     }
   };
 
   return (
-    <div className="flex flex-col space-y-1">
-      {rooms.map(room => (
-        <div key={room.id} className="flex border border-gray-300 p-4">
-          <div className="w-1/6 p-2">{room.id}</div>
-          <div className="w-1/6 p-2">{room.description}</div>
-          <div className="w-1/6 p-2">{room.typeRoom}</div>
-          <div className="w-1/6 p-2">{room.detailRoom}</div>
-          <div className='w-1/6 p-2'>{room.price}</div>
-          <div className="w-1/6 p-2">{room.status}</div>
-          <div className="w-1/12 p-2 flex items-center justify-center">
-            <button
-              className="p-2 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors"
-              onClick={() => handleEdit(room.id)}
-            >
-              <FaEdit className="text-blue-600 text-lg" />
-            </button>
-          </div>
-          <div className="w-1/12 p-2 flex items-center justify-center">
-            <button
-              className="p-2 rounded-full bg-red-100 hover:bg-red-200 transition-colors"
-              onClick={() => handleDelete(room.id)}
-            >
-              <FaTrash className="text-red-600 text-lg" />
-            </button>
-          </div>
-        </div>
-      ))}
+    <div className="p-4">
+      <h2 className="text-xl font-bold mb-4">Lista de Habitaciones</h2>
+      <table className="min-w-full bg-white">
+        <thead>
+          <tr>
+            <th className="py-2 px-4 border-b border-gray-300">Descripción</th>
+            <th className="py-2 px-4 border-b border-gray-300">Tipo</th>
+            <th className="py-2 px-4 border-b border-gray-300">Detalles</th>
+            <th className="py-2 px-4 border-b border-gray-300">Precio</th>
+            <th className="py-2 px-4 border-b border-gray-300">Foto</th>
+            <th className="py-2 px-4 border-b border-gray-300">Estado</th>
+            <th className="py-2 px-4 border-b border-gray-300">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rooms.map((room) => (
+            <tr key={room.id}>
+              <td className="py-2 px-4 border-b border-gray-300">{room.description}</td>
+              <td className="py-2 px-4 border-b border-gray-300">{room.typeRoom}</td>
+              <td className="py-2 px-4 border-b border-gray-300">{room.detailRoom}</td>
+              <td className="py-2 px-4 border-b border-gray-300">{room.price}</td>
+              <td className="py-2 px-4 border-b border-gray-300">{room.photo}</td>
+              <td className="py-2 px-4 border-b border-gray-300">{room.status}</td>
+              <td className="py-2 px-4 border-b border-gray-300">
+                <button
+                  onClick={() => handleEdit(room.id)}
+                  className="text-blue-500 hover:text-blue-700 mr-2"
+                >
+                  <FaEdit />
+                </button>
+                <button
+                  onClick={() => handleDelete(room.id)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <FaTrash />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       {isModalOpen && (
-        <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-          <h2 className="text-lg font-semibold mb-4">Editar Habitación</h2>
+        <Modal onClose={handleCloseModal}>
           <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <label className="block text-gray-700">Descripción</label>
+            <div>
+              <label htmlFor="description">Descripción</label>
               <input
                 type="text"
+                id="description"
                 name="description"
                 value={formData.description}
                 onChange={handleFormChange}
-                className="mt-1 p-2 border border-gray-300 rounded w-full"
+                required
               />
             </div>
-            <div className="mb-4">
-              <label className="block text-gray-700">Tipo de Habitación</label>
+            <div>
+              <label htmlFor="typeRoom">Tipo de Habitación</label>
               <input
                 type="text"
+                id="typeRoom"
                 name="typeRoom"
                 value={formData.typeRoom}
                 onChange={handleFormChange}
-                className="mt-1 p-2 border border-gray-300 rounded w-full"
+                required
               />
             </div>
-            <div className="mb-4">
-              <label className="block text-gray-700">Detalle</label>
+            <div>
+              <label htmlFor="detailRoom">Detalles</label>
               <input
                 type="text"
+                id="detailRoom"
                 name="detailRoom"
                 value={formData.detailRoom}
                 onChange={handleFormChange}
-                className="mt-1 p-2 border border-gray-300 rounded w-full"
+                required
               />
             </div>
-            <div className="mb-4">
-              <label className="block text-gray-700">Precio</label>
+            <div>
+              <label htmlFor="price">Precio</label>
               <input
-                type="text"
+                type="number"
+                id="price"
                 name="price"
                 value={formData.price}
                 onChange={handleFormChange}
-                className="mt-1 p-2 border border-gray-300 rounded w-full"
+                required
               />
             </div>
-            <div className="mb-4">
-              <label className="block text-gray-700">Foto</label>
+            <div>
+              <label htmlFor="photo">Foto</label>
               <input
                 type="text"
+                id="photo"
                 name="photo"
                 value={formData.photo}
                 onChange={handleFormChange}
-                className="mt-1 p-2 border border-gray-300 rounded w-full"
+                required
               />
             </div>
-            <div className="mb-4">
-              <label className="block text-gray-700">Estado</label>
-              <select
+            <div>
+              <label htmlFor="status">Estado</label>
+              <input
+                type="text"
+                id="status"
                 name="status"
                 value={formData.status}
                 onChange={handleFormChange}
-                className="mt-1 p-2 border border-gray-300 rounded w-full"
-              >
-                <option value="available">Disponible</option>
-                <option value="unavailable">No Disponible</option>
-              </select>
+                required
+              />
             </div>
-            <button
-              type="submit"
-              className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-            >
-              Guardar
-            </button>
+            <button type="submit" className="mt-4">Guardar</button>
           </form>
         </Modal>
       )}

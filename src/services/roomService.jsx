@@ -1,38 +1,67 @@
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: 'http://localhost:3000/api'
-});
+const API_URL = 'http://localhost:3000/api/rooms';
 
-const getRooms = async () => {
-  const response = await api.get('/rooms/all');
-  return response.data;
+const createRoom = async (data, token) => {
+  try {
+    const response = await axios.post(API_URL, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
-const getRoom = async (id) => {
-  const response = await api.get(`/rooms/${id}`);
-  return response.data;
+const getRooms = async (token) => {
+  try {
+    const response = await axios.get(`${API_URL}/all`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
-const createRoom = async (roomData) => {
-  const response = await api.post('/rooms', roomData);
-  return response.data;
+const getRoom = async (id, token) => {
+  try {
+    const response = await axios.get(`${API_URL}/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
-const updateRoom = async (id, roomData) => {
-  const response = await api.patch(`/rooms/${id}`, roomData);
-  return response.data;
+const updateRoom = async (id, data, token) => {
+  try {
+    const response = await axios.patch(`${API_URL}/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
-const deleteRoom = async (id) => {
-  const response = await api.delete(`/rooms/${id}`);
-  return response.data;
+const deleteRoom = async (id, token) => {
+  try {
+    await axios.delete(`${API_URL}/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (error) {
+    throw error;
+  }
 };
 
-export default {
+const roomService = {
   getRooms,
   getRoom,
   createRoom,
   updateRoom,
   deleteRoom,
 };
+
+export default roomService;
