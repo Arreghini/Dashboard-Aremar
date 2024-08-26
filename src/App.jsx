@@ -1,6 +1,5 @@
 import { Route, Routes } from 'react-router-dom';
 import DashboardPage from './pages/DashboardPage';
-import LoginPage from './components/LoginPage';
 import RoomForm from './components/RoomForm';
 import RoomList from './components/RoomList';
 import UserList from './components/UserList';
@@ -17,12 +16,11 @@ function App() {
       domain={domain}
       clientId={clientId}
       authorizationParams={{
-        redirect_uri: window.location.origin,
+        redirect_uri: 'http://localhost:5173',
       }}
     >
       <Routes>
         <Route path="/" element={<DashboardPage />} />
-        <Route path="/login" element={<LoginPage />} />
         <Route path="/roomForm" element={<RoomForm />} />
         <Route path="/roomList" element={<RoomList />} />
         <Route path="/userList" element={<UserList />} />

@@ -1,48 +1,52 @@
-import React, { useEffect, useState } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import UserList from '../components/UserList';
+import UserForm from '../components/UserForm';
+import RoomList from '../components/RoomList';
+import RoomForm from '../components/RoomForm';
+import ReservationList from '../components/ReservationList';
+import ReservationForm from '../components/ReservationForm';
 
 const DashboardPage = () => {
-  const { isAuthenticated, getAccessTokenSilently } = useAuth0();
-  const navigate = useNavigate();
+  const [darkMode, setDarkMode] = useState(false);
+  const [showUsers, setShowUsers] = useState(false);
+  const [showRooms, setShowRooms] = useState(false);
+  const [showReservations, setShowReservations] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [selectedReservation, setSelectedReservation] = useState(null);
+  const [refresh, setRefresh] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  
+  const handleReturnToHome = () => {
+    window.location.href = 'http://localhost:5173';
+  };
 
   useEffect(() => {
-    const checkAdminRole = async () => {
-      if (isAuthenticated) {
-        try {
-          const token = await getAccessTokenSilently();
-          // Aquí haces una solicitud al backend para verificar el rol
-          const response = await axios.get('/api/check-role', {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-          
-          if (response.data.isAdmin) {
-            setIsAdmin(true);
-          } else {
-            navigate('/'); // Redirige si no es admin
-          }
-        } catch (error) {
-          console.error('Error al verificar el rol:', error);
-          navigate('/');
-        }
-      } else {
-        navigate('/login');
+    const checkAdminStatus = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/api/admin/check', { withCredentials: true });
+        setIsAdmin(response.data.isAdmin);
+      } catch (error) {
+        console.error('Error al verificar el rol de administrador:', error);
+        setIsAdmin(false);
+      } finally {
+        setLoading(false);
       }
     };
 
-    checkAdminRole();
-  }, [isAuthenticated, getAccessTokenSilently, navigate]);
+    checkAdminStatus();
+  }, []);
+    
 
-  if (!isAuthenticated) {
-    return <div>Loading...</div>; // Mostrar un indicador de carga mientras se verifica la autenticación
-  }
-
-  if (!isAdmin) {
-    return null; // Mostrar nada o un mensaje de acceso denegado si no es administrador
+  if (loading) {
+    return <div>Loading...</div>;
   }
 
   return (
@@ -52,15 +56,21 @@ const DashboardPage = () => {
           onClick={() => setDarkMode(!darkMode)}
           className={`mb-4 px-4 py-2 rounded flex items-center ${darkMode ? 'text-white' : 'text-black'}`}
         >
-          {!darkMode ? (
-            <LightModeIcon className="w-6 h-6 mr-2" />
-          ) : (
+          {darkMode ? (
             <DarkModeIcon className="w-6 h-6 mr-2" />
+          ) : (
+            <LightModeIcon className="w-6 h-6 mr-2" />
           )}
         </button>
-
+        <button
+            onClick={handleReturnToHome}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Volver a Inicio
+          </button>
         <h1 className="font-bold text-2xl mb-4 text-center uppercase">DASHBOARD DEL ADMINISTRADOR</h1>
 
+        {/* Sección de Usuarios */}
         <div className="mb-8">
           <h2 className="font-bold text-lg mb-2 text-left uppercase mt-10">USUARIOS</h2>
           <div className="flex flex-col items-start">
@@ -81,6 +91,7 @@ const DashboardPage = () => {
           )}
         </div>
 
+        {/* Sección de Habitaciones */}
         <div className="mb-8">
           <h2 className="font-bold text-lg mb-2 text-left uppercase">HABITACIONES</h2>
           <div className="flex flex-col items-start">
@@ -101,6 +112,7 @@ const DashboardPage = () => {
           )}
         </div>
 
+        {/* Sección de Reservas */}
         <div className="mb-8">
           <h2 className="font-bold text-lg mb-2 text-left uppercase">RESERVAS</h2>
           <div className="flex flex-col items-start">
