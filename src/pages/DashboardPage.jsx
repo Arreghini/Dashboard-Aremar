@@ -1,19 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useAuth0 } from '@auth0/auth0-react';
+// pages/DashboardPage.js
+import React, { useState } from 'react';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
-import UserList from '../components/UserList'; 
-import UserForm from '../components/UserForm'; 
-import RoomList from '../components/RoomList'; 
-import RoomForm from '../components/RoomForm'; 
-import ReservationList from '../components/ReservationList'; 
-import ReservationForm from '../components/ReservationForm'; 
+import { useAuth0 } from '@auth0/auth0-react';
+import UserList from '../components/UserList';
+import UserForm from '../components/UserForm';
+import RoomList from '../components/RoomList';
+import RoomForm from '../components/RoomForm';
+import ReservationList from '../components/ReservationList';
+import ReservationForm from '../components/ReservationForm';
 
 const DashboardPage = () => {
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [shouldRedirect, setShouldRedirect] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [showUsers, setShowUsers] = useState(false);
   const [showRooms, setShowRooms] = useState(false);
@@ -22,56 +19,8 @@ const DashboardPage = () => {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [refresh, setRefresh] = useState(false);
-  const { user, isAuthenticated, getAccessTokenSilently, loginWithRedirect } = useAuth0();
 
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        console.log('Verificando sesión...');
-        if (!isAuthenticated) {
-          if (!shouldRedirect) {
-            setShouldRedirect(true);
-          }
-          return;
-        }
-  
-        const token = await getAccessTokenSilently();
-        console.log('Token de acceso obtenido:', token);
-  
-        const decodedToken = JSON.parse(atob(token.split('.')[1]));
-        console.log('Token decodificado:', decodedToken);
-  
-        const userRoles = decodedToken['https://aremar.com/roles'];
-        if (userRoles && userRoles.includes('admin')) {
-          setIsAdmin(true);
-        } else {
-          console.log('Usuario no es administrador');
-          setShouldRedirect(true);
-        }
-  
-      } catch (error) {
-        console.error('Error al obtener el token de acceso:', error);
-        setShouldRedirect(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    checkSession();
-  }, [isAuthenticated, getAccessTokenSilently, user, shouldRedirect]);
-  
-  if (loading) {
-    return <div>Cargando...</div>;
-  }
-
-  if (shouldRedirect) {
-    loginWithRedirect(); // Redirige a la página de inicio de sesión de Auth0
-    return null; // Evita renderizar cualquier contenido mientras redirige
-  }
-
-  if (!isAdmin) {
-    return <div>No tienes permisos para acceder al dashboard</div>;
-  }
+  const { user } = useAuth0();
 
   const handleReturnToHome = () => {
     window.location.href = 'http://localhost:5173';

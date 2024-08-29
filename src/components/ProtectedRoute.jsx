@@ -1,29 +1,56 @@
+import React, { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Navigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth0();
-  const [redirect, setRedirect] = useState(false);
+  const { isAuthenticated, getAccessTokenSilently, isLoading, loginWithRedirect, user } = useAuth0();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checkingRole, setCheckingRole] = useState(true);
 
   useEffect(() => {
-    console.log('isLoading:', isLoading, 'isAuthenticated:', isAuthenticated);
-    if (!isLoading && !isAuthenticated) {
-      window.alert('No tiene permisos de navegación en esta ruta');
-      setRedirect(true);
+    const checkAdminRole = async () => {
+      try {
+        if (!isAuthenticated) {
+          loginWithRedirect();
+          return;
+        }
+
+        const token = await getAccessTokenSilently();
+        const decodedToken = JSON.parse(atob(token.split('.')[1])); // Decodifica el token de acceso
+
+        const userRoles = decodedToken['https://aremar.com/roles'];
+        if (userRoles && userRoles.includes('admin')) {
+          setIsAdmin(true);
+        } else {
+          console.log('Usuario no es administrador');
+          await loginWithRedirect();
+        }
+      } catch (error) {
+        console.error('Error al obtener el token de acceso:', error);
+        await loginWithRedirect();
+      } finally {
+        setCheckingRole(false);
+      }
+    };
+
+    // Aseguramos que esto solo se ejecute una vez cuando el componente se monte o cuando cambie isAuthenticated
+    if (isAuthenticated && checkingRole) {
+      checkAdminRole();
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, getAccessTokenSilently, loginWithRedirect]);
 
-  if (redirect) {
-    return <Navigate to="/" />;
+  // Mostrar un mensaje de carga mientras verifica la autenticación y el rol
+  if (isLoading || checkingRole) {
+    return <div>Cargando...</div>;
   }
 
-  if (isLoading) {
-    return <div>Loading...</div>;
+  // Si no es administrador, redirigir a la página de inicio
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
   }
 
-  return children;
+  // Renderiza el contenido protegido si es un administrador
+  return <>{children}</>;
 };
-
 
 export default ProtectedRoute;
