@@ -14,65 +14,67 @@ const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
 function App() {
   return (
     <Auth0Provider
-  domain={domain}
-  clientId={clientId}
-  authorizationParams={{
-    redirect_uri: 'http://localhost:4000',
-  }}
->
-
+      domain={domain}
+      clientId={clientId}
+      authorizationParams={{
+        redirect_uri: 'http://localhost:4000',
+      }}
+    >
       <Routes>
         {/* Ruta por defecto que redirige al dashboard si está autenticado */}
-        <Route path="/" element={<Navigate to="/dashboard" />} />
+        <Route
+          path="/"
+          element={<Navigate to="/dashboard" />}
+        />
 
         {/* Define rutas individuales */}
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/dashboard"
           element={
             <ProtectedRoute requiredRole="admin">
               <DashboardPage />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/roomForm" 
+        <Route
+          path="/roomForm"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <RoomForm />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/roomList" 
+        <Route
+          path="/roomList"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <RoomList />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/userList" 
+        <Route
+          path="/userList"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <UserList />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/reservationForm" 
+        <Route
+          path="/reservationForm"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <ReservationForm />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/reservationList" 
+        <Route
+          path="/reservationList"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <ReservationList />
             </ProtectedRoute>
-          } 
+          }
         />
       </Routes>
     </Auth0Provider>
