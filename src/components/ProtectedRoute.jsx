@@ -1,56 +1,72 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
-import { Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, getAccessTokenSilently, isLoading, loginWithRedirect, user } = useAuth0();
+  const { isAuthenticated, isLoading, user, loginWithRedirect } = useAuth0();
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingRole, setCheckingRole] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAdminRole = async () => {
-      try {
-        if (!isAuthenticated) {
-          loginWithRedirect();
-          return;
+    console.log('isAuthenticated:', isAuthenticated);
+    console.log('isLoading:', isLoading);
+    console.log('user:', user);
+
+    if (!isLoading && isAuthenticated && user) {
+      const checkUserRole = async () => {
+        try {
+          setCheckingRole(true);
+
+          // Obtener roles directamente del usuario
+          const roles = user['https://aremar.com/roles'] || [];
+          console.log('Roles:', roles);
+
+          // Verificar explícitamente el rol "admin"
+          const isAdminRole = roles.includes('admin');
+          console.log('Is Admin:', isAdminRole);
+
+          setIsAdmin(isAdminRole);
+        } catch (error) {
+          console.error('Error checking user role:', error);
+        } finally {
+          setCheckingRole(false);
         }
+      };
 
-        const token = await getAccessTokenSilently();
-        const decodedToken = JSON.parse(atob(token.split('.')[1])); // Decodifica el token de acceso
-
-        const userRoles = decodedToken['https://aremar.com/roles'];
-        if (userRoles && userRoles.includes('admin')) {
-          setIsAdmin(true);
-        } else {
-          console.log('Usuario no es administrador');
-          await loginWithRedirect();
-        }
-      } catch (error) {
-        console.error('Error al obtener el token de acceso:', error);
-        await loginWithRedirect();
-      } finally {
-        setCheckingRole(false);
-      }
-    };
-
-    // Aseguramos que esto solo se ejecute una vez cuando el componente se monte o cuando cambie isAuthenticated
-    if (isAuthenticated && checkingRole) {
-      checkAdminRole();
+      checkUserRole();
+    } else {
+      console.log('User is not authenticated or still loading.');
+      setCheckingRole(false);
     }
-  }, [isAuthenticated, getAccessTokenSilently, loginWithRedirect]);
+  }, [isAuthenticated, isLoading, user]);
 
-  // Mostrar un mensaje de carga mientras verifica la autenticación y el rol
+  // useEffect(() => {
+  //   console.log('Checking redirect conditions...');
+  //   if (!isLoading && !checkingRole) {
+  //     console.log('isAuthenticated:', isAuthenticated);
+  //     console.log('isAdmin2:', isAdmin);
+
+  //     // Se asegura de usar un debugger para confirmar los valores en este momento.
+  //     if (!isAuthenticated) {
+  //       console.log('User is not authenticated, consider redirecting to login...');
+  //       loginWithRedirect();
+  //     } else if (!isAdmin) {
+  //       console.log('Authenticated but not admin, redirecting to home...');
+  //       debugger; // Coloca un punto de interrupción aquí para inspeccionar los valores
+  //       window.location.href = 'http://localhost:5173'; // Ajusta la URL según sea necesario
+  //     }
+  //   }
+  // }, [isAuthenticated, isLoading, loginWithRedirect]);
+
+  // Espera mientras se carga o se verifica el rol
   if (isLoading || checkingRole) {
-    return <div>Cargando...</div>;
+    console.log('Loading or checking role...');
+    return <p>Loading...</p>;
   }
 
-  // Si no es administrador, redirigir a la página de inicio
-  if (!isAdmin) {
-    return <Navigate to="/" replace />;
-  }
-
-  // Renderiza el contenido protegido si es un administrador
-  return <>{children}</>;
+  // Solo renderiza los hijos si está autenticado y es admin
+  return isAuthenticated && isAdmin ? children : null;
 };
 
 export default ProtectedRoute;
