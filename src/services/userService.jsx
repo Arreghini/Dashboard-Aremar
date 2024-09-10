@@ -1,56 +1,55 @@
-const API_URL = 'https://aremar.com/'; 
+import axios from 'axios';
 
-const getUsers = async () => {
-    const response = await fetch(API_URL);
-    if (!response.ok) {
-        throw new Error('Error fetching users');
-    }
-    return response.json();
-};
+const apiUrl = 'http://localhost:3000/api';
 
 const createUser = async (userData) => {
-    const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(userData)
-    });
-    if (!response.ok) {
-        throw new Error('Error creating user');
+    try {
+        const response = await axios.post(`${apiUrl}/users`, userData);
+        console.log('Usuario creado exitosamente');
+        return response.data; 
+    } catch (error) {
+        console.error('Error al crear el usuario:', error);
+        throw error; 
     }
-    return response.json();
 };
 
-const deleteUser = async (userId) => {
-    const response = await fetch(`${API_URL}/${userId}`, {
-        method: 'DELETE',
-    });
-    if (!response.ok) {
-        throw new Error('Error deleting user');
+const updateUser = async (id, userData) => {
+    try {
+        const response = await axios.put(`${apiUrl}/users/${id}`, userData);
+        console.log('Usuario actualizado exitosamente');
+        return response.data; 
+    } catch (error) {
+        console.error('Error al actualizar el usuario:', error);
+        throw error;
     }
-    return response.json();
 };
 
-const updateUser = async (userId, updates) => {
-    const response = await fetch(`${API_URL}/${userId}`, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updates)
-    });
-    if (!response.ok) {
-        throw new Error('Error updating user');
+const getUsers = async () => {
+    try {
+        const response = await axios.get(`${apiUrl}/users`);
+        return response.data;
+    } catch (error) {
+        console.error('Error al obtener los usuarios:', error); 
+        throw error;
     }
-    return response.json();
 };
 
-const userService = {
-    getUsers,
+const deleteUser = async (id) => {
+    try {
+        const response = await axios.delete(`${apiUrl}/users/${id}`);
+        console.log('Usuario eliminado exitosamente');
+        return response.data; 
+    } catch (error) {
+        console.error('Error al eliminar el usuario:', error);
+        throw error;
+    }
+};
+
+module.exports = {
     createUser,
-    deleteUser,
     updateUser,
+    getUsers,
+    deleteUser,
 };
 
-export default userService;
+

@@ -1,3 +1,19 @@
+// Este archivo define un componente de React llamado DashboardPage que representa una página de panel de control para un administrador. 
+// Aquí están las principales características:
+// Estados: Utiliza varios estados con useState para manejar el modo oscuro, mostrar/ocultar listas, y gestionar elementos seleccionados.
+// Autenticación: Usa useAuth0 para obtener información del usuario autenticado.
+// Diseño: Implementa un diseño responsivo con Tailwind CSS, incluyendo un encabezado con título, botón de modo oscuro/claro y botón para volver 
+// al inicio.
+// Secciones principales:
+// Usuarios: Permite crear, listar, editar y eliminar usuarios.
+// Habitaciones: Ofrece funcionalidades para gestionar habitaciones.
+// Reservas: Proporciona opciones para administrar reservas.
+// Componentes hijos: Utiliza componentes como UserList, UserForm, RoomList, RoomForm, ReservationList y ReservationForm para manejar las operaciones CRUD.
+// Actualización de datos: Usa un estado 'refresh' para forzar la actualización de las listas cuando se realizan cambios.
+// Condicionales: Emplea renderizado condicional para mostrar/ocultar elementos según el estado.
+// Estilos dinámicos: Aplica estilos diferentes basados en el modo oscuro/claro.
+// Este componente ofrece una interfaz completa para que un administrador gestione usuarios, habitaciones y reservas en un sistema, para un 
+// hotel o alojamientos en general.
 import React, { useState } from 'react';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
@@ -27,16 +43,31 @@ const DashboardPage = () => {
 
   return (
     <div className={`flex flex-col min-h-screen ${darkMode ? 'bg-gray-800 text-white' : 'bg-gray-200 text-black'}`}>
-      <div className={`w-full h-full flex justify-center items-center ${darkMode ? 'bg-gray-900' : 'bg-blue-200'} shadow-md p-6`}>
+      {/* Header */}
+      <div className="flex justify-between items-center p-6 shadow-md">
+        {/* Título del dashboard a la izquierda */}
+        <h1 className="font-bold text-2xl uppercase">DASHBOARD DEL ADMINISTRADOR</h1>
+        
+        {/* Botón de Modo Oscuro a la derecha */}
         <button
           onClick={() => setDarkMode(!darkMode)}
-          className={`mb-4 px-4 py-2 rounded flex items-center ${darkMode ? 'text-white' : 'text-black'}`}
+          className={`px-4 py-2 rounded flex items-center ${darkMode ? 'text-white' : 'text-black'}`}
         >
           {darkMode ? <DarkModeIcon className="w-6 h-6 mr-2" /> : <LightModeIcon className="w-6 h-6 mr-2" />}
           {darkMode ? 'Modo Claro' : 'Modo Oscuro'}
         </button>
-        <h1 className="font-bold text-2xl mb-4 text-center uppercase">DASHBOARD DEL ADMINISTRADOR</h1>
 
+        {/* Botón Volver a Inicio a la derecha */}
+        <button
+          onClick={handleReturnToHome}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        >
+          Volver a Inicio
+        </button>
+      </div>
+
+      {/* Contenido principal */}
+      <div className={`flex flex-col flex-grow p-6 ${darkMode ? 'bg-gray-900' : 'bg-blue-200'} shadow-md`}>
         {user && (
           <div className="mb-4 text-center">
             <h2 className="font-bold text-lg">Bienvenido, {user.name}</h2>
@@ -44,13 +75,6 @@ const DashboardPage = () => {
             <p>Rol: {user['https://aremar.com/roles'][0]}</p>
           </div>
         )}
-
-        <button
-          onClick={handleReturnToHome}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Volver a Inicio
-        </button>
 
         {/* Sección de Usuarios */}
         <div className="mb-8">
