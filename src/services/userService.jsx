@@ -1,4 +1,4 @@
-const API_URL = 'https://api.example.com/users'; // URL del API de usuarios
+const API_URL = 'https://aremar.com/'; 
 
 const getUsers = async () => {
     const response = await fetch(API_URL);

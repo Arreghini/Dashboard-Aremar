@@ -41,24 +41,7 @@ const ProtectedRoute = ({ children }) => {
     }
   }, [isAuthenticated, isLoading, user]);
 
-  // useEffect(() => {
-  //   console.log('Checking redirect conditions...');
-  //   if (!isLoading && !checkingRole) {
-  //     console.log('isAuthenticated:', isAuthenticated);
-  //     console.log('isAdmin2:', isAdmin);
-
-  //     // Se asegura de usar un debugger para confirmar los valores en este momento.
-  //     if (!isAuthenticated) {
-  //       console.log('User is not authenticated, consider redirecting to login...');
-  //       loginWithRedirect();
-  //     } else if (!isAdmin) {
-  //       console.log('Authenticated but not admin, redirecting to home...');
-  //       debugger; // Coloca un punto de interrupción aquí para inspeccionar los valores
-  //       window.location.href = 'http://localhost:5173'; // Ajusta la URL según sea necesario
-  //     }
-  //   }
-  // }, [isAuthenticated, isLoading, loginWithRedirect]);
-
+  
   // Espera mientras se carga o se verifica el rol
   if (isLoading || checkingRole) {
     console.log('Loading or checking role...');
