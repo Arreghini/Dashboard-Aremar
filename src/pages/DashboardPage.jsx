@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react'; 
 import { useAuth0 } from '@auth0/auth0-react';
 import { FaSun as LightModeIcon, FaMoon as DarkModeIcon } from 'react-icons/fa'; 
+import UserForm from '../components/UserForm'; 
+import UserList from '../components/UserList';
+import RoomForm from '../components/RoomForm';
+import ReservationForm from '../components/ReservationForm';
+import RoomList from '../components/RoomList';
+import ReservationList from '../components/ReservationList';
+
 
 const DashboardPage = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -13,20 +20,7 @@ const DashboardPage = () => {
   const [refresh, setRefresh] = useState(false);
   const [token, setToken] = useState('');
 
-  const { user, getAccessTokenSilently } = useAuth0();
-
-  useEffect(() => {
-    const fetchToken = async () => {
-      try {
-        const accessToken = await getAccessTokenSilently();
-        setToken(accessToken);
-      } catch (error) {
-        console.error('Error obteniendo el token:', error);
-      }
-    };
-    
-    fetchToken();
-  }, [getAccessTokenSilently]);
+  const { user } = useAuth0();
 
   // Función para redirigir al inicio
   const handleReturnToHome = () => {
