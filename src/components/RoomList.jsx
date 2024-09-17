@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { FaEdit, FaTrash } from 'react-icons/fa';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuth0 } from '@auth0/auth0-react';  // Importa el hook correcto
 import roomService from '../services/roomService';
 import Modal from './Modal';
 
 const RoomList = () => {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuth0();  // Usa el hook correcto de Auth0
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,16 +21,18 @@ const RoomList = () => {
   const fetchRooms = async () => {
     try {
       const token = await getAccessTokenSilently();
-      const rooms = await roomService.getRooms(token);
-      setRooms(rooms);
+      console.log("Token:", token);  // Verifica si el token se obtiene correctamente
+      const roomsData = await roomService.getRooms(token);
+      setRooms(roomsData);
     } catch (error) {
       console.error('Error fetching rooms:', error);
     }
   };
+  
 
   useEffect(() => {
     fetchRooms();
-  }, [getAccessTokenSilently]);
+  }, []);
 
   const handleEdit = async (id) => {
     try {

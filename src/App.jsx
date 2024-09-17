@@ -10,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 const domain = import.meta.env.VITE_AUTH0_DOMAIN;
 const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
+const audience = import.meta.env.VITE_AUTH0_AUDIENCE;
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
       clientId={clientId}
       authorizationParams={{
         redirect_uri: 'http://localhost:4000',
+        audience: audience,
       }}
     >
       <Routes>
