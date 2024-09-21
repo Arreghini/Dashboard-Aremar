@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { FaEdit, FaTrash } from 'react-icons/fa';
-import { useAuth0 } from '@auth0/auth0-react';  // Importa el hook correcto
+import { useAuth0 } from '@auth0/auth0-react';  
 import roomService from '../services/roomService';
 import Modal from './Modal';
 
 const RoomList = () => {
-  const { getAccessTokenSilently } = useAuth0();  // Usa el hook correcto de Auth0
+  const { getAccessTokenSilently } = useAuth0();  
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -14,21 +14,19 @@ const RoomList = () => {
     typeRoom: '',
     detailRoom: '',
     price: '',
-    photo: '',
+    photoRoom: '',  
     status: '',
   });
 
   const fetchRooms = async () => {
     try {
       const token = await getAccessTokenSilently();
-      console.log("Token:", token);  // Verifica si el token se obtiene correctamente
       const roomsData = await roomService.getRooms(token);
       setRooms(roomsData);
     } catch (error) {
       console.error('Error fetching rooms:', error);
     }
   };
-  
 
   useEffect(() => {
     fetchRooms();
@@ -44,7 +42,7 @@ const RoomList = () => {
         typeRoom: room.typeRoom,
         detailRoom: room.detailRoom,
         price: room.price,
-        photo: room.photo,
+        photoRoom: room.photoRoom,  
         status: room.status,
       });
       setIsModalOpen(true);
@@ -58,7 +56,7 @@ const RoomList = () => {
       try {
         const token = await getAccessTokenSilently();
         await roomService.deleteRoom(id, token);
-        fetchRooms();
+        fetchRooms();  // Recargar lista tras borrar
       } catch (error) {
         console.error('Error deleting room:', error);
       }
@@ -86,7 +84,7 @@ const RoomList = () => {
       } else {
         await roomService.createRoom(formData, token);
       }
-      fetchRooms();
+      fetchRooms();  // Recargar lista tras editar/crear
       handleCloseModal();
     } catch (error) {
       console.error('Error saving room:', error);

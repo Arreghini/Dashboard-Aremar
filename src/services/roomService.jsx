@@ -1,10 +1,18 @@
 import axios from 'axios';
 
+const BASE_URL = 'http://localhost:3000/api/rooms';
+
+const getHeaders = (token) => ({
+  headers: {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  },
+});
+
 const roomService = {
   getRooms: async () => {
     try {
-      const response = await axios.get('http://localhost:3000/api/rooms', {
-      });
+      const response = await axios.get(`${BASE_URL}/all`);
       return response.data;
     } catch (error) {
       console.error('Error al obtener las habitaciones:', error);
@@ -14,8 +22,7 @@ const roomService = {
 
   getRoom: async (id) => {
     try {
-      const response = await axios.get(`http://localhost:3000/api/rooms/${id}`, {
-      });
+      const response = await axios.get(`${BASE_URL}/${id}`);
       return response.data;
     } catch (error) {
       console.error('Error al obtener la habitación:', error);
@@ -24,13 +31,10 @@ const roomService = {
   },
 
   createRoom: async (roomData, token) => {
+    console.log("Token:", token);
+
     try {
-      const response = await axios.post('http://localhost:3000/api/rooms', roomData, {
-        headers: {
-          Authorization: `Bearer ${token}`,  // Incluye el token en el encabezado
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await axios.post(`${BASE_URL}/admin`, roomData, getHeaders(token));
       return response.data;
     } catch (error) {
       console.error('Error al crear la habitación:', error);
@@ -40,12 +44,7 @@ const roomService = {
 
   updateRoom: async (id, roomData, token) => {
     try {
-      const response = await axios.patch(`http://localhost:3000/api/rooms/${id}`, roomData, {
-        headers: {
-          Authorization: `Bearer ${token}`,  // Incluye el token en el encabezado
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await axios.patch(`${BASE_URL}/${id}`, roomData, getHeaders(token));
       return response.data;
     } catch (error) {
       console.error('Error al actualizar la habitación:', error);
@@ -55,16 +54,12 @@ const roomService = {
 
   deleteRoom: async (id, token) => {
     try {
-      await axios.delete(`http://localhost:3000/api/rooms/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`  // Incluye el token en el encabezado
-        }
-      });
+      await axios.delete(`${BASE_URL}/${id}`, getHeaders(token));
     } catch (error) {
       console.error('Error al eliminar la habitación:', error);
       throw error;
     }
-  }
+  },
 };
 
 export default roomService;

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import roomService from '../services/roomService';
 
-const RoomForm = () => {
+const RoomForm = ({ token }) => {
   const [formData, setFormData] = useState({
     id: '',
     description: '',
@@ -25,7 +25,7 @@ const RoomForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await roomService.createRoom(formData);
+      await roomService.createRoom(formData, token);
       // Reset form after successful submission
       setFormData({
         id: '',
