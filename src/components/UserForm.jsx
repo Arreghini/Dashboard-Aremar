@@ -30,10 +30,9 @@ const RoomForm = () => {
     e.preventDefault();
     setIsLoading(true);  // Indica que la solicitud está en proceso
     try {
+      const token = await getAccessTokenSilently();
       console.log('Obteniendo token...');
-      const token = await getAccessTokenSilently();  // Obtén el token para autenticación
-      console.log('Token recibido:', token);  // Verifica que el token se imprime en la consola
-
+      console.log("Token en RoomForm:", token);
       await roomService.createRoom(formData, token);  // Llama al servicio para crear la habitación
       console.log('Habitación creada con éxito.');
 

@@ -29,11 +29,10 @@ const roomService = {
       throw error;
     }
   },
-
+  
   createRoom: async (roomData, token) => {
-    console.log("Token:", token);
-
     try {
+      console.log('token enviado al back:', token)
       const response = await axios.post(`${BASE_URL}/admin`, roomData, getHeaders(token));
       return response.data;
     } catch (error) {

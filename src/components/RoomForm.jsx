@@ -1,8 +1,11 @@
 
 import React, { useState } from 'react';
 import roomService from '../services/roomService';
+import { useAuth0 } from '@auth0/auth0-react';  
 
-const RoomForm = ({ token }) => {
+const RoomForm = () => {
+  const { getAccessTokenSilently } = useAuth0();  
+
   const [formData, setFormData] = useState({
     id: '',
     description: '',
@@ -25,6 +28,7 @@ const RoomForm = ({ token }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const token = await getAccessTokenSilently();
       await roomService.createRoom(formData, token);
       // Reset form after successful submission
       setFormData({
@@ -37,6 +41,7 @@ const RoomForm = ({ token }) => {
         status: '',
       });
       setError(''); // Clear any previous error
+      console.log('Habitación creada:', createdRoom);
     } catch (error) {
       if (error.response && error.response.status === 400) {
         setError('Room with this ID already exists.');
