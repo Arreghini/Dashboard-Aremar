@@ -22,7 +22,11 @@ const RoomList = () => {
     try {
       const token = await getAccessTokenSilently();
       const roomsData = await roomService.getRooms(token);
-      setRooms(roomsData);
+      if (Array.isArray(roomsData)) { // Verificamos si la respuesta es un arreglo
+        setRooms(roomsData);
+      } else {
+        setRooms([]); // Si la respuesta no es un arreglo, asignamos un arreglo vacío
+      }
     } catch (error) {
       console.error('Error fetching rooms:', error);
     }
