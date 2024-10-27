@@ -30,7 +30,8 @@ const RoomForm = () => {
     try {
       const token = await getAccessTokenSilently();
       await roomService.createRoom(formData, token);
-      // Reset form after successful submission
+  
+      // Restablecer el formulario después de una creación exitosa
       setFormData({
         id: '',
         description: '',
@@ -40,17 +41,18 @@ const RoomForm = () => {
         photoRoom: '',
         status: '',
       });
-      setError(''); // Clear any previous error
-      console.log('Habitación creada:', createdRoom);
+      
+      setError(''); // Limpiar errores previos
+      console.log('Habitación creada con éxito');
     } catch (error) {
-      if (error.response && error.response.status === 400) {
-        setError('Room with this ID already exists.');
+      if (error.response && error.response.data && error.response.data.error === 'Room with this ID already exists') {
+        setError('Ya existe una habitación con este ID. Por favor, elige un ID diferente.');
       } else {
-        setError('Error creating room.');
+        setError('Error al crear la habitación. Por favor, intenta de nuevo.');
       }
-      console.error('Error creating room:', error);
     }
   };
+  
 
   return (
     <form onSubmit={handleSubmit}>

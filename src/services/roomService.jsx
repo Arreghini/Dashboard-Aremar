@@ -10,25 +10,32 @@ const getHeaders = (token) => ({
 });
 
 const roomService = {
+  // getRooms: async () => {
+  //   try {
+  //     const response = await axios.get(`${BASE_URL}/all`);
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error('Error al obtener las habitaciones:', error);
+  //     throw error;
+  //   }
+  // },
+
   getRooms: async () => {
     try {
       const response = await axios.get(`${BASE_URL}/all`);
-      return response.data;
+      console.log('Respuesta del servidor:', response.data);
+      if (Array.isArray(response.data)) {
+        return response.data;
+      } else {
+        console.log('La respuesta no es un array de habitaciones');
+        return [];
+      }
     } catch (error) {
       console.error('Error al obtener las habitaciones:', error);
       throw error;
     }
   },
-
-  getRoom: async (id) => {
-    try {
-      const response = await axios.get(`${BASE_URL}/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error al obtener la habitación:', error);
-      throw error;
-    }
-  },
+  
   
   createRoom: async (roomData, token) => {
     try {
@@ -40,6 +47,7 @@ const roomService = {
       throw error;
     }
   },
+
 
   updateRoom: async (id, roomData, token) => {
     try {

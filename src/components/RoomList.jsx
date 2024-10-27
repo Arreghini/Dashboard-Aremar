@@ -20,17 +20,20 @@ const RoomList = () => {
 
   const fetchRooms = async () => {
     try {
-      const token = await getAccessTokenSilently();
-      const roomsData = await roomService.getRooms(token);
-      if (Array.isArray(roomsData)) { // Verificamos si la respuesta es un arreglo
+      const roomsData = await roomService.getRooms();
+      console.log('Datos de habitaciones recibidos:', roomsData);
+      if (Array.isArray(roomsData) && roomsData.length > 0) {
         setRooms(roomsData);
       } else {
-        setRooms([]); // Si la respuesta no es un arreglo, asignamos un arreglo vacío
+        console.log('No se encontraron habitaciones o los datos no son un array');
+        setRooms([]);
       }
     } catch (error) {
-      console.error('Error fetching rooms:', error);
+      console.error('Error al obtener las habitaciones:', error);
+      setRooms([]);
     }
   };
+  
 
   useEffect(() => {
     fetchRooms();
