@@ -10,15 +10,14 @@ const getHeaders = (token) => ({
 });
 
 const roomService = {
-  // getRooms: async () => {
-  //   try {
-  //     const response = await axios.get(`${BASE_URL}/all`);
-  //     return response.data;
-  //   } catch (error) {
-  //     console.error('Error al obtener las habitaciones:', error);
-  //     throw error;
-  //   }
-  // },
+  getRoom: async (id, token) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/${id}`, getHeaders(token));
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 
   getRooms: async () => {
     try {
@@ -34,8 +33,7 @@ const roomService = {
       console.error('Error al obtener las habitaciones:', error);
       throw error;
     }
-  },
-  
+  },  
   
   createRoom: async (roomData, token) => {
     try {
@@ -47,7 +45,6 @@ const roomService = {
       throw error;
     }
   },
-
 
   updateRoom: async (id, roomData, token) => {
     try {
