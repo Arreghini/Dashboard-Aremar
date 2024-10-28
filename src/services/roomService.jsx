@@ -10,9 +10,9 @@ const getHeaders = (token) => ({
 });
 
 const roomService = {
-  getRoom: async (id, token) => {
+  getRoom: async (id) => {
     try {
-      const response = await axios.get(`${BASE_URL}/${id}`, getHeaders(token));
+      const response = await axios.get(`${BASE_URL}/${id}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -48,7 +48,7 @@ const roomService = {
 
   updateRoom: async (id, roomData, token) => {
     try {
-      const response = await axios.patch(`${BASE_URL}/${id}`, roomData, getHeaders(token));
+      const response = await axios.patch(`${BASE_URL}/admin/${id}`, roomData, getHeaders(token));
       return response.data;
     } catch (error) {
       console.error('Error al actualizar la habitación:', error);
@@ -58,7 +58,7 @@ const roomService = {
 
   deleteRoom: async (id, token) => {
     try {
-      await axios.delete(`${BASE_URL}/${id}`, getHeaders(token));
+      await axios.delete(`${BASE_URL}/admin/${id}`, getHeaders(token));
     } catch (error) {
       console.error('Error al eliminar la habitación:', error);
       throw error;
@@ -67,3 +67,4 @@ const roomService = {
 };
 
 export default roomService;
+
