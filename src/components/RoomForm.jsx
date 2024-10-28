@@ -5,7 +5,6 @@ import { useAuth0 } from '@auth0/auth0-react';
 
 const RoomForm = () => {
   const { getAccessTokenSilently } = useAuth0();  
-
   const [formData, setFormData] = useState({
     id: '',
     description: '',

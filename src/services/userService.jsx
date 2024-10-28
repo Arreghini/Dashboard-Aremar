@@ -1,66 +1,70 @@
 import axios from 'axios';
 
-const apiUrl = 'http://localhost:3000/api';
+const BASE_URL = 'http://localhost:3000/api/users/admin';
 
-const createUser = async (userData, token) => {
+const getHeaders = (token) => ({
+  headers: {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  },
+});
+
+const userService = { 
+  getUser: async (id,token) => {
   try {
-    const response = await axios.post(`${apiUrl}/users`, userData, {
-      headers: {
-        Authorization: `Bearer ${token}`,  // Pasa el token como header
-      },
-    });
+    const response = await axios.get(`${BASE_URL}/${id}`, getHeaders(token));
+    console.log('Respuesta del servidor:', response.data);
+    return response.data;
+  } catch (error) {
+    console.log('Error al obtener el usuario:', error);
+    throw error;
+  }  
+},
+ getUsers: async (token) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/all`,getHeaders(token));
+    console.log('Respuesta del servidor:',response.data);
+    if (Array.isArray(response.data)) {
+      return response.data;
+    } else {
+      console.log('La respuesta no es un array de usuarios');
+      return [];
+    }
+  }catch (error) {
+    console.log('Error al obtener los usuarios:', error);
+    throw error;
+    }
+  },
+ createUser: async (userData, token) => {
+  try {
+    const response = await axios.post(`${BASE_URL}`, userData, getHeaders(token));
     console.log('Usuario creado exitosamente');
     return response.data;
   } catch (error) {
     console.error('Error al crear el usuario:', error);
     throw error;
   }
-};
-
-const updateUser = async (id, userData, token) => {
+},
+ updateUser: async (id, userData, token) => {
   try {
-    const response = await axios.put(`${apiUrl}/users/${id}`, userData, {
-      headers: {
-        Authorization: `Bearer ${token}`,  // Pasa el token como header
-      },
-    });
+    const response = await axios.patch(`${BASE_URL}/${id}`,userData, getHeaders(token));
     console.log('Usuario actualizado exitosamente');
     return response.data;
   } catch (error) {
     console.error('Error al actualizar el usuario:', error);
     throw error;
   }
-};
-
-const getUsers = async (token) => {
+},
+ deleteUser: async (id, token) => {
   try {
-    const response = await axios.get(`${apiUrl}/users`, {
-      headers: {
-        Authorization: `Bearer ${token}`,  // Pasa el token como header
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error al obtener los usuarios:', error);
-    throw error;
-  }
-};
-
-const deleteUser = async (id, token) => {
-  try {
-    const response = await axios.delete(`${apiUrl}/users/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,  // Pasa el token como header
-      },
-    });
+    const response = await axios.delete(`${BASE_URL}/${id}`,getHeaders(token)); 
     console.log('Usuario eliminado exitosamente');
     return response.data;
   } catch (error) {
     console.error('Error al eliminar el usuario:', error);
     throw error;
   }
+},
 };
-
-const userService = { createUser, updateUser, getUsers, deleteUser };
 
 export default userService;

@@ -18,7 +18,6 @@ const roomService = {
       throw error;
     }
   },
-
   getRooms: async () => {
     try {
       const response = await axios.get(`${BASE_URL}/all`);
@@ -34,18 +33,17 @@ const roomService = {
       throw error;
     }
   },  
-  
   createRoom: async (roomData, token) => {
     try {
       console.log('token enviado al back:', token)
       const response = await axios.post(`${BASE_URL}/admin`, roomData, getHeaders(token));
+      console.log('Habitación actualizada exitosamente')
       return response.data;
     } catch (error) {
       console.error('Error al crear la habitación:', error);
       throw error;
     }
   },
-
   updateRoom: async (id, roomData, token) => {
     try {
       const response = await axios.patch(`${BASE_URL}/admin/${id}`, roomData, getHeaders(token));
@@ -55,7 +53,6 @@ const roomService = {
       throw error;
     }
   },
-
   deleteRoom: async (id, token) => {
     try {
       await axios.delete(`${BASE_URL}/admin/${id}`, getHeaders(token));

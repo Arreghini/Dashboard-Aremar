@@ -36,7 +36,6 @@ const RoomList = () => {
     setFormData(room); // Carga los datos de la habitación en el formulario
     setIsModalOpen(true); // Abre el modal
   };
-  
 
   const handleModalClose = () => {
     setIsModalOpen(false); // Cierra el modal

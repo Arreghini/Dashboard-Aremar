@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';  // Importa Auth0
+import { useAuth0 } from '@auth0/auth0-react';  
 import roomService from '../services/roomService';
 
-const RoomForm = () => {
+const UserForm = () => {
   const { getAccessTokenSilently } = useAuth0();  // Usa Auth0 para obtener el token de acceso
   const [formData, setFormData] = useState({
     id: '',
-    description: '',
-    typeRoom: '',
-    detailRoom: '',
-    price: '',
-    photo: '',  // Consistencia con RoomList
-    status: '',
+    name: '',
+    email: '',
+    emailVerified: '',
+    picture: '',
+    phone: '',  
+    dni: '',
+    address: '',
+    isActive: true,    
   });
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);  // Estado para gestionar la carga
+  const [isLoading, setIsLoading] = useState(false);  
 
   // Maneja los cambios en los campos del formulario
   const handleChange = (e) => {
@@ -31,94 +33,113 @@ const RoomForm = () => {
     setIsLoading(true);  // Indica que la solicitud está en proceso
     try {
       const token = await getAccessTokenSilently();
-      console.log('Obteniendo token...');
-      console.log("Token en RoomForm:", token);
-      await roomService.createRoom(formData, token);  // Llama al servicio para crear la habitación
-      console.log('Habitación creada con éxito.');
+      await userService.createUser(formData, token);
 
       // Reinicia el formulario después de la creación
       setFormData({
         id: '',
-        description: '',
-        typeRoom: '',
-        detailRoom: '',
-        price: '',
-        photo: '',
-        status: '',
+        name: '',
+        email: '',
+        emailVerified: '',
+        picture: '',
+        phone: '',  
+        dni: '',
+        address: '',
+        isActive: true,   
       });
       setError('');  // Limpia cualquier error anterior
     } catch (error) {
       if (error.response && error.response.status === 400) {
-        setError('Room with this ID already exists.');
+        setError('User with this id already exists.');
       } else {
-        setError('Error creating room.');
+        setError('Error creating user.');
       }
-      console.error('Error creando la habitación:', error);
+      console.error('Error creando el usuario:', error);
     } finally {
-      setIsLoading(false);  // Detiene el estado de carga
+      setIsLoading(false); 
     }
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      <h1>Create New Room</h1>
+      <h1>Create New User</h1>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <label>
-        Description:
+        name:
         <input
           type="text"
-          name="description"
-          value={formData.description}
+          name="name"
+          value={formData.name}
           onChange={handleChange}
           required
         />
       </label>
       <label>
-        Type of Room:
+        email:
         <input
           type="text"
-          name="typeRoom"
-          value={formData.typeRoom}
+          name="email"
+          value={formData.email}
           onChange={handleChange}
           required
         />
       </label>
       <label>
-        Details:
+        emailVerified:
         <input
           type="text"
-          name="detailRoom"
-          value={formData.detailRoom}
+          name="emailVerified"
+          value={formData.emailVerified}
           onChange={handleChange}
           required
         />
       </label>
       <label>
-        Price:
+        picture:
         <input
-          type="number"
-          name="price"
-          value={formData.price}
+          type="text"
+          name="picture"
+          value={formData.picture}
           onChange={handleChange}
           required
         />
       </label>
       <label>
-        Photo URL:
+        phone:
         <input
           type="text"
-          name="photo"
-          value={formData.photo}
+          name="phone"
+          value= {formData.phone}
           onChange={handleChange}
           required
         />
       </label>
       <label>
-        Status:
+        dni:
         <input
           type="text"
-          name="status"
-          value={formData.status}
+          name="dni"
+          value={formData.dni}
+          onChange={handleChange}
+          required
+        />
+      </label>
+      <label>
+        address:
+        <input
+          type="text"
+          name="address"
+          value={formData.address}
+          onChange={handleChange}
+          required
+        />        
+      </label>
+      <label>
+        isActive:
+        <input
+          type="boolean"
+          name="isActive"
+          value={formData.isActive}
           onChange={handleChange}
           required
         />
@@ -130,4 +151,4 @@ const RoomForm = () => {
   );
 };
 
-export default RoomForm;
+export default UserForm;
