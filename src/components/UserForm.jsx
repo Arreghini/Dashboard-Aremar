@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';  
-import roomService from '../services/roomService';
+import userService from '../services/userService';
 
 const UserForm = () => {
   const { getAccessTokenSilently } = useAuth0();  // Usa Auth0 para obtener el token de acceso
@@ -87,7 +87,7 @@ const UserForm = () => {
       <label>
         emailVerified:
         <input
-          type="text"
+          type="boolean"
           name="emailVerified"
           value={formData.emailVerified}
           onChange={handleChange}

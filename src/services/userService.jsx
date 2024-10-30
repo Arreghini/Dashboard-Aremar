@@ -2,12 +2,16 @@ import axios from 'axios';
 
 const BASE_URL = 'http://localhost:3000/api/users/admin';
 
-const getHeaders = (token) => ({
-  headers: {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  },
-});
+// Añade un console.log para verificar el token
+const getHeaders = (token) => {
+  console.log('Token recibido:', token);
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  };
+};
 
 const userService = { 
   getUser: async (id,token) => {

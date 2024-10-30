@@ -22,7 +22,8 @@ const UserList = () => {
   
     const fetchUsers = async () => {
       try {
-        const usersData = await userService.getUsers();
+        const token = await getAccessTokenSilently();
+        const usersData = await userService.getUsers(token);
         setUsers(usersData);
       } catch (error) {
         console.error('Error al obtener los usuarios:', error);
