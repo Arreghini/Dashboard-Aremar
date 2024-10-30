@@ -115,12 +115,12 @@ return (
             <td className="py-2 px-4 border-b border-gray-300">{user.isActive}</td>
             <td className="py-2 px-4 border-b border-gray-300">
 
-              <button onClick={() => handleEdit(room)} 
+              <button onClick={() => handleEdit(user)} 
               className="text-blue-500 hover:text-blue-700 mr-2">
               <FaEdit />
               </button>
 
-              <button onClick={() => handleDelete(room.id)}
+              <button onClick={() => handleDelete(user.id)}
               className="text-red-500 hover:text-red-700">
               <FaTrash />
               </button>
@@ -133,7 +133,7 @@ return (
 
     {/* Modal para editar usuario */}
     {isModalOpen && (
-<Modal isOpen={isModalOpen} onClose={handleModalClose}>
+<Modal isOpen={isModalOpen} onClose={handleCloseModal}>
   <h2 className="text-lg font-bold mb-4">Editar Usuario</h2>
   <form onSubmit={(e) => { e.preventDefault(); handleUpdateUser(); }}>
           <input 
@@ -158,7 +158,6 @@ return (
               onChange={(e) => setFormData({...formData, emailVerified: e.target.checked })}
               placeholder="Email verificado" 
               className="mb-2 w-full"
-              required
               />              
             <input 
               type="text" 
@@ -166,7 +165,6 @@ return (
               onChange={(e) => setFormData({...formData, picture: e.target.value })}
               placeholder="URL de la imagen"
               className="mb-2 w-full"
-              required
               />
             <input 
               type="text" 
@@ -174,7 +172,6 @@ return (
               onChange={(e) => setFormData({...formData, phone: e.target.value })}
               placeholder="Teléfono"
               className="mb-2 w-full"
-              required
               />
             <input 
               type="text" 
@@ -182,7 +179,6 @@ return (
               onChange={(e) => setFormData({...formData, dni: e.target.value })}
               placeholder="DNI"
               className="mb-2 w-full"
-              required
               />
             <input 
               type="text" 
@@ -190,7 +186,6 @@ return (
               onChange={(e) => setFormData({...formData, address: e.target.value })}
               placeholder="Dirección"
               className="mb-2 w-full"
-              required
               />
             <input 
               type="boolean" 

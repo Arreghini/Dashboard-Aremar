@@ -8,7 +8,7 @@ const UserForm = () => {
     id: '',
     name: '',
     email: '',
-    emailVerified: '',
+    emailVerified: false,  // Cambiado a booleano
     picture: '',
     phone: '',  
     dni: '',
@@ -20,34 +20,34 @@ const UserForm = () => {
 
   // Maneja los cambios en los campos del formulario
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value, // Actualiza booleanos correctamente
     });
   };
 
   // Maneja el envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);  // Indica que la solicitud está en proceso
+    setIsLoading(true);
+    console.log('formData:', formData); 
     try {
       const token = await getAccessTokenSilently();
       await userService.createUser(formData, token);
-
-      // Reinicia el formulario después de la creación
+      
       setFormData({
         id: '',
         name: '',
         email: '',
         emailVerified: '',
         picture: '',
-        phone: '',  
+        phone: '',
         dni: '',
         address: '',
-        isActive: true,   
+        isActive: true,
       });
-      setError('');  // Limpia cualquier error anterior
+      setError('');
     } catch (error) {
       if (error.response && error.response.status === 400) {
         setError('User with this id already exists.');
@@ -56,16 +56,17 @@ const UserForm = () => {
       }
       console.error('Error creando el usuario:', error);
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   };
+  
 
   return (
     <form onSubmit={handleSubmit}>
       <h1>Create New User</h1>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <label>
-        name:
+        Name:
         <input
           type="text"
           name="name"
@@ -75,9 +76,9 @@ const UserForm = () => {
         />
       </label>
       <label>
-        email:
+        Email:
         <input
-          type="text"
+          type="email"
           name="email"
           value={formData.email}
           onChange={handleChange}
@@ -85,67 +86,61 @@ const UserForm = () => {
         />
       </label>
       <label>
-        emailVerified:
+        Email Verified:
         <input
-          type="boolean"
+          type="checkbox"
           name="emailVerified"
-          value={formData.emailVerified}
+          checked={formData.emailVerified}  // Usa checked para checkbox
           onChange={handleChange}
-          required
         />
       </label>
       <label>
-        picture:
+        Picture:
         <input
           type="text"
           name="picture"
           value={formData.picture}
           onChange={handleChange}
-          required
         />
       </label>
       <label>
-        phone:
+        Phone:
         <input
           type="text"
           name="phone"
-          value= {formData.phone}
+          value={formData.phone}
           onChange={handleChange}
-          required
         />
       </label>
       <label>
-        dni:
+        DNI:
         <input
           type="text"
           name="dni"
           value={formData.dni}
           onChange={handleChange}
-          required
         />
       </label>
       <label>
-        address:
+        Address:
         <input
           type="text"
           name="address"
           value={formData.address}
           onChange={handleChange}
-          required
         />        
       </label>
       <label>
-        isActive:
+        Is Active:
         <input
-          type="boolean"
+          type="checkbox"
           name="isActive"
-          value={formData.isActive}
+          checked={formData.isActive}  // Usa checked para checkbox
           onChange={handleChange}
-          required
         />
       </label>
       <button type="submit" disabled={isLoading}>
-        {isLoading ? 'Creating...' : 'Create Room'}
+        {isLoading ? 'Creating...' : 'Create User'}
       </button>
     </form>
   );
