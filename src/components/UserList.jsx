@@ -100,8 +100,15 @@ return (
             <td className="py-2 px-4 border-b border-gray-300">{user.id}</td>
             <td className="py-2 px-4 border-b border-gray-300">{user.name}</td>
             <td className="py-2 px-4 border-b border-gray-300">{user.email}</td>
-            <td className="py-2 px-4 border-b border-gray-300">{user.emailVerified}</td>
-            <td className="py-2 px-4 border-b border-gray-300">{user.picture}</td>
+            <td className="py-2 px-4 border-b border-gray-300"> {user.email_verified ? (
+          <p>✅</p>
+        ) : (
+          <p>❌</p>)}</td>
+            <td className="py-2 px-4 border-b border-gray-300"><img 
+            src={user.picture} 
+            alt={`${user.name}'s profile`} 
+            className="w-12 h-12 rounded-full" 
+            /></td>
             <td className="py-2 px-4 border-b border-gray-300">{user.phone}</td>
             <td className="py-2 px-4 border-b border-gray-300">{user.dni}</td>
             <td className="py-2 px-4 border-b border-gray-300">{user.address}</td>
