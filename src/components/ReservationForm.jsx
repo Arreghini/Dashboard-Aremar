@@ -1,149 +1,70 @@
 import React, { useState, useEffect } from 'react';
+import userService from '../services/userService'; // Servicio para obtener usuarios
 import reservationService from '../services/reservationService';
-import roomService from '../services/roomService';
-import userService from '../services/userService';
 
-const ReservationForm = ({ reservation = {}, onSave }) => {
-  const [formData, setFormData] = useState({
-    id: reservation.id || '',
-    userId: reservation.userId || '',
-    roomId: reservation.roomId || '',
-    guests: reservation.guests || '',
-    checkInDate: reservation.checkInDate || '',
-    checkOutDate: reservation.checkOutDate || '',
-    totalPrice: reservation.totalPrice || '',
-    status: reservation.status || 'pending',
-  });
-
-  const [rooms, setRooms] = useState([]);
+const ReservationForm = ({ onClose, onSave }) => {
   const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState('');
+  const [roomId, setRoomId] = useState('');
+  const [date, setDate] = useState('');
 
   useEffect(() => {
-    const fetchRooms = async () => {
-      const data = await roomService.getRooms();
-      setRooms(data);
-    };
-
     const fetchUsers = async () => {
       const data = await userService.getUsers();
       setUsers(data);
     };
-
-    fetchRooms();
     fetchUsers();
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      if (formData.id) {
-        await reservationService.updateReservation(formData.id, formData);
-      } else {
-        await reservationService.createReservation(formData);
-      }
-      onSave();
-    } catch (error) {
-      console.error('Error saving reservation:', error);
-    }
+    await reservationService.createReservation({
+      userId: selectedUser,
+      roomId,
+      date,
+    });
+    onSave(); // Actualiza la lista de reservas
+    onClose(); // Cierra el formulario
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h1>{formData.id ? 'Edit Reservation' : 'Create Reservation'}</h1>
-      <label>
-        User:
-        <select
-          name="userId"
-          value={formData.userId}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Select User</option>
-          {users.map(user => (
-            <option key={user.id} value={user.id}>
-              {user.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Room:
-        <select
-          name="roomId"
-          value={formData.roomId}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Select Room</option>
-          {rooms.map(room => (
-            <option key={room.id} value={room.id}>
-              {room.description}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Guests:
-        <input
-          type="number"
-          name="guests"
-          value={formData.guests}
-          onChange={handleChange}
-          required
-        />
-      </label>
-      <label>
-        Check-in Date:
-        <input
-          type="date"
-          name="checkInDate"
-          value={formData.checkInDate}
-          onChange={handleChange}
-          required
-        />
-      </label>
-      <label>
-        Check-out Date:
-        <input
-          type="date"
-          name="checkOutDate"
-          value={formData.checkOutDate}
-          onChange={handleChange}
-          required
-        />
-      </label>
-      <label>
-        Total Price:
-        <input
-          type="number"
-          name="totalPrice"
-          value={formData.totalPrice}
-          onChange={handleChange}
-          required
-        />
-      </label>
-      <label>
-        Status:
-        <select
-          name="status"
-          value={formData.status}
-          onChange={handleChange}
-        >
-          <option value="pending">Pending</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-      </label>
-      <button type="submit">{formData.id ? 'Update Reservation' : 'Create Reservation'}</button>
-    </form>
+    <div className="reservation-form">
+      <h2>Crear Nueva Reserva</h2>
+      <form onSubmit={handleSubmit}>
+        <label>
+          Seleccionar Usuario:
+          <select value={selectedUser} onChange={(e) => setSelectedUser(e.target.value)} required>
+            <option value="">Seleccione un usuario</option>
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>{user.name}</option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          Habitación:
+          <input
+            type="text"
+            value={roomId}
+            onChange={(e) => setRoomId(e.target.value)}
+            required
+          />
+        </label>
+
+        <label>
+          Fecha:
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            required
+          />
+        </label>
+
+        <button type="submit">Guardar Reserva</button>
+        <button type="button" onClick={onClose}>Cancelar</button>
+      </form>
+    </div>
   );
 };
 
