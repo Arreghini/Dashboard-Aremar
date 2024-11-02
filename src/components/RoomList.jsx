@@ -11,12 +11,14 @@ const RoomList = () => {
   const [formData, setFormData] = useState({
     id: '',
     description: '',
-    typeRoom: '',
+    roomType: '',
     detailRoom: '',
     price: '',
     photoRoom: '',  
     status: '',
   });
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const fetchRooms = async () => {
     try {
@@ -24,6 +26,7 @@ const RoomList = () => {
       setRooms(roomsData);
     } catch (error) {
       console.error('Error al obtener las habitaciones:', error);
+      setErrorMessage('No se pudieron cargar las habitaciones.');
     }
   };
 
@@ -32,42 +35,40 @@ const RoomList = () => {
   }, []);
 
   const handleEdit = (room) => {
-    console.log('Editando habitación:', room); // Verifica que el room se esté recibiendo
-    setFormData(room); // Carga los datos de la habitación en el formulario
-    setIsModalOpen(true); // Abre el modal
+    setFormData(room); 
+    setIsModalOpen(true); 
   };
 
   const handleModalClose = () => {
-    setIsModalOpen(false); // Cierra el modal
-    setFormData({ // Reinicia el estado del formulario
-      id: '',
-      description: '',
-      typeRoom: '',
-      detailRoom: '',
-      price: '',
-      photoRoom: '',  
-      status: '',
-    });
+    setIsModalOpen(false); 
+    setFormData({ id: '', description: '', roomType: '', detailRoom: '', price: '', photoRoom: '', status: '' });
+    setErrorMessage('');
+    setSuccessMessage('');
   }; 
+
   const handleUpdateRoom = async () => {
     try {
       const token = await getAccessTokenSilently();
       await roomService.updateRoom(formData.id, formData, token);
-      fetchRooms(); // Recarga la lista de habitaciones
-      handleModalClose(); // Cierra el modal
+      setSuccessMessage('Habitación actualizada con éxito.');
+      fetchRooms();
+      handleModalClose();
     } catch (error) {
       console.error('Error actualizando la habitación:', error);
+      setErrorMessage('Error al actualizar la habitación.');
     }
   };
   
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar esta habitación?')) {
       try {
-        const token = await getAccessTokenSilently(); // Obtiene el token aquí
-        await roomService.deleteRoom(id, token); // Pasa el token aquí
-        fetchRooms(); // Recarga la lista tras borrar
+        const token = await getAccessTokenSilently();
+        await roomService.deleteRoom(id, token);
+        setSuccessMessage('Habitación eliminada con éxito.');
+        fetchRooms();
       } catch (error) {
         console.error('Error eliminando la habitación:', error);
+        setErrorMessage('Error al eliminar la habitación.');
       }
     }
   };
@@ -75,6 +76,8 @@ const RoomList = () => {
   return (
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">Lista de Habitaciones</h2>
+      {errorMessage && <div className="text-red-500 mb-4">{errorMessage}</div>}
+      {successMessage && <div className="text-green-500 mb-4">{successMessage}</div>}
       <table className="min-w-full bg-white">
         <thead>
           <tr>
@@ -92,22 +95,17 @@ const RoomList = () => {
             <tr key={room.id}>
               <td className="py-2 px-4 border-b border-gray-300">{room.id}</td>
               <td className="py-2 px-4 border-b border-gray-300">{room.description}</td>
-              <td className="py-2 px-4 border-b border-gray-300">{room.typeRoom}</td>
+              <td className="py-2 px-4 border-b border-gray-300">{room.roomType}</td>
               <td className="py-2 px-4 border-b border-gray-300">{room.detailRoom}</td>
               <td className="py-2 px-4 border-b border-gray-300">{room.price}</td>
               <td className="py-2 px-4 border-b border-gray-300">{room.status}</td>
               <td className="py-2 px-4 border-b border-gray-300">
-
-                <button onClick={() => handleEdit(room)} 
-                className="text-blue-500 hover:text-blue-700 mr-2">
-                <FaEdit />
+                <button onClick={() => handleEdit(room)} className="text-blue-500 hover:text-blue-700 mr-2">
+                  <FaEdit />
                 </button>
-
-                <button onClick={() => handleDelete(room.id)}
-                className="text-red-500 hover:text-red-700">
-                <FaTrash />
+                <button onClick={() => handleDelete(room.id)} className="text-red-500 hover:text-red-700">
+                  <FaTrash />
                 </button>
-
               </td>
             </tr>
           ))}
@@ -116,9 +114,9 @@ const RoomList = () => {
 
       {/* Modal para editar habitación */}
       {isModalOpen && (
-  <Modal isOpen={isModalOpen} onClose={handleModalClose}>
-    <h2 className="text-lg font-bold mb-4">Editar Habitación</h2>
-    <form onSubmit={(e) => { e.preventDefault(); handleUpdateRoom(); }}>
+        <Modal isOpen={isModalOpen} onClose={handleModalClose}>
+          <h2 className="text-lg font-bold mb-4">Editar Habitación</h2>
+          <form onSubmit={(e) => { e.preventDefault(); handleUpdateRoom(); }}>
             <input 
               type="text" 
               value={formData.description} 
@@ -130,7 +128,7 @@ const RoomList = () => {
             <input 
               type="text" 
               value={formData.typeRoom} 
-              onChange={(e) => setFormData({ ...formData, typeRoom: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, roomType: e.target.value })}
               placeholder="Tipo de habitación" 
               className="mb-2 w-full"
               required 

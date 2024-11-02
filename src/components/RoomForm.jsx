@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
 import roomService from '../services/roomService';
-import { useAuth0 } from '@auth0/auth0-react';  
+import { useAuth0 } from '@auth0/auth0-react';
 
 const RoomForm = () => {
-  const { getAccessTokenSilently } = useAuth0();  
+  const { getAccessTokenSilently } = useAuth0();
   const [formData, setFormData] = useState({
     id: '',
     description: '',
-    typeRoom: '',
+    roomType: '',
     detailRoom: '',
     price: '',
     photoRoom: '',
     status: '',
   });
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,20 +29,20 @@ const RoomForm = () => {
     try {
       const token = await getAccessTokenSilently();
       await roomService.createRoom(formData, token);
-  
+      
       // Restablecer el formulario después de una creación exitosa
       setFormData({
         id: '',
         description: '',
-        typeRoom: '',
+        roomType: '',
         detailRoom: '',
         price: '',
         photoRoom: '',
         status: '',
       });
-      
+
       setError(''); // Limpiar errores previos
-      console.log('Habitación creada con éxito');
+      setSuccessMessage('Habitación creada con éxito'); // Mensaje de éxito
     } catch (error) {
       if (error.response && error.response.data && error.response.data.error === 'Room with this ID already exists') {
         setError('Ya existe una habitación con este ID. Por favor, elige un ID diferente.');
@@ -50,13 +51,13 @@ const RoomForm = () => {
       }
     }
   };
-  
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h1>Create New Room</h1>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <label>
+    <form onSubmit={handleSubmit} className="p-4 border border-gray-300 rounded">
+      <h1 className="text-lg font-bold mb-4">Crear Nueva Habitación</h1>
+      {error && <p className="text-red-500">{error}</p>}
+      {successMessage && <p className="text-green-500">{successMessage}</p>}
+      <label className="block mb-2">
         ID:
         <input
           type="text"
@@ -64,68 +65,80 @@ const RoomForm = () => {
           value={formData.id}
           onChange={handleChange}
           required
+          className="border border-gray-300 p-2 w-full"
         />
       </label>
-      <label>
-        Description:
+      <label className="block mb-2">
+        Descripción:
         <input
           type="text"
           name="description"
           value={formData.description}
           onChange={handleChange}
+          className="border border-gray-300 p-2 w-full"
         />
       </label>
-      <label>
-        Type Room:
+      <label className="block mb-2">
+        Tipo de Habitación:
         <input
           type="text"
-          name="typeRoom"
-          value={formData.typeRoom}
+          name="roomType"
+          value={formData.roomType}
           onChange={handleChange}
           required
+          className="border border-gray-300 p-2 w-full"
         />
       </label>
-      <label>
-        Detail Room:
+      <label className="block mb-2">
+        Detalles:
         <input
           type="text"
           name="detailRoom"
           value={formData.detailRoom}
           onChange={handleChange}
           required
+          className="border border-gray-300 p-2 w-full"
         />
       </label>
-      <label>
-        Price:
+      <label className="block mb-2">
+        Precio:
         <input
           type="number"
           name="price"
           value={formData.price}
           onChange={handleChange}
           required
+          className="border border-gray-300 p-2 w-full"
         />
       </label>
-      <label>
-        Photo Room:
+      <label className="block mb-2">
+        URL de la Foto:
         <input
           type="text"
           name="photoRoom"
           value={formData.photoRoom}
           onChange={handleChange}
           required
+          className="border border-gray-300 p-2 w-full"
         />
       </label>
-      <label>
-        Status:
-        <input
-          type="text"
+      <label className="block mb-2">
+        Estado:
+        <select
           name="status"
           value={formData.status}
           onChange={handleChange}
           required
-        />
+          className="border border-gray-300 p-2 w-full"
+        >
+          <option value="">Seleccionar estado</option>
+          <option value="available">Disponible</option>
+          <option value="unavailable">No disponible</option>
+        </select>
       </label>
-      <button type="submit">Create Room</button>
+      <button type="submit" className="bg-blue-500 text-white p-2 rounded">
+        Crear Habitación
+      </button>
     </form>
   );
 };
