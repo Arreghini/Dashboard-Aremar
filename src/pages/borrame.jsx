@@ -54,27 +54,6 @@ const DashboardPage = () => {
           </div>
         )}
 
-        {/* Sección de Usuarios */}
-        <div className="mb-8">
-          <h2 className="font-bold text-lg mb-2 text-left uppercase">USUARIOS</h2>
-          <div className="flex flex-col items-start">
-            <button className="mb-2" onClick={() => setSelectedUser({})}>Crear Usuario</button>
-            <button onClick={() => setShowUsers(!showUsers)} className="mb-2">
-              {showUsers ? 'Ocultar Lista de Usuarios' : 'Lista de Usuarios'}
-            </button>
-            {showUsers && (
-              <div className="w-full">
-                <UserList key={refresh} onEdit={setSelectedUser} onDelete={() => setRefresh(!refresh)} />
-              </div>
-            )}
-          </div>
-          {selectedUser && (
-            <div className="mt-4">
-              <UserForm user={selectedUser} onSave={() => setRefresh(!refresh)} />
-            </div>
-          )}
-        </div>
-
         {/* Sección de Tipos de Habitación */}
         <div className="mb-8">
           <h2 className="font-bold text-lg mb-2 text-left uppercase">TIPOS DE HABITACIÓN</h2>

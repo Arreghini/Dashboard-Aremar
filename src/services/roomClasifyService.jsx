@@ -10,18 +10,26 @@ const getHeaders = (token) => ({
 });
 
 const roomClasifyService = {
-  getRoomType: async () => {
+  getRoomType: async (token) => {
     try {
-      const response = await axios.get(`${BASE_URL}/admin/roomType`);
+      const response = await axios.get(`${BASE_URL}/admin/roomType`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       return response.data;
     } catch (error) {
       console.error('Error al obtener los tipos de habitación:', error);
       throw error;
     }
   },
-  getRoomDetail: async () => {
+  getRoomDetail: async (token) => {
     try {
-      const response = await axios.get(`${BASE_URL}/admin/roomDetail`);
+      const response = await axios.get(`${BASE_URL}/admin/roomDetail`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       return response.data;
     } catch (error) {
       console.error('Error al obtener los detalles de la habitación:', error);
