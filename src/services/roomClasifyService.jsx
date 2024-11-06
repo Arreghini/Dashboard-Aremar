@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:3000/api/rooms';
+const BASE_URL = 'http://localhost:3000/api/rooms/admin';
 
 const getHeaders = (token) => ({
   headers: {
@@ -12,7 +12,7 @@ const getHeaders = (token) => ({
 const roomClasifyService = {
   getRoomType: async (token) => {
     try {
-      const response = await axios.get(`${BASE_URL}/admin/roomType`, getHeaders(token));
+      const response = await axios.get(`${BASE_URL}/roomType`, getHeaders(token));
       return response.data;
     } catch (error) {
       console.error('Error al obtener los tipos de habitación:', error);
@@ -21,7 +21,7 @@ const roomClasifyService = {
   },
   getRoomDetail: async (token) => {
     try {
-      const response = await axios.get(`${BASE_URL}/admin/roomDetail`, getHeaders(token));
+      const response = await axios.get(`${BASE_URL}/roomDetail`, getHeaders(token));
       return response.data;
     } catch (error) {
       console.error('Error al obtener los detalles de la habitación:', error);
@@ -30,16 +30,17 @@ const roomClasifyService = {
   },
   createRoomType: async (roomTypeData, token) => {
     try {
-      const response = await axios.post(`${BASE_URL}/admin/roomType`, roomTypeData, getHeaders(token));
+      const response = await axios.post(`${BASE_URL}/roomType`, roomTypeData, getHeaders(token));
       return response.data;
     } catch (error) {
       console.error('Error al crear el tipo de habitación:', error);
       throw error;
     }
   },
+  
   createRoomDetail: async (roomDetailData, token) => {
     try {
-      const response = await axios.post(`${BASE_URL}/admin/roomDetail`, roomDetailData, getHeaders(token));
+      const response = await axios.post(`${BASE_URL}/roomDetail`, roomDetailData, getHeaders(token));
       return response.data;
     } catch (error) {
       console.error('Error al crear el detalle de la habitación:', error);
@@ -48,7 +49,7 @@ const roomClasifyService = {
   },
   updateRoomType: async (id, roomData, token) => {
     try {
-      const response = await axios.patch(`${BASE_URL}/admin/roomType/${id}`, roomData, getHeaders(token));
+      const response = await axios.patch(`${BASE_URL}/roomType/${id}`, roomData, getHeaders(token));
       console.log('Tipo de habitación actualizado exitosamente');
       return response.data;
     } catch (error) {
@@ -58,7 +59,7 @@ const roomClasifyService = {
   },
   updateRoomDetail: async (id, roomData, token) => {
     try {
-      const response = await axios.patch(`${BASE_URL}/admin/roomDetail/${id}`, roomData, getHeaders(token));
+      const response = await axios.patch(`${BASE_URL}/roomDetail/${id}`, roomData, getHeaders(token));
       console.log('Detalles de la habitación actualizados exitosamente');
       return response.data;
     } catch (error) {
@@ -68,7 +69,7 @@ const roomClasifyService = {
   },
   deleteRoomType: async (id, token) => {
     try {
-      const response = await axios.delete(`${BASE_URL}/admin/roomType/${id}`, getHeaders(token));
+      const response = await axios.delete(`${BASE_URL}/roomType/${id}`, getHeaders(token));
       console.log('Tipo de habitación eliminado exitosamente');
       return response.data;
     } catch (error) {
@@ -78,7 +79,7 @@ const roomClasifyService = {
   },
   deleteRoomDetail: async (id, token) => {
     try {
-      const response = await axios.delete(`${BASE_URL}/admin/roomDetail/${id}`, getHeaders(token));
+      const response = await axios.delete(`${BASE_URL}/roomDetail/${id}`, getHeaders(token));
       console.log('Detalles de la habitación eliminados exitosamente');
       return response.data;
     } catch (error) {
