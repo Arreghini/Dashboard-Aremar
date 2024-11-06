@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import roomService from '../services/roomService';
+import roomClasifyService from '../services/roomClasifyService';
 import { useAuth0 } from '@auth0/auth0-react';
 
 const RoomForm = ({ room = {}, onSave }) => {
@@ -22,10 +23,15 @@ const RoomForm = ({ room = {}, onSave }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const types = await roomService.getRoomTypes();
-        const details = await roomService.getRoomDetails();
-        setRoomTypes(types);
-        setRoomDetails(details);
+        const token = await getAccessTokenSilently();
+        const types = await roomClasifyService.getRoomType(token);
+        const details = await roomClasifyService.getRoomDetail(token);
+        setRoomTypes(types.data || []);
+        setRoomDetails(details.data || []); 
+
+        console.log('Tipos cargados:', types);
+        console.log('Detalles cargados:', details);
+
         setLoading(false);
       } catch (error) {
         console.error('Error fetching room types or details:', error);
@@ -34,7 +40,7 @@ const RoomForm = ({ room = {}, onSave }) => {
       }
     };
     fetchData();
-  }, []);
+  }, [getAccessTokenSilently]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -77,6 +83,28 @@ const RoomForm = ({ room = {}, onSave }) => {
       {error && <p className="text-red-500">{error}</p>}
       {successMessage && <p className="text-green-500">{successMessage}</p>}
       <label className="block mb-2">
+      Id:
+      <input
+      type="text"
+      name="id"
+      value={formData.id}
+      onChange={handleChange}
+      required
+      className="border border-gray-300 p-2 w-full"
+      />
+      </label>
+      <label className="block mb-2">
+      Descripción: 
+      <input
+        type="text"
+        name="description"
+        value={formData.description}
+        onChange={handleChange}
+        required
+        className="border border-gray-300 p-2 w-full"
+      />
+    </label>
+      <label className="block mb-2">
         Tipo de Habitación:
         <select
           name="roomType"
@@ -87,7 +115,9 @@ const RoomForm = ({ room = {}, onSave }) => {
         >
           <option value="">Selecciona un tipo</option>
           {roomTypes.map((type) => (
-            <option key={type.id} value={type.id}>{type.type}</option>
+            <option key={type.id} value={type.id}>
+            {type.name || type.type || type.description}
+            </option>
           ))}
         </select>
       </label>
@@ -102,11 +132,48 @@ const RoomForm = ({ room = {}, onSave }) => {
         >
           <option value="">Selecciona un detalle</option>
           {roomDetails.map((detail) => (
-            <option key={detail.id} value={detail.id}>{detail.detail}</option>
+          <option key={detail.id} value={detail.id}>
+          {detail.name || detail.detail || detail.description}
+          </option>
           ))}
         </select>
       </label>
-      {/* Otros campos del formulario */}
+<label className="block mb-2">
+  Precio:
+  <input
+    type="text"
+    name="price"
+    value={formData.price}
+    onChange={handleChange}
+    required
+    className="border border-gray-300 p-2 w-full"
+  />
+</label>
+<label className="block mb-2">
+  Foto:
+  <input
+    type="file"
+    name="photoRoom"
+    onChange={(e) => setFormData({...formData, photoRoom: e.target.files[0] })}
+    required
+    className="border border-gray-300 p-2 w-full"
+  />
+</label>
+<label className="block mb-2">
+  Estado:
+  <select
+    name="status"
+    value={formData.status}
+    onChange={handleChange}
+    required
+    className="border border-gray-300 p-2 w-full"
+  >
+    <option value="">Selecciona un estado</option>
+    <option value="Disponible">Disponible</option>
+    <option value="Ocupado">Ocupado</option>
+    <option value="Mantenimiento">Mantenimiento</option>
+  </select>
+</label>
       <button type="submit" className="bg-blue-500 text-white p-2 rounded">
         Crear Habitación
       </button>

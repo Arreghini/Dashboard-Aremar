@@ -7,8 +7,9 @@
     "dev": "nodemon --watch src --ext jsx --exec vite",
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --fix",
     "preview": "vite preview"
-  },
+  },  
   "dependencies": {
     "@auth0/auth0-react": "^2.2.4",
     "@emotion/react": "^11.11.4",
