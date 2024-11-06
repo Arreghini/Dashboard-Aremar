@@ -8,6 +8,7 @@ import RoomList from '../components/RoomList';
 import ReservationForm from '../components/ReservationForm';
 import ReservationList from '../components/ReservationList';
 import RoomTypeForm from '../components/RoomTypeForm';
+import RoomDetailForm from '../components/RoomDetailForm';
 
 const DashboardPage = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -75,15 +76,16 @@ const DashboardPage = () => {
           )}
         </div>
 
-        {/* Sección de Tipos de Habitación */}
+        {/* Sección de Tipos y detalles de Habitación */}
         <div className="mb-8">
-          <h2 className="font-bold text-lg mb-2 text-left uppercase">TIPOS DE HABITACIÓN</h2>
+          <h2 className="font-bold text-lg mb-2 text-left uppercase">TIPOS y DETALLES DE HABITACIÓN</h2>
           <button onClick={() => setShowRoomTypes(!showRoomTypes)} className="mb-2">
             {showRoomTypes ? 'Ocultar Tipos de Habitación' : 'Mostrar Tipos de Habitación'}
           </button>
           {showRoomTypes && (
             <div className="w-full">
               <RoomTypeForm onRoomTypeCreated={() => setRefresh(!refresh)} />
+                <RoomDetailForm onRoomDetailCreated={() => setRefresh(!refresh)} />
             </div>
           )}
         </div>

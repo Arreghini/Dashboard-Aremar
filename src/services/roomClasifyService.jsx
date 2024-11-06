@@ -12,11 +12,7 @@ const getHeaders = (token) => ({
 const roomClasifyService = {
   getRoomType: async (token) => {
     try {
-      const response = await axios.get(`${BASE_URL}/admin/roomType`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const response = await axios.get(`${BASE_URL}/admin/roomType`, getHeaders(token));
       return response.data;
     } catch (error) {
       console.error('Error al obtener los tipos de habitación:', error);
@@ -25,29 +21,25 @@ const roomClasifyService = {
   },
   getRoomDetail: async (token) => {
     try {
-      const response = await axios.get(`${BASE_URL}/admin/roomDetail`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const response = await axios.get(`${BASE_URL}/admin/roomDetail`, getHeaders(token));
       return response.data;
     } catch (error) {
       console.error('Error al obtener los detalles de la habitación:', error);
       throw error;
     }
   },
-  createRoomType: async (data, token) => {
+  createRoomType: async (roomTypeData, token) => {
     try {
-      const response = await axios.post(`${BASE_URL}/admin/roomType`, data, getHeaders(token));
+      const response = await axios.post(`${BASE_URL}/admin/roomType`, roomTypeData, getHeaders(token));
       return response.data;
     } catch (error) {
       console.error('Error al crear el tipo de habitación:', error);
       throw error;
     }
   },
-  createRoomDetail: async (data, token) => {
+  createRoomDetail: async (roomDetailData, token) => {
     try {
-      const response = await axios.post(`${BASE_URL}/admin/roomDetail`, data, getHeaders(token));
+      const response = await axios.post(`${BASE_URL}/admin/roomDetail`, roomDetailData, getHeaders(token));
       return response.data;
     } catch (error) {
       console.error('Error al crear el detalle de la habitación:', error);
