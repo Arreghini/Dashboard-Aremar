@@ -9,6 +9,7 @@ import ReservationForm from '../components/ReservationForm';
 import ReservationList from '../components/ReservationList';
 import RoomTypeForm from '../components/RoomTypeForm';
 import RoomDetailForm from '../components/RoomDetailForm';
+import Modal from '../components/Modal';
 
 const DashboardPage = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -20,6 +21,7 @@ const DashboardPage = () => {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [refresh, setRefresh] = useState(false);
+  const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
 
   const { user } = useAuth0();
 
@@ -92,24 +94,37 @@ const DashboardPage = () => {
 
         {/* Sección de Habitaciones */}
         <div className="mb-8">
-          <h2 className="font-bold text-lg mb-2 text-left uppercase">HABITACIONES</h2>
-          <div className="flex flex-col items-start">
-            <button className="mb-2" onClick={() => setSelectedRoom({})}>Crear Habitación</button>
-            <button onClick={() => setShowRooms(!showRooms)} className="mb-2">
-              {showRooms ? 'Ocultar Lista de Habitaciones' : 'Lista de Habitaciones'}
-            </button>
-            {showRooms && (
-              <div className="w-full">
-                <RoomList key={refresh} onEdit={setSelectedRoom} onDelete={() => setRefresh(!refresh)} />
-              </div>
-            )}
-          </div>
-          {selectedRoom && (
-            <div className="mt-4">
-              <RoomForm room={selectedRoom} onSave={() => setRefresh(!refresh)} />
-            </div>
-          )}
+    <h2 className="font-bold text-lg mb-2 text-left uppercase">HABITACIONES</h2>
+    <div className="flex flex-col items-start">
+      <button 
+        className="mb-2" 
+        onClick={() => {
+          setSelectedRoom({});
+          setIsRoomModalOpen(true);
+        }}
+      >
+        Crear Habitación
+      </button>
+      <button onClick={() => setShowRooms(!showRooms)} className="mb-2">
+        {showRooms ? 'Ocultar Lista de Habitaciones' : 'Lista de Habitaciones'}
+      </button>
+      {showRooms && (
+        <div className="w-full">
+          <RoomList key={refresh} onEdit={setSelectedRoom} onDelete={() => setRefresh(!refresh)} />
         </div>
+      )}
+    </div>
+    
+    <Modal isOpen={isRoomModalOpen} onClose={() => setIsRoomModalOpen(false)}>
+      <RoomForm 
+        room={selectedRoom} 
+        onSave={() => {
+          setRefresh(!refresh);
+          setIsRoomModalOpen(false);
+        }} 
+      />
+    </Modal>
+  </div>
 
         {/* Sección de Reservas */}
         <div className="mb-8">

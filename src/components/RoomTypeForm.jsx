@@ -64,33 +64,34 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
     }
   };
 
-  const handleEdit = (id, roomType) => {
-    setRoomTypeId(id);
-    setRoomTypeData(roomType); // Asigna el objeto completo del tipo de habitación
-  };
-
   const handleDelete = async (id) => {
+    if (!id) {
+      setError('ID no válido');
+      return;
+    }
+    
     try {
       const token = await getAccessTokenSilently();
       await roomClasifyService.deleteRoomType(id, token);
+      await loadRoomTypes(token);
       setSuccessMessage('Tipo de habitación eliminado con éxito');
-      setRoomTypeData({
-        name: '',
-        photos: [],
-        simpleBeds: '',
-        trundleBeds: '',
-        kingBeds: '',
-        windows: '',
-      });
-      setRoomTypeId(null);
-      setError('');
-      loadRoomTypes(token); // Refresca la lista con el token válido
     } catch (error) {
-      console.error('Error al eliminar el tipo de habitación:', error);
-      setError('Error al eliminar el tipo de habitación');
+      setError(`Error al eliminar: ${error.response?.status}`);
     }
   };
-
+  
+  const handleEdit = async (id, roomType) => {
+    setRoomTypeId(id);
+    setRoomTypeData({
+      name: roomType.name,
+      photos: roomType.photos || [],
+      simpleBeds: roomType.simpleBeds,
+      trundleBeds: roomType.trundleBeds,
+      kingBeds: roomType.kingBeds,
+      windows: roomType.windows,
+    });
+  };  
+      
   const loadRoomTypes = async (token) => {
     try {
       const fetchedRoomTypes = await roomClasifyService.getRoomType(token);

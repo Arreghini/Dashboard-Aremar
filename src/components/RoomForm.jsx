@@ -20,27 +20,24 @@ const RoomForm = ({ room = {}, onSave }) => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = await getAccessTokenSilently();
-        const types = await roomClasifyService.getRoomType(token);
-        const details = await roomClasifyService.getRoomDetail(token);
-        setRoomTypes(types.data || []);
-        setRoomDetails(details.data || []); 
+ // Modificar el useEffect donde se obtienen los datos
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+      const types = await roomClasifyService.getRoomType(token);
+      const details = await roomClasifyService.getRoomDetail(token);
+      setRoomTypes(types); 
+      setRoomDetails(details); 
+      setLoading(false);
+    } catch (error) {
+      setError('Error al cargar datos');
+      setLoading(false);
+    }
+  };
+  fetchData();
+}, [getAccessTokenSilently]);
 
-        console.log('Tipos cargados:', types);
-        console.log('Detalles cargados:', details);
-
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching room types or details:', error);
-        setError('Error al cargar tipos o detalles de habitación');
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [getAccessTokenSilently]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -104,40 +101,35 @@ const RoomForm = ({ room = {}, onSave }) => {
         className="border border-gray-300 p-2 w-full"
       />
     </label>
-      <label className="block mb-2">
-        Tipo de Habitación:
-        <select
-          name="roomType"
-          value={formData.roomType}
-          onChange={handleChange}
-          required
-          className="border border-gray-300 p-2 w-full"
-        >
-          <option value="">Selecciona un tipo</option>
-          {roomTypes.map((type) => (
-            <option key={type.id} value={type.id}>
-            {type.name || type.type || type.description}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="block mb-2">
-        Detalle de Habitación:
-        <select
-          name="detailRoom"
-          value={formData.detailRoom}
-          onChange={handleChange}
-          required
-          className="border border-gray-300 p-2 w-full"
-        >
-          <option value="">Selecciona un detalle</option>
-          {roomDetails.map((detail) => (
-          <option key={detail.id} value={detail.id}>
-          {detail.name || detail.detail || detail.description}
-          </option>
-          ))}
-        </select>
-      </label>
+    <select
+  name="roomType"
+  value={formData.roomType}
+  onChange={handleChange}
+  required
+  className="border border-gray-300 p-2 w-full"
+>
+  <option value="">Selecciona un tipo</option>
+  {roomTypes && roomTypes.length > 0 && roomTypes.map((type) => (
+    <option key={type.id} value={type.id}>
+      {type.name || type.type || type.description}
+    </option>
+  ))}
+</select>
+
+<select
+  name="detailRoom"
+  value={formData.detailRoom}
+  onChange={handleChange}
+  required
+  className="border border-gray-300 p-2 w-full"
+>
+  <option value="">Selecciona un detalle</option>
+  {roomDetails && roomDetails.length > 0 && roomDetails.map((detail) => (
+    <option key={detail.id} value={detail.id}>
+      {detail.name || detail.detail || detail.description}
+    </option>
+  ))}
+</select>
 <label className="block mb-2">
   Precio:
   <input

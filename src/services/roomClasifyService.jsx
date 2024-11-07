@@ -2,13 +2,6 @@ import axios from 'axios';
 
 const BASE_URL = 'http://localhost:3000/api/rooms/admin';
 
-const getHeaders = (token) => ({
-  headers: {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  },
-});
-
 const roomClasifyService = {
   getRoomType: async (token) => {
     try {
@@ -25,6 +18,7 @@ const roomClasifyService = {
       throw error;
     }
   },
+
   getRoomDetail: async (token) => {
     try {
       const response = await axios.get(`${BASE_URL}/roomDetail`, {
@@ -40,47 +34,47 @@ const roomClasifyService = {
       throw error;
     }
   },
-createRoomType: async (roomTypeData, token) => {
-  try {
-    const response = await axios.post(
-      `${BASE_URL}/roomType`, 
-      roomTypeData,
-      {
+
+  createRoomType: async (roomTypeData, token) => {
+    try {
+      const response = await axios.post(`${BASE_URL}/roomType`, roomTypeData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         }
-      }
-    );
-    console.log('Respuesta crear tipo:', response);
-    return response.data;
-  } catch (error) {
-    console.error('Error al crear el tipo de habitación:', error);
-    throw error;
-  }
-},
-createRoomDetail: async (roomDetailData, token) => {
-  try {
-    const response = await axios.post(
-      `${BASE_URL}/roomDetail`, 
-      roomDetailData,
-      {
+      });
+      console.log('Respuesta crear tipo:', response);
+      return response.data;
+    } catch (error) {
+      console.error('Error al crear el tipo de habitación:', error);
+      throw error;
+    }
+  },
+
+  createRoomDetail: async (roomDetailData, token) => {
+    try {
+      const response = await axios.post(`${BASE_URL}/roomDetail`, roomDetailData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         }
-      }
-    );
-    console.log('Respuesta crear detalle:', response);
-    return response.data;
-  } catch (error) {
-    console.error('Error al crear el detalle de la habitación:', error);
-    throw error;
-  }
-},
+      });
+      console.log('Respuesta crear detalle:', response);
+      return response.data;
+    } catch (error) {
+      console.error('Error al crear el detalle de la habitación:', error);
+      throw error;
+    }
+  },
+
   updateRoomType: async (id, roomData, token) => {
     try {
-      const response = await axios.patch(`${BASE_URL}/roomType/${id}`, roomData, getHeaders(token));
+      const response = await axios.patch(`${BASE_URL}/roomType/${id}`, roomData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+      });
       console.log('Tipo de habitación actualizado exitosamente');
       return response.data;
     } catch (error) {
@@ -88,9 +82,15 @@ createRoomDetail: async (roomDetailData, token) => {
       throw error;
     }
   },
+
   updateRoomDetail: async (id, roomData, token) => {
     try {
-      const response = await axios.patch(`${BASE_URL}/roomDetail/${id}`, roomData, getHeaders(token));
+      const response = await axios.patch(`${BASE_URL}/roomDetail/${id}`, roomData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+      });
       console.log('Detalles de la habitación actualizados exitosamente');
       return response.data;
     } catch (error) {
@@ -98,19 +98,38 @@ createRoomDetail: async (roomDetailData, token) => {
       throw error;
     }
   },
+
   deleteRoomType: async (id, token) => {
     try {
-      const response = await axios.delete(`${BASE_URL}/roomType/${id}`, getHeaders(token));
-      console.log('Tipo de habitación eliminado exitosamente');
+      // Ajustamos la URL para que coincida con el endpoint del backend
+      const url = `${BASE_URL}/roomTypes/${id}`;
+      
+      const response = await axios.delete(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+      });
+      console.log('Eliminación exitosa:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error al eliminar el tipo de habitación:', error);
+      console.log('ID de eliminación:', id);
+      console.log('URL completa:', url);
       throw error;
     }
   },
+  
+  
+  
+  
   deleteRoomDetail: async (id, token) => {
     try {
-      const response = await axios.delete(`${BASE_URL}/roomDetail/${id}`, getHeaders(token));
+      const response = await axios.delete(`${BASE_URL}/roomDetail/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+      });
       console.log('Detalles de la habitación eliminados exitosamente');
       return response.data;
     } catch (error) {
