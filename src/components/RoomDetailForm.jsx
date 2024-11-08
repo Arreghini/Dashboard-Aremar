@@ -9,41 +9,64 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
     smart_TV: false,
     wifi: false,
     microwave: false,
-    pava_electrica : false,
+    pava_electrica: false,
   });
+  
+  const handleChange = (e) => {
+    const { name, checked } = e.target;
+    setRoomDetailData(prevData => ({
+      ...prevData,
+      [name]: checked || false
+    }));
+  };
+
   const [detailId, setDetailId] = useState(null);
   const [details, setDetails] = useState([]);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
+  const detailNames = {
+    cableTvService: "TV por Cable",
+    smart_TV: "Smart TV",
+    wifi: "WiFi",
+    microwave: "Microondas", 
+    pava_electrica: "Pava Eléctrica"
+  };
+  
   useEffect(() => {
     const fetchDetails = async () => {
       try {
         const token = await getAccessTokenSilently();
-        const fetchedDetails = await roomClasifyService.getRoomDetail(token);
-        setDetails(fetchedDetails);
+        const response = await roomClasifyService.getRoomDetail(token);
+        console.log("Respuesta completa del servidor:", response);
+        setDetails(response || []);
       } catch (error) {
-        console.error('Error al obtener detalles:', error);
+        console.error('Error específico:', error.response);
       }
     };
     fetchDetails();
   }, [getAccessTokenSilently]);
+  
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const token = await getAccessTokenSilently();
-
+      console.log("Datos a enviar al crear:", roomDetailData);
+      
       if (detailId) {
-        // Actualización de un detalle existente
         await roomClasifyService.updateRoomDetail(detailId, roomDetailData, token);
-        setSuccessMessage('Detalle de habitación actualizado con éxito');
       } else {
-        // Creación de un nuevo detalle
-        await roomClasifyService.createRoomDetail(roomDetailData, token);
-        setSuccessMessage('Detalle de habitación creado con éxito');
+        const response = await roomClasifyService.createRoomDetail(roomDetailData, token);
+        console.log("Respuesta del servidor al crear:", response);
       }
-
+      
+      // Verificar los datos después de recargar
+      const newDetails = await roomClasifyService.getRoomDetail(token);
+      console.log("Datos actualizados:", newDetails);
+      
+      setDetails(newDetails);
       setRoomDetailData({
         cableTvService: false,
         smart_TV: false,
@@ -52,24 +75,27 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
         pava_electrica: false,
       });
       setDetailId(null);
-      setError('');
-      loadDetails(token);
-      onRoomDetailCreated();
+      
     } catch (error) {
+      console.error("Error completo:", error);
       setError('Error al guardar el detalle de habitación');
-      console.error(error);
     }
   };
-
   const handleEdit = (id, detailData) => {
     setDetailId(id);
-    setRoomDetailData(detailData);
+    setRoomDetailData({
+      cableTvService: detailData.cableTvService || false,
+      smart_TV: detailData.smart_TV || false,
+      wifi: detailData.wifi || false,
+      microwave: detailData.microwave || false,
+      pava_electrica: detailData.pava_electrica || false,
+    });
   };
-
   const handleDelete = async (id) => {
     try {
       const token = await getAccessTokenSilently();
       await roomClasifyService.deleteRoomDetail(id, token);
+      await loadDetails(token);
       setSuccessMessage('Detalle de habitación eliminado con éxito');
       setRoomDetailData({
         cableTvService: false,
@@ -79,9 +105,7 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
         pava_electrica: false,
       });
       setDetailId(null);
-      setError('');
-      loadDetails(token);
-      onRoomDetailCreated();
+      if (onRoomDetailCreated) onRoomDetailCreated();
     } catch (error) {
       setError('Error al eliminar el detalle de habitación');
       console.error(error);
@@ -94,15 +118,8 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
       setDetails(fetchedDetails);
     } catch (error) {
       console.error('Error al cargar los detalles de habitación:', error);
+      setError('Error al cargar los detalles de habitación');
     }
-  };
-
-  const handleChange = (e) => {
-    const { name, checked } = e.target;
-    setRoomDetailData((prevData) => ({
-      ...prevData,
-      [name]: checked,
-    }));
   };
 
   return (
@@ -153,29 +170,45 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
         </label>
         <label className="flex items-center mb-2">
           <input
-          type="checkbox"
-          name="pava_electrica"
-          checked={roomDetailData.pava_electrica}
-          onChange={handleChange}
-          className="mr-2"
+            type="checkbox"
+            name="pava_electrica"
+            checked={roomDetailData.pava_electrica}
+            onChange={handleChange}
+            className="mr-2"
           />
           Pava eléctrica
-          </label>
-        <button type="submit" className="bg-blue-500 text-white p-2 rounded mt-2">
-          {detailId ? 'Actualizar' : 'Crear'} Detalle
+        </label>
+        <button
+          type="submit"
+          className="bg-blue-500 text-white py-2 px-4 rounded"
+        >
+          {detailId ? 'Actualizar' : 'Crear'}
         </button>
       </form>
-      <ul className="mt-4">
-        {details.map((item) => (
-          <li key={item.id} className="flex justify-between items-center border-b border-gray-300 p-2">
-            <span>{item.cableTvService ? 'TV por cable, ' : ''}{item.smart_TV ? 'Smart TV, ' : ''}{item.wifi ? 'WiFi, ' : ''}{item.microwave ? 'Microondas' : ''}</span>
-            <div>
-              <button onClick={() => handleEdit(item.id, item)} className="text-blue-500 mr-2">Editar</button>
-              <button onClick={() => handleDelete(item.id)} className="text-red-500">Eliminar</button>
-            </div>
-          </li>
-        ))}
-      </ul>
+      <h2 className="text-lg font-bold mt-4">Detalles de Habitaciones</h2>
+      {details.map((detail) => (
+  <div key={detail.id} className="flex items-center justify-between mb-2 p-2 border rounded bg-gray-50">
+    <div className="flex flex-wrap gap-2">
+      {detail.cableTvService && <span className="bg-blue-100 px-2 py-1 rounded">TV por Cable</span>}
+      {detail.smart_TV && <span className="bg-blue-100 px-2 py-1 rounded">Smart TV</span>}
+      {detail.wifi && <span className="bg-blue-100 px-2 py-1 rounded">WiFi</span>}
+      {detail.microwave && <span className="bg-blue-100 px-2 py-1 rounded">Microondas</span>}
+      {detail.pava_electrica && <span className="bg-blue-100 px-2 py-1 rounded">Pava Eléctrica</span>}
+      {!detail.cableTvService && !detail.smart_TV && !detail.wifi && !detail.microwave && !detail.pava_electrica && 
+        <span className="text-gray-500">Sin servicios seleccionados</span>
+      }
+    </div>
+    <div>
+      <button onClick={() => handleEdit(detail.id, detail)} className="text-blue-500 mr-2">
+        Editar
+      </button>
+      <button onClick={() => handleDelete(detail.id)} className="text-red-500">
+        Eliminar
+      </button>
+    </div>
+  </div>
+))}
+
     </div>
   );
 };

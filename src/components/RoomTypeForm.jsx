@@ -75,6 +75,19 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
       await roomClasifyService.deleteRoomType(id, token);
       await loadRoomTypes(token);
       setSuccessMessage('Tipo de habitación eliminado con éxito');
+      setRoomTypeData({
+        name: '',
+        photos: [],
+        simpleBeds: '',
+        trundleBeds: '',
+        kingBeds: '',
+        windows: '',
+      });   
+      setRoomTypeId(null);
+      setError('');
+      setSuccessMessage('');
+      loadRoomTypes(token);
+      onRoomTypeCreated(); // Llama al callback si está definido
     } catch (error) {
       setError(`Error al eliminar: ${error.response?.status}`);
     }
