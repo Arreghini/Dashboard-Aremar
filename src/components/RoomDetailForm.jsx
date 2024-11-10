@@ -11,14 +11,6 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
     microwave: false,
     pava_electrica: false,
   });
-  
-  const handleChange = (e) => {
-    const { name, checked } = e.target;
-    setRoomDetailData(prevData => ({
-      ...prevData,
-      [name]: checked || false
-    }));
-  };
 
   const [detailId, setDetailId] = useState(null);
   const [details, setDetails] = useState([]);
@@ -32,7 +24,7 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
     microwave: "Microondas", 
     pava_electrica: "Pava Eléctrica"
   };
-  
+
   useEffect(() => {
     const fetchDetails = async () => {
       try {
@@ -46,27 +38,29 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
     };
     fetchDetails();
   }, [getAccessTokenSilently]);
-  
-  
+
+  const handleChange = (e) => {
+    const { name, checked } = e.target;
+    setRoomDetailData(prevData => ({
+      ...prevData,
+      [name]: checked || false
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const token = await getAccessTokenSilently();
       console.log("Datos a enviar al crear:", roomDetailData);
-      
+
       if (detailId) {
         await roomClasifyService.updateRoomDetail(detailId, roomDetailData, token);
       } else {
         const response = await roomClasifyService.createRoomDetail(roomDetailData, token);
         console.log("Respuesta del servidor al crear:", response);
+        setDetails([...details, response]);
       }
-      
-      // Verificar los datos después de recargar
-      const newDetails = await roomClasifyService.getRoomDetail(token);
-      console.log("Datos actualizados:", newDetails);
-      
-      setDetails(newDetails);
+
       setRoomDetailData({
         cableTvService: false,
         smart_TV: false,
@@ -76,11 +70,15 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
       });
       setDetailId(null);
       
+      if (onRoomDetailCreated) onRoomDetailCreated();
+      setSuccessMessage('Detalle de habitación guardado con éxito');
+      setError('');
     } catch (error) {
       console.error("Error completo:", error);
       setError('Error al guardar el detalle de habitación');
     }
   };
+
   const handleEdit = (id, detailData) => {
     setDetailId(id);
     setRoomDetailData({
@@ -91,11 +89,12 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
       pava_electrica: detailData.pava_electrica || false,
     });
   };
+
   const handleDelete = async (id) => {
     try {
       const token = await getAccessTokenSilently();
       await roomClasifyService.deleteRoomDetail(id, token);
-      await loadDetails(token);
+      setDetails(details.filter(detail => detail.id !== id));
       setSuccessMessage('Detalle de habitación eliminado con éxito');
       setRoomDetailData({
         cableTvService: false,
@@ -105,20 +104,9 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
         pava_electrica: false,
       });
       setDetailId(null);
-      if (onRoomDetailCreated) onRoomDetailCreated();
     } catch (error) {
       setError('Error al eliminar el detalle de habitación');
       console.error(error);
-    }
-  };
-
-  const loadDetails = async (token) => {
-    try {
-      const fetchedDetails = await roomClasifyService.getRoomDetail(token);
-      setDetails(fetchedDetails);
-    } catch (error) {
-      console.error('Error al cargar los detalles de habitación:', error);
-      setError('Error al cargar los detalles de habitación');
     }
   };
 
@@ -128,63 +116,24 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
       {error && <p className="text-red-500">{error}</p>}
       {successMessage && <p className="text-green-500">{successMessage}</p>}
       <form onSubmit={handleSubmit}>
-        <label className="flex items-center mb-2">
-          <input
-            type="checkbox"
-            name="cableTvService"
-            checked={roomDetailData.cableTvService}
-            onChange={handleChange}
-            className="mr-2"
-          />
-          Servicio de TV por cable
-        </label>
-        <label className="flex items-center mb-2">
-          <input
-            type="checkbox"
-            name="smart_TV"
-            checked={roomDetailData.smart_TV}
-            onChange={handleChange}
-            className="mr-2"
-          />
-          Smart TV
-        </label>
-        <label className="flex items-center mb-2">
-          <input
-            type="checkbox"
-            name="wifi"
-            checked={roomDetailData.wifi}
-            onChange={handleChange}
-            className="mr-2"
-          />
-          WiFi
-        </label>
-        <label className="flex items-center mb-2">
-          <input
-            type="checkbox"
-            name="microwave"
-            checked={roomDetailData.microwave}
-            onChange={handleChange}
-            className="mr-2"
-          />
-          Microondas
-        </label>
-        <label className="flex items-center mb-2">
-          <input
-            type="checkbox"
-            name="pava_electrica"
-            checked={roomDetailData.pava_electrica}
-            onChange={handleChange}
-            className="mr-2"
-          />
-          Pava eléctrica
-        </label>
-        <button
-          type="submit"
-          className="bg-blue-500 text-white py-2 px-4 rounded"
-        >
+      {Object.keys(detailNames).map((name) => (
+  <label key={name} className="flex items-center mb-2">
+    <input
+      type="checkbox"
+      name={name}
+      checked={roomDetailData[name]}
+      onChange={handleChange}
+      className="mr-2"
+    />
+    {detailNames[name]}
+  </label>
+))}
+
+        <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded">
           {detailId ? 'Actualizar' : 'Crear'}
         </button>
       </form>
+
       <h2 className="text-lg font-bold mt-4">Detalles de Habitaciones</h2>
       {details.map((detail) => (
   <div key={detail.id} className="flex items-center justify-between mb-2 p-2 border rounded bg-gray-50">

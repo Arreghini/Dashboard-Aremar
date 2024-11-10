@@ -6,38 +6,37 @@ import { useAuth0 } from '@auth0/auth0-react';
 const RoomForm = ({ room = {}, onSave }) => {
   const { getAccessTokenSilently } = useAuth0();
   const [formData, setFormData] = useState({
-    id: room.id || '',
-    description: room.description || '',
-    roomType: room.roomType || '',
-    detailRoom: room.detailRoom || '',
-    price: room.price || '',
-    photoRoom: room.photoRoom || '',
-    status: room.status || '',
-  });
+    id: room?.id || '',
+    description: room?.description || '',
+    roomType: room?.roomType || '',
+    detailRoom: room?.detailRoom || '', // Cambiamos roomDetail por detailRoom
+    price: room?.price || '',
+    photoRoom: room?.photoRoom || '',
+    status: room?.status || '',
+});
   const [roomTypes, setRoomTypes] = useState([]);
   const [roomDetails, setRoomDetails] = useState([]);
-  const [loading, setLoading] = useState(true);  // Indicador de carga
+  const [loading, setLoading] = useState(false); // Cambiamos a false inicialmente
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
- // Modificar el useEffect donde se obtienen los datos
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const token = await getAccessTokenSilently();
-      const types = await roomClasifyService.getRoomType(token);
-      const details = await roomClasifyService.getRoomDetail(token);
-      setRoomTypes(types); 
-      setRoomDetails(details); 
-      setLoading(false);
-    } catch (error) {
-      setError('Error al cargar datos');
-      setLoading(false);
-    }
-  };
-  fetchData();
-}, [getAccessTokenSilently]);
-
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const token = await getAccessTokenSilently();
+        const types = await roomClasifyService.getRoomType(token);
+        const details = await roomClasifyService.getRoomDetail(token);
+        setRoomTypes(types);
+        setRoomDetails(details);
+      } catch (error) {
+        setError('Error al cargar datos');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [getAccessTokenSilently]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -49,27 +48,26 @@ useEffect(() => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const token = await getAccessTokenSilently();
-      await roomService.createRoom(formData, token);
-      setSuccessMessage('Habitación creada con éxito');
-      onSave();  // Para refrescar la lista en `RoomList`
-      setFormData({
-        id: '',
-        description: '',
-        roomType: '',
-        detailRoom: '',
-        price: '',
-        photoRoom: '',
-        status: '',
-      });
-      setError('');
-    } catch (error) {
-      console.error('Error al crear la habitación:', error);
-      setError('Error al crear la habitación');
-    }
-  };
+    
+    const formDataToSend = {
+        ...formData,
+        id: formData.id || Date.now().toString(), // Generamos un ID único si no existe
+        price: parseInt(formData.price, 10),
+        status: formData.status || 'available'
+    };
 
+    try {
+        const token = await getAccessTokenSilently();
+        await roomService.createRoom(formDataToSend, token);
+        setSuccessMessage('Habitación creada con éxito');
+        onSave();
+    } catch (error) {
+        setError('Error en la creación: ' + error.response?.data);
+    }
+};
+
+  
+  
   if (loading) {
     return <p>Cargando tipos y detalles de habitación...</p>;
   }
@@ -117,8 +115,8 @@ useEffect(() => {
 </select>
 
 <select
-  name="detailRoom"
-  value={formData.detailRoom}
+  name="roomDetail"
+  value={formData.roomDetail}
   onChange={handleChange}
   required
   className="border border-gray-300 p-2 w-full"
@@ -126,7 +124,7 @@ useEffect(() => {
   <option value="">Selecciona un detalle</option>
   {roomDetails && roomDetails.length > 0 && roomDetails.map((detail) => (
     <option key={detail.id} value={detail.id}>
-      {detail.name || detail.detail || detail.description}
+      {detail.name || detail.roomDetail || detail.description}
     </option>
   ))}
 </select>
@@ -147,7 +145,6 @@ useEffect(() => {
     type="file"
     name="photoRoom"
     onChange={(e) => setFormData({...formData, photoRoom: e.target.files[0] })}
-    required
     className="border border-gray-300 p-2 w-full"
   />
 </label>
@@ -161,16 +158,17 @@ useEffect(() => {
     className="border border-gray-300 p-2 w-full"
   >
     <option value="">Selecciona un estado</option>
-    <option value="Disponible">Disponible</option>
-    <option value="Ocupado">Ocupado</option>
-    <option value="Mantenimiento">Mantenimiento</option>
+    <option value="available">Disponible</option>
+    <option value="unavailable">Ocupado</option>
   </select>
 </label>
-      <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-        Crear Habitación
-      </button>
+<button type="submit" className="bg-blue-500 text-white p-2 rounded">
+    {room?.id ? 'Actualizar Habitación' : 'Crear Habitación'}
+</button>
+
     </form>
   );
+  
 };
 
 export default RoomForm;
