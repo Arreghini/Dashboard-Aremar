@@ -7,10 +7,10 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
   const [roomDetailData, setRoomDetailData] = useState({
     cableTvService: false,
     smart_TV: false,
-    wifi: false,
+    wifi: true, 
     microwave: false,
     pava_electrica: false,
-  });
+  });  
 
   const [detailId, setDetailId] = useState(null);
   const [details, setDetails] = useState([]);
@@ -51,26 +51,28 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
     e.preventDefault();
     try {
       const token = await getAccessTokenSilently();
-      console.log("Datos a enviar al crear:", roomDetailData);
-
+      let response;
+  
       if (detailId) {
         await roomClasifyService.updateRoomDetail(detailId, roomDetailData, token);
+        setDetails(details.map(detail => detail.id === detailId ? { ...detail, ...roomDetailData } : detail));
       } else {
-        const response = await roomClasifyService.createRoomDetail(roomDetailData, token);
-        console.log("Respuesta del servidor al crear:", response);
-        setDetails([...details, response]);
+        response = await roomClasifyService.createRoomDetail(roomDetailData, token);
+        setDetails([...details, response.data]);
       }
-
+  
       setRoomDetailData({
         cableTvService: false,
         smart_TV: false,
-        wifi: false,
+        wifi: true,  
         microwave: false,
         pava_electrica: false,
       });
       setDetailId(null);
-      
+  
+      // Llama a la función de éxito, si existe
       if (onRoomDetailCreated) onRoomDetailCreated();
+      
       setSuccessMessage('Detalle de habitación guardado con éxito');
       setError('');
     } catch (error) {
@@ -78,17 +80,7 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
       setError('Error al guardar el detalle de habitación');
     }
   };
-
-  const handleEdit = (id, detailData) => {
-    setDetailId(id);
-    setRoomDetailData({
-      cableTvService: detailData.cableTvService || false,
-      smart_TV: detailData.smart_TV || false,
-      wifi: detailData.wifi || false,
-      microwave: detailData.microwave || false,
-      pava_electrica: detailData.pava_electrica || false,
-    });
-  };
+  
 
   const handleDelete = async (id) => {
     try {
@@ -99,7 +91,7 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
       setRoomDetailData({
         cableTvService: false,
         smart_TV: false,
-        wifi: false,
+        wifi: true,
         microwave: false,
         pava_electrica: false,
       });
@@ -157,7 +149,6 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
     </div>
   </div>
 ))}
-
     </div>
   );
 };
