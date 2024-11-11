@@ -53,23 +53,28 @@ const RoomForm = ({ room = {}, onSave }) => {
     
     const formDataToSend = {
         ...formData,
-        id: formData.id || Date.now().toString(), // Generamos un ID único si no existe
         price: parseInt(formData.price, 10),
         status: formData.status || 'available'
     };
 
     try {
         const token = await getAccessTokenSilently();
-        await roomService.createRoom(formDataToSend, token);
-        setSuccessMessage('Habitación creada con éxito');
+        if (room.id) {
+            // Si existe un ID, actualizamos
+            await roomService.updateRoom(room.id, formDataToSend, token);
+            setSuccessMessage('Habitación actualizada con éxito');
+        } else {
+            // Si no existe ID, creamos nueva
+            formDataToSend.id = Date.now().toString();
+            await roomService.createRoom(formDataToSend, token);
+            setSuccessMessage('Habitación creada con éxito');
+        }
         onSave();
     } catch (error) {
-        setError('Error en la creación: ' + error.response?.data);
+        setError('Error en la operación: ' + error.response?.data);
     }
 };
 
-  
-  
   if (loading) {
     return <p>Cargando tipos y detalles de habitación...</p>;
   }
