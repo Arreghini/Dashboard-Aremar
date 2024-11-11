@@ -27,6 +27,8 @@ const RoomForm = ({ room = {}, onSave }) => {
         const token = await getAccessTokenSilently();
         const types = await roomClasifyService.getRoomType(token);
         const details = await roomClasifyService.getRoomDetail(token);
+        
+        console.log("Detalles de habitación:", details);
         setRoomTypes(types);
         setRoomDetails(details);
       } catch (error) {
@@ -122,12 +124,24 @@ const RoomForm = ({ room = {}, onSave }) => {
   className="border border-gray-300 p-2 w-full"
 >
   <option value="">Selecciona un detalle</option>
-  {roomDetails && roomDetails.length > 0 && roomDetails.map((detail) => (
-    <option key={detail.id} value={detail.id}>
-      {detail.name || detail.roomDetail || detail.description}
-    </option>
-  ))}
+  {roomDetails && roomDetails.length > 0 && roomDetails.map((detail) => {
+    const servicios = [];
+    if (detail.cableTvService) servicios.push("TV por Cable");
+    if (detail.smart_TV) servicios.push("Smart TV");
+    if (detail.wifi) servicios.push("WiFi");
+    if (detail.microwave) servicios.push("Microondas");
+    if (detail.pava_electrica) servicios.push("Pava Eléctrica");
+    
+    const descripcion = servicios.length > 0 ? servicios.join(", ") : "Sin servicios";
+    
+    return (
+      <option key={detail.id} value={detail.id}>
+        {descripcion}
+      </option>
+    );
+  })}
 </select>
+
 <label className="block mb-2">
   Precio:
   <input
