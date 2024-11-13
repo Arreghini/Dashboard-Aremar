@@ -36,15 +36,21 @@ const roomService = {
   },
 
   createRoom: async (roomData, token) => {
+    if (!roomData || !roomData.description) {
+        console.error('roomData o description están indefinidos:', roomData);
+        throw new Error('roomData o description están indefinidos');
+    }
+
     const roomPayload = {
-        id: roomData.id,
-        description: roomData.description,
-        roomTypeId: roomData.roomTypeId || roomData.roomType,
-        detailRoomId: roomData.roomDetailId || roomData.roomDetail, // Cambiamos a detailRoomId
-        price: parseInt(roomData.price),
-        status: roomData.status || 'available',
-        photoRoom: roomData.photoRoom || '',
-    };
+      id: roomData.id, 
+      description: roomData.description,
+      roomType: roomData.roomType,
+      roomDetail: roomData.roomDetail,
+      price: roomData.price,
+      status: roomData.status,
+      photoRoom: Array.isArray(roomData.photoRoom) ? roomData.photoRoom : [],
+  };
+  
 
     try {
         const response = await axios.post(
@@ -52,17 +58,13 @@ const roomService = {
             roomPayload, 
             getHeaders(token)
         );
-        console.log('Datos enviados:', roomPayload);
         return response.data;
     } catch (error) {
-        console.log('Datos que causaron el error:', roomPayload);
-        console.log('Respuesta del servidor:', error.response?.data);
+        console.error('Error en createRoom:', error);
         throw error;
     }
 },
-
-
-
+  
   updateRoom: async (id, roomData, token) => {
     const roomPayload = {
       id: roomData.id,
@@ -71,9 +73,11 @@ const roomService = {
       roomDetail: roomData.roomDetail,
       price: roomData.price,
       status: roomData.status,
-      photoRoom: roomData.photoRoom,
+      photoRoom: Array.isArray(roomData.photoRoom) ? roomData.photoRoom : [], // Validación para asegurar que sea un array
     };
-
+  
+    console.log('Datos enviados para la actualización:', roomPayload);
+  
     try {
       const response = await axios.patch(`${BASE_URL}/admin/${id}`, roomPayload, getHeaders(token));
       console.log('Datos enviados en la actualización:', roomPayload);
@@ -85,6 +89,7 @@ const roomService = {
       throw error;
     }
   },
+  
 
   deleteRoom: async (id, token) => {
     try {

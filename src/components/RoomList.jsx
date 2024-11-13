@@ -15,14 +15,17 @@ const RoomList = () => {
 
   const fetchRooms = async () => {
     try {
-      const token = await getAccessTokenSilently();
-      const roomsData = await roomService.getRooms(token);
-      setRooms(roomsData);
+      const roomsData = await roomService.getRooms();
+      const roomsWithPhotoArray = roomsData.map(room => ({
+        ...room,
+        photoRoom: room.photoRoom || []
+      }));
+      setRooms(roomsWithPhotoArray);
     } catch (error) {
       console.error('Error al obtener las habitaciones:', error);
       setErrorMessage('No se pudieron cargar las habitaciones.');
     }
-  };
+  };  
 
   useEffect(() => {
     fetchRooms();
@@ -65,24 +68,23 @@ const RoomList = () => {
 
   const handleSave = async (roomData) => {
     try {
-        const token = await getAccessTokenSilently();
-        if (roomData && roomData.id) {
-            await roomService.updateRoom(roomData.id, roomData, token);
-            setSuccessMessage('Habitación actualizada con éxito.');
-        } else {
-            await roomService.createRoom(roomData, token);
-            setSuccessMessage('Habitación creada con éxito.');
-        }
-        await fetchRooms();
-        setErrorMessage('');
-        handleModalClose();
+      const token = await getAccessTokenSilently();
+      if (roomData && roomData.id) {
+        await roomService.updateRoom(roomData.id, roomData, token);
+        setSuccessMessage('Habitación actualizada con éxito.');
+      } else {
+        await roomService.createRoom(roomData, token);
+        setSuccessMessage('Habitación creada con éxito.');
+      }
+      await fetchRooms();
+      setErrorMessage('');
+      handleModalClose();
     } catch (error) {
-        console.error('Error al guardar la habitación:', error);
-        setErrorMessage('No se pudo guardar la habitación.');
-        setSuccessMessage('');
+      console.error('Error al guardar la habitación:', error);
+      setErrorMessage('No se pudo guardar la habitación.');
+      setSuccessMessage('');
     }
-};
-
+  };
 
   return (
     <div className="p-4">
@@ -93,19 +95,34 @@ const RoomList = () => {
         Crear Habitación
       </button>
       <div>
-        {rooms.map((room) => (
-          <div key={room.id} className="flex justify-between items-center mb-2 border-b pb-2">
-            <span>{room.description}</span>
-            <div className="flex space-x-2">
-              <button onClick={() => handleEdit(room)} className="text-blue-500">
-                <FaEdit />
-              </button>
-              <button onClick={() => handleDelete(room.id)} className="text-red-500">
-                <FaTrash />
-              </button>
-            </div>
-          </div>
-        ))}
+      {rooms.map((room) => (
+  <div key={room.id} className="flex justify-between items-center mb-2 border-b pb-2">
+    <span>{room.description}</span>
+    <div className="flex space-x-2">
+      {room?.photoRoom && Array.isArray(room.photoRoom) && room.photoRoom.length > 0 ? (
+        room.photoRoom.map((photo, index) => (
+          <img 
+            key={index} 
+            src={photo} 
+            alt={`Room ${room.id} - ${index}`} 
+            className="w-20 h-20 object-cover" 
+          />
+        ))
+      ) : (
+        <span>No hay imágenes disponibles</span>
+      )}
+    </div>
+    <div className="flex space-x-2">
+      <button onClick={() => handleEdit(room)} className="text-blue-500">
+        <FaEdit />
+      </button>
+      <button onClick={() => handleDelete(room.id)} className="text-red-500">
+        <FaTrash />
+      </button>
+    </div>
+  </div>
+))}
+
       </div>
       <Modal 
         isOpen={isModalOpen} 
