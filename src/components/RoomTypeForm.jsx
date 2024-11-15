@@ -7,11 +7,11 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
   const [roomTypeData, setRoomTypeData] = useState({
     name: '',
     photos: [],
-    simpleBeds: '',
+    simpleBeds: '', 
     trundleBeds: '',
     kingBeds: '',
     windows: '',
-  });  
+  });
   const [roomTypeId, setRoomTypeId] = useState(null);
   const [roomTypes, setRoomTypes] = useState([]);
   const [error, setError] = useState('');
@@ -55,9 +55,9 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
       });
       setRoomTypeId(null);
       setError('');
-      loadRoomTypes(token); // Refresca la lista con el token válido
+      loadRoomTypes(token);
 
-      if (onRoomTypeCreated) onRoomTypeCreated(); // Llama al callback si está definido
+      if (onRoomTypeCreated) onRoomTypeCreated();
     } catch (error) {
       console.error('Error al guardar el tipo de habitación:', error);
       setError('Error al guardar el tipo de habitación');
@@ -82,29 +82,28 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
         trundleBeds: '',
         kingBeds: '',
         windows: '',
-      });   
+      });
       setRoomTypeId(null);
       setError('');
-      setSuccessMessage('');
       loadRoomTypes(token);
-      onRoomTypeCreated(); // Llama al callback si está definido
+      if (onRoomTypeCreated) onRoomTypeCreated();
     } catch (error) {
       setError(`Error al eliminar: ${error.response?.status}`);
     }
   };
   
-  const handleEdit = async (id, roomType) => {
+  const handleEdit = (id, roomType) => {
     setRoomTypeId(id);
     setRoomTypeData({
       name: roomType.name,
       photos: roomType.photos || [],
-      simpleBeds: roomType.simpleBeds,
-      trundleBeds: roomType.trundleBeds,
-      kingBeds: roomType.kingBeds,
-      windows: roomType.windows,
+      simpleBeds: roomType.simpleBeds?.toString() || '0',
+      trundleBeds: roomType.trundleBeds?.toString() || '0',
+      kingBeds: roomType.kingBeds?.toString() || '0',
+      windows: roomType.windows?.toString() || '0',
     });
-  };  
-      
+  };
+
   const loadRoomTypes = async (token) => {
     try {
       const fetchedRoomTypes = await roomClasifyService.getRoomType(token);
@@ -132,34 +131,34 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
         <input
           type="number"
           value={roomTypeData.simpleBeds}
-          onChange={(e) => setRoomTypeData({ ...roomTypeData, simpleBeds: Number(e.target.value) })}
+          onChange={(e) => setRoomTypeData({ ...roomTypeData, simpleBeds: e.target.value })}
           placeholder="Número de camas simples"
           className="border border-gray-300 p-2 w-full mb-2"
         />
         <input
           type="number"
           value={roomTypeData.trundleBeds}
-          onChange={(e) => setRoomTypeData({ ...roomTypeData, trundleBeds: Number(e.target.value) })}
+          onChange={(e) => setRoomTypeData({ ...roomTypeData, trundleBeds: e.target.value })}
           placeholder="Número de camas nido"
           className="border border-gray-300 p-2 w-full mb-2"
         />
         <input
           type="number"
           value={roomTypeData.kingBeds}
-          onChange={(e) => setRoomTypeData({ ...roomTypeData, kingBeds: Number(e.target.value) })}
+          onChange={(e) => setRoomTypeData({ ...roomTypeData, kingBeds: e.target.value })}
           placeholder="Número de camas king"
           className="border border-gray-300 p-2 w-full mb-2"
         />
         <input
           type="number"
           value={roomTypeData.windows}
-          onChange={(e) => setRoomTypeData({ ...roomTypeData, windows: Number(e.target.value) })}
+          onChange={(e) => setRoomTypeData({ ...roomTypeData, windows: e.target.value })}
           placeholder="Número de ventanas"
           className="border border-gray-300 p-2 w-full mb-2"
         />
         <input
           type="text"
-          value={roomTypeData.photos.join(', ')} // Puedes manejar esto según cómo quieras gestionar las fotos
+          value={roomTypeData.photos.join(', ')}
           onChange={(e) => setRoomTypeData({ ...roomTypeData, photos: e.target.value.split(',').map(photo => photo.trim()) })}
           placeholder="URLs de fotos (separadas por comas)"
           className="border border-gray-300 p-2 w-full mb-2"

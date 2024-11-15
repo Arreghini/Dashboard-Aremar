@@ -44,8 +44,8 @@ const roomService = {
     const roomPayload = {
       id: roomData.id, 
       description: roomData.description,
-      roomType: roomData.roomType,
-      roomDetail: roomData.roomDetail,
+      roomTypeId: roomData.roomTypeId,
+      roomDetailId: roomData.roomDetailId,
       price: roomData.price,
       status: roomData.status,
       photoRoom: Array.isArray(roomData.photoRoom) ? roomData.photoRoom : [],
@@ -69,8 +69,8 @@ const roomService = {
     const roomPayload = {
       id: roomData.id,
       description: roomData.description,
-      roomType: roomData.roomType,
-      roomDetail: roomData.roomDetail,
+      roomTypeId: roomData.roomTypeId,
+      roomDetailId: roomData.roomDetailId,
       price: roomData.price,
       status: roomData.status,
       photoRoom: Array.isArray(roomData.photoRoom) ? roomData.photoRoom : [], // Validación para asegurar que sea un array

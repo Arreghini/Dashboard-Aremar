@@ -8,8 +8,8 @@ const RoomForm = ({ room = {}, onSave }) => {
   const [formData, setFormData] = useState({
     id: room?.id || '',
     description: room?.description || '',
-    roomType: room?.roomType || '',
-    detailRoom: room?.detailRoom || '', // Cambiamos roomDetail por detailRoom
+    roomTypeId: room?.roomTypeId || '',
+    detailRoomId: room?.detailRoomId || '', 
     price: room?.price || '',
     photoRoom: room?.photoRoom || '',
     status: room?.status || '',
@@ -107,8 +107,8 @@ const RoomForm = ({ room = {}, onSave }) => {
       />
     </label>
     <select
-  name="roomType"
-  value={formData.roomType}
+  name="roomTypeId" // Cambiamos a roomTypeId
+  value={formData.roomTypeId}
   onChange={handleChange}
   required
   className="border border-gray-300 p-2 w-full"
@@ -122,8 +122,8 @@ const RoomForm = ({ room = {}, onSave }) => {
 </select>
 
 <select
-  name="roomDetail"
-  value={formData.roomDetail}
+  name="detailRoomId" // Cambiamos a detailRoomId
+  value={formData.detailRoomId}
   onChange={handleChange}
   required
   className="border border-gray-300 p-2 w-full"
@@ -136,7 +136,7 @@ const RoomForm = ({ room = {}, onSave }) => {
     if (detail.wifi) servicios.push("WiFi");
     if (detail.microwave) servicios.push("Microondas");
     if (detail.pava_electrica) servicios.push("Pava Eléctrica");
-    
+
     const descripcion = servicios.length > 0 ? servicios.join(", ") : "Sin servicios";
     
     return (
@@ -146,6 +146,7 @@ const RoomForm = ({ room = {}, onSave }) => {
     );
   })}
 </select>
+
 
 <label className="block mb-2">
   Precio:
