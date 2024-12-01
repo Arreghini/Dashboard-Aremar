@@ -1,50 +1,77 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import reservationService from '../services/reservationService';
 
-const ReservationList = ({ onEdit, onDelete }) => {
+const ReservationList = () => {
   const [reservations, setReservations] = useState([]);
-
-  useEffect(() => {
-    fetchReservations();
-  }, []);
-
-  const fetchReservations = async () => {
-    const data = await reservationService.getReservations();
-    setReservations(data);
-  };
+  const [loading, setLoading] = useState(true);
 
   const handleConfirm = async (reservationId) => {
-    await reservationService.confirmReservation(reservationId);
-    fetchReservations();
+    try {
+      await reservationService.confirmReservation(reservationId);
+      const updatedReservations = reservations.map(res => 
+        res.id === reservationId ? { ...res, status: 'confirmed' } : res
+      );
+      setReservations(updatedReservations);
+    } catch (error) {
+      console.error('Error al confirmar la reservación:', error);
+    }
   };
 
   const handleCancel = async (reservationId) => {
-    await reservationService.cancelReservation(reservationId);
-    fetchReservations();
+    try {
+      await reservationService.cancelReservation(reservationId);
+      const updatedReservations = reservations.map(res => 
+        res.id === reservationId ? { ...res, status: 'cancelled' } : res
+      );
+      setReservations(updatedReservations);
+    } catch (error) {
+      console.error('Error al cancelar la reservación:', error);
+    }
   };
 
   const handleDelete = async (reservationId) => {
-    await reservationService.deleteReservation(reservationId);
-    fetchReservations();
+    try {
+      await reservationService.deleteReservation(reservationId);
+      const updatedReservations = reservations.filter(res => res.id !== reservationId);
+      setReservations(updatedReservations);
+    } catch (error) {
+      console.error('Error al eliminar la reservación:', error);
+    }
   };
 
   return (
-    <div>
-      {reservations.map((reservation) => (
-        <div key={reservation.id} className="flex justify-between items-center my-2">
-          <span>{reservation.guestName} - {reservation.roomId} - Estado: {reservation.status}</span>
-          <div>
-            <button onClick={() => onEdit(reservation)} className="mx-1">Editar</button>
-            <button onClick={() => handleDelete(reservation.id)} className="mx-1">Eliminar</button>
-            {reservation.status === 'pending' && (
-              <>
-                <button onClick={() => handleConfirm(reservation.id)} className="mx-1">Confirmar</button>
-                <button onClick={() => handleCancel(reservation.id)} className="mx-1">Cancelar</button>
-              </>
-            )}
-          </div>
+    <div className="p-4">
+      <h2 className="text-xl font-bold mb-4">Lista de Reservaciones</h2>
+      {reservations.length === 0 ? (
+        <p>No hay reservaciones disponibles</p>
+      ) : (
+        <div className="grid gap-4">
+          {reservations.map((reservation) => (
+            <div key={reservation.id} className="border p-4 rounded">
+              <div className="flex justify-end space-x-2">
+                <button 
+                  onClick={() => handleConfirm(reservation.id)}
+                  className="bg-green-500 text-white px-4 py-2 rounded"
+                >
+                  Confirmar
+                </button>
+                <button 
+                  onClick={() => handleCancel(reservation.id)}
+                  className="bg-yellow-500 text-white px-4 py-2 rounded"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={() => handleDelete(reservation.id)}
+                  className="bg-red-500 text-white px-4 py-2 rounded"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 };
