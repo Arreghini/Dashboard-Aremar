@@ -37,35 +37,35 @@ const roomClasifyService = {
 
   createRoomType: async (roomTypeData, token) => {
     try {
-      const response = await axios.post(`${BASE_URL}/roomType`, roomTypeData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        }
-      });
-      console.log('Respuesta crear tipo:', response);
-      return response.data;
-    } catch (error) {
-      console.error('Error al crear el tipo de habitación:', error);
-      throw error;
-    }
-  },
+      // Convertimos explícitamente el precio a número
+      const price = Number(roomTypeData.price);
+      if (isNaN(price) || price <= 0) {
+        throw new Error('El precio debe ser un número válido mayor que 0');
+      }
 
-  createRoomDetail: async (roomDetailData, token) => {
-    try {
-      const response = await axios.post(`${BASE_URL}/roomDetail`, roomDetailData, {
+      const data = {
+        name: roomTypeData.name,
+        photos: roomTypeData.photos,
+        simpleBeds: Number(roomTypeData.simpleBeds),
+        trundleBeds: Number(roomTypeData.trundleBeds),
+        kingBeds: Number(roomTypeData.kingBeds),
+        windows: Number(roomTypeData.windows),
+        price: price
+      };
+
+      const response = await axios.post(`${BASE_URL}/roomType`, data, {
         headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
-      console.log('Respuesta crear detalle:', response);
+
       return response.data;
     } catch (error) {
-      console.error('Error al crear el detalle de la habitación:', error);
+      console.log('Datos enviados:', roomTypeData);
       throw error;
     }
-  },
+},
 
   updateRoomType: async (id, roomData, token) => {
     try {
@@ -118,10 +118,7 @@ const roomClasifyService = {
       throw error;
     }
   },
-  
-  
-  
-  
+
   deleteRoomDetail: async (id, token) => {
     try {
       const response = await axios.delete(`${BASE_URL}/roomDetail/${id}`, {

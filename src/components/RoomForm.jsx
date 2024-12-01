@@ -10,7 +10,6 @@ const RoomForm = ({ room = {}, onSave }) => {
     description: room?.description || '',
     roomTypeId: room?.roomTypeId || '',
     detailRoomId: room?.detailRoomId || '', 
-    price: room?.price || '',
     photoRoom: room?.photoRoom || '',
     status: room?.status || '',
 });

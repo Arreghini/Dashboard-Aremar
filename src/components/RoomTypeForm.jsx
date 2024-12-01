@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import roomClasifyService from '../services/roomClasifyService';
 import { useAuth0 } from '@auth0/auth0-react';
 
@@ -11,6 +11,7 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
     trundleBeds: '',
     kingBeds: '',
     windows: '',
+    price: '',
   });
   const [roomTypeId, setRoomTypeId] = useState(null);
   const [roomTypes, setRoomTypes] = useState([]);
@@ -32,18 +33,36 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+  
     try {
       const token = await getAccessTokenSilently();
-      const roomTypePayload = { ...roomTypeData };
-
+  
+      // Aseguramos que el precio sea un número válido
+      const roomTypePayload = {
+        name: roomTypeData.name,
+        photos: Array.isArray(roomTypeData.photos) ? roomTypeData.photos : [],
+        simpleBeds: Number(roomTypeData.simpleBeds || 0),
+        trundleBeds: Number(roomTypeData.trundleBeds || 0),
+        kingBeds: Number(roomTypeData.kingBeds || 0),
+        windows: Number(roomTypeData.windows || 0),
+        price: Number(roomTypeData.price || 0),
+      };
+  
+      // Validación del precio
+      if (!roomTypePayload.price || roomTypePayload.price <= 0) {
+        setError('El precio es requerido y debe ser mayor que 0');
+        return;
+      }
+  
       if (roomTypeId) {
         await roomClasifyService.updateRoomType(roomTypeId, roomTypePayload, token);
-        setSuccessMessage('Tipo de habitación actualizado con éxito');
       } else {
         await roomClasifyService.createRoomType(roomTypePayload, token);
-        setSuccessMessage('Tipo de habitación creado con éxito');
       }
-
+  
+      // Mensaje de éxito
+      setSuccessMessage('Tipo de habitación creado con éxito');
+  
       // Resetear el formulario
       setRoomTypeData({
         name: '',
@@ -52,17 +71,18 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
         trundleBeds: '',
         kingBeds: '',
         windows: '',
+        price: '',
       });
       setRoomTypeId(null);
       setError('');
       loadRoomTypes(token);
-
+  
       if (onRoomTypeCreated) onRoomTypeCreated();
     } catch (error) {
       console.error('Error al guardar el tipo de habitación:', error);
       setError('Error al guardar el tipo de habitación');
     }
-  };
+  };  
 
   const handleDelete = async (id) => {
     if (!id) {
@@ -82,6 +102,7 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
         trundleBeds: '',
         kingBeds: '',
         windows: '',
+        price: '',
       });
       setRoomTypeId(null);
       setError('');
@@ -101,6 +122,7 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
       trundleBeds: roomType.trundleBeds?.toString() || '0',
       kingBeds: roomType.kingBeds?.toString() || '0',
       windows: roomType.windows?.toString() || '0',
+      price: roomType.price?.toString() || '0',
     });
   };
 
@@ -162,6 +184,13 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
           onChange={(e) => setRoomTypeData({ ...roomTypeData, photos: e.target.value.split(',').map(photo => photo.trim()) })}
           placeholder="URLs de fotos (separadas por comas)"
           className="border border-gray-300 p-2 w-full mb-2"
+        />
+        <input
+        type="number"
+        value={roomTypeData.price}
+        onChange={(e) => setRoomTypeData({ ...roomTypeData, price: e.target.value })}
+        placeholder="Precio diario"
+        className="border border-gray-300 p-2 w-full mb-2"
         />
         <button type="submit" className="bg-blue-500 text-white p-2 rounded mt-2">
           {roomTypeId ? 'Actualizar' : 'Crear'} Tipo
