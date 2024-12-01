@@ -33,19 +33,35 @@ const RoomList = () => {
 
   const handleEdit = async (room) => {
     try {
-      const token = await getAccessTokenSilently();
-      if (room.id) {
-        const roomData = await roomService.getRoom(room.id, token);
-        setFormData(roomData);
-      } else {
-        setFormData({});
-      }
-      setIsModalOpen(true);
+        const token = await getAccessTokenSilently();
+        if (room.id) {
+            setFormData(room); // Usamos directamente los datos que ya tenemos
+            setIsModalOpen(true);
+        } else {
+            setFormData({});
+            setIsModalOpen(true);
+        }
     } catch (error) {
-      console.error('Error en edición:', error);
-      setErrorMessage('No se pudieron cargar los detalles de la habitación.');
+        setErrorMessage('Error al cargar los datos de la habitación');
     }
-  };
+};
+
+const handleSave = async (roomData) => {
+    try {
+        const token = await getAccessTokenSilently();
+        if (roomData.id) {
+            await roomService.updateRoom(roomData.id, roomData, token);
+            setSuccessMessage('Habitación actualizada exitosamente');
+        } else {
+            await roomService.createRoom(roomData, token);
+            setSuccessMessage('Habitación creada exitosamente');
+        }
+        await fetchRooms();
+        handleModalClose();
+    } catch (error) {
+        setErrorMessage(error.message || 'Error al guardar la habitación');
+    }
+};
 
   const handleDelete = async (roomId) => {
     try {
@@ -64,26 +80,6 @@ const RoomList = () => {
     setFormData(null);
     setErrorMessage('');
     setSuccessMessage('');
-  };
-
-  const handleSave = async (roomData) => {
-    try {
-      const token = await getAccessTokenSilently();
-      if (roomData && roomData.id) {
-        await roomService.updateRoom(roomData.id, roomData, token);
-        setSuccessMessage('Habitación actualizada con éxito.');
-      } else {
-        await roomService.createRoom(roomData, token);
-        setSuccessMessage('Habitación creada con éxito.');
-      }
-      await fetchRooms();
-      setErrorMessage('');
-      handleModalClose();
-    } catch (error) {
-      console.error('Error al guardar la habitación:', error);
-      setErrorMessage('No se pudo guardar la habitación.');
-      setSuccessMessage('');
-    }
   };
 
   return (

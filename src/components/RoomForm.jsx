@@ -9,13 +9,14 @@ const RoomForm = ({ room = {}, onSave }) => {
     id: room?.id || '',
     description: room?.description || '',
     roomTypeId: room?.roomTypeId || '',
-    detailRoomId: room?.detailRoomId || '', 
+    detailRoomId: room?.detailRoomId || '',
     photoRoom: room?.photoRoom || '',
-    status: room?.status || '',
-});
+    status: room?.status || 'available',
+    price: room?.price || 0,
+  });
   const [roomTypes, setRoomTypes] = useState([]);
   const [roomDetails, setRoomDetails] = useState([]);
-  const [loading, setLoading] = useState(false); // Cambiamos a false inicialmente
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -26,8 +27,7 @@ const RoomForm = ({ room = {}, onSave }) => {
         const token = await getAccessTokenSilently();
         const types = await roomClasifyService.getRoomType(token);
         const details = await roomClasifyService.getRoomDetail(token);
-        
-        console.log("Detalles de habitación:", details);
+
         setRoomTypes(types);
         setRoomDetails(details);
       } catch (error) {
@@ -39,22 +39,45 @@ const RoomForm = ({ room = {}, onSave }) => {
     fetchData();
   }, [getAccessTokenSilently]);
 
+  useEffect(() => {
+    // Sincronizar los valores de room con formData cuando room cambie
+    setFormData({
+      id: room?.id || '',
+      description: room?.description || '',
+      roomTypeId: room?.roomTypeId || '',
+      detailRoomId: room?.detailRoomId || '',
+      photoRoom: room?.photoRoom || '',
+      status: room?.status || 'available',
+      price: room?.price || 0,
+    });
+  }, [room]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value,
+      [name]: name === 'price' ? parseInt(value, 10) || 0 : value,
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     const formDataToSend = {
-        ...formData,
+        id: formData.id,
+        description: formData.description,
+        roomTypeId: formData.roomTypeId,
+        roomDetailId: formData.detailRoomId,
         price: parseInt(formData.price, 10),
-        status: formData.status || 'available'
+        status: formData.status || 'available',
+        photoRoom: formData.photoRoom || []
     };
+
+    // Validación antes de enviar
+    if (!formDataToSend.description) {
+        setError('La descripción es obligatoria');
+        return;
+    }
 
     try {
         const token = await getAccessTokenSilently();
@@ -65,12 +88,11 @@ const RoomForm = ({ room = {}, onSave }) => {
             await roomService.createRoom(formDataToSend, token);
             setSuccessMessage('Habitación creada con éxito');
         }
-        onSave();
+        onSave(formDataToSend);
     } catch (error) {
-        setError('Error en la operación: ' + error.response?.data);
+        setError('Error en la operación: ' + error.response?.data || error.message);
     }
 };
-
 
   if (loading) {
     return <p>Cargando tipos y detalles de habitación...</p>;
@@ -78,114 +100,114 @@ const RoomForm = ({ room = {}, onSave }) => {
 
   return (
     <form onSubmit={handleSubmit} className="p-4 border border-gray-300 rounded">
-      <h1 className="text-lg font-bold mb-4">Crear Nueva Habitación</h1>
+      <h1 className="text-lg font-bold mb-4">{room?.id ? 'Actualizar Habitación' : 'Crear Nueva Habitación'}</h1>
       {error && <p className="text-red-500">{error}</p>}
       {successMessage && <p className="text-green-500">{successMessage}</p>}
       <label className="block mb-2">
-      Id:
-      <input
-      type="text"
-      name="id"
-      value={formData.id}
-      onChange={handleChange}
-      required
-      className="border border-gray-300 p-2 w-full"
-      />
+        Id:
+        <input
+          type="text"
+          name="id"
+          value={formData.id}
+          onChange={handleChange}
+          required
+          className="border border-gray-300 p-2 w-full"
+        />
       </label>
       <label className="block mb-2">
-      Descripción: 
-      <input
-        type="text"
-        name="description"
-        value={formData.description}
-        onChange={handleChange}
-        required
-        className="border border-gray-300 p-2 w-full"
-      />
-    </label>
-    <select
-  name="roomTypeId" // Cambiamos a roomTypeId
-  value={formData.roomTypeId}
-  onChange={handleChange}
-  required
-  className="border border-gray-300 p-2 w-full"
->
-  <option value="">Selecciona un tipo</option>
-  {roomTypes && roomTypes.length > 0 && roomTypes.map((type) => (
-    <option key={type.id} value={type.id}>
-      {type.name || type.type || type.description}
-    </option>
-  ))}
-</select>
+        Descripción:
+        <input
+          type="text"
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          required
+          className="border border-gray-300 p-2 w-full"
+        />
+      </label>
+      <label className="block mb-2">
+        Tipo de Habitación:
+        <select
+          name="roomTypeId"
+          value={formData.roomTypeId}
+          onChange={handleChange}
+          required
+          className="border border-gray-300 p-2 w-full"
+        >
+          <option value="">Selecciona un tipo</option>
+          {roomTypes.map((type) => (
+            <option key={type.id} value={type.id}>
+              {type.name || type.type || type.description}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="block mb-2">
+        Detalles:
+        <select
+          name="detailRoomId"
+          value={formData.detailRoomId}
+          onChange={handleChange}
+          required
+          className="border border-gray-300 p-2 w-full"
+        >
+          <option value="">Selecciona un detalle</option>
+          {roomDetails.map((detail) => {
+            const servicios = [];
+            if (detail.cableTvService) servicios.push("TV por Cable");
+            if (detail.smart_TV) servicios.push("Smart TV");
+            if (detail.wifi) servicios.push("WiFi");
+            if (detail.microwave) servicios.push("Microondas");
+            if (detail.pava_electrica) servicios.push("Pava Eléctrica");
 
-<select
-  name="detailRoomId" // Cambiamos a detailRoomId
-  value={formData.detailRoomId}
-  onChange={handleChange}
-  required
-  className="border border-gray-300 p-2 w-full"
->
-  <option value="">Selecciona un detalle</option>
-  {roomDetails && roomDetails.length > 0 && roomDetails.map((detail) => {
-    const servicios = [];
-    if (detail.cableTvService) servicios.push("TV por Cable");
-    if (detail.smart_TV) servicios.push("Smart TV");
-    if (detail.wifi) servicios.push("WiFi");
-    if (detail.microwave) servicios.push("Microondas");
-    if (detail.pava_electrica) servicios.push("Pava Eléctrica");
+            const descripcion = servicios.length > 0 ? servicios.join(", ") : "Sin servicios";
 
-    const descripcion = servicios.length > 0 ? servicios.join(", ") : "Sin servicios";
-    
-    return (
-      <option key={detail.id} value={detail.id}>
-        {descripcion}
-      </option>
-    );
-  })}
-</select>
-
-
-<label className="block mb-2">
-  Precio:
-  <input
-    type="text"
-    name="price"
-    value={formData.price}
-    onChange={handleChange}
-    required
-    className="border border-gray-300 p-2 w-full"
-  />
-</label>
-<label className="block mb-2">
-  Foto:
-  <input
-    type="file"
-    name="photoRoom"
-    onChange={(e) => setFormData({...formData, photoRoom: e.target.files[0] })}
-    className="border border-gray-300 p-2 w-full"
-  />
-</label>
-<label className="block mb-2">
-  Estado:
-  <select
-    name="status"
-    value={formData.status}
-    onChange={handleChange}
-    required
-    className="border border-gray-300 p-2 w-full"
-  >
-    <option value="">Selecciona un estado</option>
-    <option value="available">Disponible</option>
-    <option value="unavailable">Ocupado</option>
-  </select>
-</label>
-<button type="submit" className="bg-blue-500 text-white p-2 rounded">
-    {room?.id ? 'Actualizar Habitación' : 'Crear Habitación'}
-</button>
-
+            return (
+              <option key={detail.id} value={detail.id}>
+                {descripcion}
+              </option>
+            );
+          })}
+        </select>
+      </label>
+      <label className="block mb-2">
+        Precio:
+        <input
+          type="number"
+          name="price"
+          value={formData.price}
+          onChange={handleChange}
+          required
+          className="border border-gray-300 p-2 w-full"
+        />
+      </label>
+      <label className="block mb-2">
+        Foto:
+        <input
+          type="file"
+          name="photoRoom"
+          onChange={(e) => setFormData({ ...formData, photoRoom: e.target.files[0] })}
+          className="border border-gray-300 p-2 w-full"
+        />
+      </label>
+      <label className="block mb-2">
+        Estado:
+        <select
+          name="status"
+          value={formData.status}
+          onChange={handleChange}
+          required
+          className="border border-gray-300 p-2 w-full"
+        >
+          <option value="available">Disponible</option>
+          <option value="unavailable">Ocupado</option>
+        </select>
+      </label>
+      <button type="submit" className="bg-blue-500 text-white p-2 rounded">
+        {room?.id ? 'Actualizar Habitación' : 'Crear Habitación'}
+      </button>
     </form>
   );
-  
 };
 
 export default RoomForm;

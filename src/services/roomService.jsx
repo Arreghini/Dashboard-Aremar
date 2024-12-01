@@ -12,13 +12,13 @@ const getHeaders = (token) => ({
 const roomService = {
   getRoom: async (id, token) => {
     try {
-        const response = await axios.get(`${BASE_URL}/${id}`, getHeaders(token));
+        const response = await axios.get(`${BASE_URL}/admin/${id}`, getHeaders(token));
         return response.data;
     } catch (error) {
         console.error('Error al obtener la habitación:', error);
         throw error;
     }
-},  
+},
   getRooms: async () => {
     try {
       const response = await axios.get(`${BASE_URL}/all`);
@@ -36,26 +36,28 @@ const roomService = {
   },
 
   createRoom: async (roomData, token) => {
-    if (!roomData || !roomData.description) {
-        console.error('roomData o description están indefinidos:', roomData);
-        throw new Error('roomData o description están indefinidos');
+    if (!roomData || typeof roomData !== 'object') {
+        throw new Error('roomData debe ser un objeto válido');
+    }
+
+    if (!roomData.description || typeof roomData.description !== 'string') {
+        throw new Error('La descripción es obligatoria y debe ser texto');
     }
 
     const roomPayload = {
-      id: roomData.id, 
-      description: roomData.description,
-      roomTypeId: roomData.roomTypeId,
-      roomDetailId: roomData.roomDetailId,
-      price: roomData.price,
-      status: roomData.status,
-      photoRoom: Array.isArray(roomData.photoRoom) ? roomData.photoRoom : [],
-  };
-  
+        id: roomData.id,
+        description: roomData.description,
+        roomTypeId: roomData.roomTypeId,
+        roomDetailId: roomData.roomDetailId,
+        price: roomData.price,
+        status: roomData.status,
+        photoRoom: Array.isArray(roomData.photoRoom) ? roomData.photoRoom : []
+    };
 
     try {
         const response = await axios.post(
-            `${BASE_URL}/admin`, 
-            roomPayload, 
+            `${BASE_URL}/admin`,
+            roomPayload,
             getHeaders(token)
         );
         return response.data;
@@ -64,32 +66,29 @@ const roomService = {
         throw error;
     }
 },
-  
-  updateRoom: async (id, roomData, token) => {
-    const roomPayload = {
-      id: roomData.id,
-      description: roomData.description,
-      roomTypeId: roomData.roomTypeId,
-      roomDetailId: roomData.roomDetailId,
-      price: roomData.price,
-      status: roomData.status,
-      photoRoom: Array.isArray(roomData.photoRoom) ? roomData.photoRoom : [], // Validación para asegurar que sea un array
-    };
-  
-    console.log('Datos enviados para la actualización:', roomPayload);
-  
-    try {
-      const response = await axios.patch(`${BASE_URL}/admin/${id}`, roomPayload, getHeaders(token));
-      console.log('Datos enviados en la actualización:', roomPayload);
-      console.log('Respuesta del servidor al actualizar:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Error al actualizar la habitación:', error);
-      console.log('Detalles del error:', error.response?.data);
-      throw error;
-    }
-  },
-  
+
+updateRoom: async (id, roomData, token) => {
+  const roomPayload = {
+    description: roomData.description,
+    roomTypeId: roomData.roomTypeId,
+    detailRoomId: roomData.detailRoomId || roomData.roomDetailId, // Manejamos ambos nombres
+    price: Number(roomData.price),
+    status: roomData.status,
+    photoRoom: Array.isArray(roomData.photoRoom) ? roomData.photoRoom : []
+  };
+
+  try {
+    const response = await axios.patch(
+      `${BASE_URL}/admin/${id}`, 
+      roomPayload, 
+      getHeaders(token)
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error en la actualización:', error);
+    throw error;
+  }
+},
 
   deleteRoom: async (id, token) => {
     try {
