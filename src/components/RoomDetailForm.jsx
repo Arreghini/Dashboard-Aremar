@@ -80,7 +80,12 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
       setError('Error al guardar el detalle de habitación');
     }
   };
-  
+
+  const handleEdit = (id) => {
+    const detail = details.find(detail => detail.id === id);
+    if (detail) setRoomDetailData(detail);
+    setDetailId(id);
+  };  
 
   const handleDelete = async (id) => {
     try {
@@ -130,17 +135,19 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
       {details.map((detail) => (
   <div key={detail.id} className="flex items-center justify-between mb-2 p-2 border rounded bg-gray-50">
     <div className="flex flex-wrap gap-2">
-      {detail.cableTvService && <span className="bg-blue-100 px-2 py-1 rounded">TV por Cable</span>}
-      {detail.smart_TV && <span className="bg-blue-100 px-2 py-1 rounded">Smart TV</span>}
-      {detail.wifi && <span className="bg-blue-100 px-2 py-1 rounded">WiFi</span>}
-      {detail.microwave && <span className="bg-blue-100 px-2 py-1 rounded">Microondas</span>}
-      {detail.pava_electrica && <span className="bg-blue-100 px-2 py-1 rounded">Pava Eléctrica</span>}
-      {!detail.cableTvService && !detail.smart_TV && !detail.wifi && !detail.microwave && !detail.pava_electrica && 
-        <span className="text-gray-500">Sin servicios seleccionados</span>
-      }
+      {Object.entries(detail).map(([key, value]) => {
+        if (key !== 'id' && value === true && detailNames[key]) {
+          return (
+            <span key={key} className="bg-blue-100 px-2 py-1 rounded">
+              {detailNames[key]}
+            </span>
+          );
+        }
+        return null;
+      })}
     </div>
     <div>
-      <button onClick={() => handleEdit(detail.id, detail)} className="text-blue-500 mr-2">
+      <button onClick={() => handleEdit(detail.id)} className="text-blue-500 mr-2">
         Editar
       </button>
       <button onClick={() => handleDelete(detail.id)} className="text-red-500">

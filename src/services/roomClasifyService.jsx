@@ -66,6 +66,21 @@ const roomClasifyService = {
       throw error;
     }
 },
+createRoomDetail: async (roomDetailData, token) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/roomDetail`, roomDetailData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    console.log('Detalle de habitación creado exitosamente');
+    return response;
+  } catch (error) {
+    console.log('Datos enviados:', roomDetailData);
+    throw error;
+  }
+},
 
   updateRoomType: async (id, roomData, token) => {
     try {
