@@ -113,11 +113,15 @@ createRoomDetail: async (roomDetailData, token) => {
       throw error;
     }
   },
-
+  
   deleteRoomType: async (id, token) => {
     try {
-      // Ajustamos la URL para que coincida con el endpoint del backend
-      const url = `${BASE_URL}/roomTypes/${id}`;
+      if (!id) {
+        throw new Error('ID no proporcionado');
+      }
+  
+      // Usamos la ruta correcta del backend
+      const url = `${BASE_URL}/roomType/${id}`;
       
       const response = await axios.delete(url, {
         headers: {
@@ -125,15 +129,24 @@ createRoomDetail: async (roomDetailData, token) => {
           'Content-Type': 'application/json',
         }
       });
-      console.log('Eliminación exitosa:', response.data);
-      return response.data;
+      
+      console.log('Respuesta del servidor:', response);
+      
+      if (response.status === 200 || response.status === 204) {
+        return {
+          success: true,
+          message: 'Tipo de habitación eliminado correctamente',
+          id: id,
+          data: response.data
+        };
+      }
+      
     } catch (error) {
-      console.log('ID de eliminación:', id);
-      console.log('URL completa:', url);
-      throw error;
+      console.error('Error completo:', error.response || error);
+      throw new Error(`Error al eliminar: ${error.response?.data?.message || error.message}`);
     }
-  },
-
+  },  
+  
   deleteRoomDetail: async (id, token) => {
     try {
       const response = await axios.delete(`${BASE_URL}/roomDetail/${id}`, {
