@@ -27,7 +27,16 @@ const RoomForm = ({ room = {}, onSave }) => {
         const token = await getAccessTokenSilently();
         const types = await roomClasifyService.getRoomType(token);
         const details = await roomClasifyService.getRoomDetail(token);
-
+  
+        // Si estamos editando, buscamos el tipo de habitación correspondiente
+        if (room?.roomTypeId) {
+          const selectedType = types.find(type => type.id === room.roomTypeId);
+          setFormData(prevData => ({
+            ...prevData,
+            price: selectedType ? selectedType.price : 0
+          }));
+        }
+  
         setRoomTypes(types);
         setRoomDetails(details);
       } catch (error) {
@@ -37,8 +46,8 @@ const RoomForm = ({ room = {}, onSave }) => {
       }
     };
     fetchData();
-  }, [getAccessTokenSilently]);
-
+  }, [getAccessTokenSilently, room]);
+  
   useEffect(() => {
     // Sincronizar los valores de room con formData cuando room cambie
     setFormData({
@@ -54,12 +63,23 @@ const RoomForm = ({ room = {}, onSave }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: name === 'price' ? Number(value) : value,
+    }));
+  };
+  
+  const handleRoomTypeChange = (e) => {
+    const selectedTypeId = e.target.value;
+    const selectedType = roomTypes.find(type => type.id === selectedTypeId);
+    
     setFormData({
       ...formData,
-      [name]: name === 'price' ? parseInt(value, 10) || 0 : value,
+      roomTypeId: selectedTypeId,
+      price: selectedType ? selectedType.price : 0
     });
   };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -68,24 +88,22 @@ const RoomForm = ({ room = {}, onSave }) => {
         description: formData.description,
         roomTypeId: formData.roomTypeId,
         roomDetailId: formData.detailRoomId,
-        price: parseInt(formData.price, 10),
+        price: Number(formData.price), // Aseguramos que sea número
         status: formData.status || 'available',
         photoRoom: formData.photoRoom || []
     };
 
-    // Validación antes de enviar
-    if (!formDataToSend.description) {
-        setError('La descripción es obligatoria');
-        return;
-    }
+    console.log('Precio a enviar:', formDataToSend.price); // Para verificar el valor
 
     try {
         const token = await getAccessTokenSilently();
         if (room.id) {
-            await roomService.updateRoom(room.id, formDataToSend, token);
+            const updatedRoom = await roomService.updateRoom(room.id, formDataToSend, token);
+            console.log('Habitación actualizada:', updatedRoom);
             setSuccessMessage('Habitación actualizada con éxito');
         } else {
-            await roomService.createRoom(formDataToSend, token);
+            const newRoom = await roomService.createRoom(formDataToSend, token);
+            console.log('Habitación creada:', newRoom);
             setSuccessMessage('Habitación creada con éxito');
         }
         onSave(formDataToSend);
@@ -127,10 +145,10 @@ const RoomForm = ({ room = {}, onSave }) => {
       </label>
       <label className="block mb-2">
         Tipo de Habitación:
-        <select
+       <select
           name="roomTypeId"
           value={formData.roomTypeId}
-          onChange={handleChange}
+          onChange={handleRoomTypeChange}
           required
           className="border border-gray-300 p-2 w-full"
         >
@@ -171,16 +189,22 @@ const RoomForm = ({ room = {}, onSave }) => {
         </select>
       </label>
       <label className="block mb-2">
-        Precio:
-        <input
-          type="number"
-          name="price"
-          value={formData.price}
-          onChange={handleChange}
-          required
-          className="border border-gray-300 p-2 w-full"
-        />
-      </label>
+  Precio:
+  <input
+    type="number"
+    name="price"
+    value={formData.price}
+    onChange={handleChange}
+    className="border border-gray-300 p-2 w-full"
+  />
+  {formData.roomTypeId && (
+    <span className="text-sm text-gray-500">
+      Precio sugerido: {
+        roomTypes.find(type => type.id === formData.roomTypeId)?.price || 0
+      }
+    </span>
+  )}
+</label>
       <label className="block mb-2">
         Foto:
         <input

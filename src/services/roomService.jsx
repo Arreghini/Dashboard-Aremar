@@ -36,20 +36,12 @@ const roomService = {
   },
 
   createRoom: async (roomData, token) => {
-    if (!roomData || typeof roomData !== 'object') {
-        throw new Error('roomData debe ser un objeto válido');
-    }
-
-    if (!roomData.description || typeof roomData.description !== 'string') {
-        throw new Error('La descripción es obligatoria y debe ser texto');
-    }
-
     const roomPayload = {
         id: roomData.id,
         description: roomData.description,
         roomTypeId: roomData.roomTypeId,
         roomDetailId: roomData.roomDetailId,
-        price: roomData.price,
+        price: Number(roomData.price), // Usamos el precio modificado
         status: roomData.status,
         photoRoom: Array.isArray(roomData.photoRoom) ? roomData.photoRoom : []
     };
@@ -71,8 +63,8 @@ updateRoom: async (id, roomData, token) => {
   const roomPayload = {
     description: roomData.description,
     roomTypeId: roomData.roomTypeId,
-    detailRoomId: roomData.detailRoomId || roomData.roomDetailId, // Manejamos ambos nombres
-    price: Number(roomData.price),
+    detailRoomId: roomData.detailRoomId || roomData.roomDetailId,
+    price: Number(roomData.price), // Usamos el precio modificado
     status: roomData.status,
     photoRoom: Array.isArray(roomData.photoRoom) ? roomData.photoRoom : []
   };
