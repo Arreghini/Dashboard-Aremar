@@ -1,9 +1,8 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:3000/api/reservations';
+const BASE_URL = 'http://localhost:3000/api/reservations/admin';
 
 const getHeaders = (token) => {
-  console.log('Token recibido:', token);
   return {
     headers: {
       Authorization: `Bearer ${token}`,

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:3000/api/rooms';
+const BASE_URL = 'http://localhost:3000/api/rooms/admin';
 
 const getHeaders = (token) => ({
   headers: {
@@ -12,16 +12,16 @@ const getHeaders = (token) => ({
 const roomService = {
   getRoom: async (id, token) => {
     try {
-        const response = await axios.get(`${BASE_URL}/admin/${id}`, getHeaders(token));
+        const response = await axios.get(`${BASE_URL}/${id}`, getHeaders(token));
         return response.data;
     } catch (error) {
         console.error('Error al obtener la habitación:', error);
         throw error;
     }
 },
-  getRooms: async () => {
+  getRooms: async (token) => {
     try {
-      const response = await axios.get(`${BASE_URL}/all`);
+      const response = await axios.get(`${BASE_URL}/all`, getHeaders(token));
       console.log('Respuesta del servidor:', response.data);
       if (Array.isArray(response.data)) {
         return response.data;
@@ -48,7 +48,7 @@ const roomService = {
 
     try {
         const response = await axios.post(
-            `${BASE_URL}/admin`,
+            `${BASE_URL}`,
             roomPayload,
             getHeaders(token)
         );
@@ -71,7 +71,7 @@ updateRoom: async (id, roomData, token) => {
 
   try {
     const response = await axios.patch(
-      `${BASE_URL}/admin/${id}`, 
+      `${BASE_URL}/${id}`, 
       roomPayload, 
       getHeaders(token)
     );
@@ -84,7 +84,7 @@ updateRoom: async (id, roomData, token) => {
 
   deleteRoom: async (id, token) => {
     try {
-      await axios.delete(`${BASE_URL}/admin/${id}`, getHeaders(token));
+      await axios.delete(`${BASE_URL}/${id}`, getHeaders(token));
       console.log('Habitación eliminada con éxito');
     } catch (error) {
       console.error('Error al eliminar la habitación:', error);

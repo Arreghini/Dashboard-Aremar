@@ -15,7 +15,8 @@ const RoomList = () => {
 
   const fetchRooms = async () => {
     try {
-      const roomsData = await roomService.getRooms();
+      const token = await getAccessTokenSilently();
+      const roomsData = await roomService.getRooms(token);
       const roomsWithPhotoArray = roomsData.map(room => ({
         ...room,
         photoRoom: room.photoRoom || []
@@ -25,8 +26,8 @@ const RoomList = () => {
       console.error('Error al obtener las habitaciones:', error);
       setErrorMessage('No se pudieron cargar las habitaciones.');
     }
-  };  
-
+  };
+  
   useEffect(() => {
     fetchRooms();
   }, [getAccessTokenSilently]);
