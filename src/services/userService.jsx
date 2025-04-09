@@ -2,7 +2,6 @@ import axios from 'axios';
 
 const BASE_URL = 'http://localhost:3000/api/users/admin';
 
-// Añade un console.log para verificar el token
 const getHeaders = (token) => {
   console.log('Token recibido:', token);
   return {

@@ -130,10 +130,11 @@ const DashboardPage = () => {
         <div className="mb-8">
           <h2 className="font-bold text-lg mb-2 text-left uppercase">RESERVAS</h2>
           <div className="flex flex-col items-start">
-            <button className="mb-2" onClick={() => setSelectedReservation({})}>Crear Reserva</button>
-            <button onClick={() => setShowReservations(!showReservations)} className="mb-2">
-              {showReservations ? 'Ocultar Lista de Reservas' : 'Lista de Reservas'}
+            <button className="mb-2" onClick={() => setSelectedReservation({})}>Crear Reserva
             </button>
+            <button onClick={() => setShowReservations(!showReservations)} className="mb-2">
+            {showReservations ? 'Ocultar Lista de Reservas' : 'Lista de Reservas'}
+          </button>
             {showReservations && (
               <div className="w-full">
                 <ReservationList key={refresh} onEdit={setSelectedReservation} onDelete={() => setRefresh(!refresh)} />
@@ -142,7 +143,14 @@ const DashboardPage = () => {
           </div>
           {selectedReservation && (
             <div className="mt-4">
-              <ReservationForm reservation={selectedReservation} onSave={() => setRefresh(!refresh)} />
+              <ReservationForm 
+                reservation={selectedReservation} 
+                onSave={() => {
+                  setRefresh(!refresh);
+                  setSelectedReservation(null);
+                }}
+                onClose={() => setSelectedReservation(null)}
+              />
             </div>
           )}
         </div>

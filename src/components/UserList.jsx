@@ -73,7 +73,7 @@ const UserList = () => {
       fetchUsers();
     } catch (error) {
       console.error('Error al eliminar el usuario:',error);
-    };
+    }
   }
 };
 
