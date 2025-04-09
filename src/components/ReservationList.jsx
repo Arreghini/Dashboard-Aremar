@@ -12,19 +12,16 @@ const ReservationList = () => {
     try {
       setLoading(true);
       const token = await getAccessTokenSilently();
-      if (!token) {
-        throw new Error('No se pudo obtener el token de autenticación');
-      }
       const reservationsData = await reservationService.getReservations(token);
       setReservations(reservationsData);
-      setLoading(false);
     } catch (error) {
-      setLoading(false);
       setError(`Error de autenticación: ${error.message}`);
       console.error('Error al cargar las reservas:', error);
+    } finally {
+      setLoading(false);
     }
   };
-
+  
   useEffect(() => {
     fetchReservations();
   }, [getAccessTokenSilently]);

@@ -2,12 +2,15 @@ import axios from 'axios';
 
 const BASE_URL = 'http://localhost:3000/api/reservations';
 
-const getHeaders = (token) => ({
-  headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  }
-});
+const getHeaders = (token) => {
+  console.log('Token recibido:', token);
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  };
+};
 
 const getReservations = async (token) => {    
     const response = await axios.get(BASE_URL, getHeaders(token)); 
