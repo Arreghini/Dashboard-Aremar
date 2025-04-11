@@ -14,6 +14,7 @@ const ReservationList = () => {
       const token = await getAccessTokenSilently();
       const reservationsData = await reservationService.getReservations(token);
       setReservations(reservationsData);
+      console.log('Reservas cargadas:', reservationsData);
     } catch (error) {
       setError(`Error de autenticación: ${error.message}`);
       console.error('Error al cargar las reservas:', error);
