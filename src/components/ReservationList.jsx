@@ -96,29 +96,48 @@ const ReservationList = () => {
       ) : (
         <div className="grid gap-4">
           {reservations.map((reservation) => (
-            <div key={reservation.id} className="border p-4 rounded">
+            <div key={reservation.id} className="border p-4 rounded shadow-md">
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <h3 className="font-semibold">Detalles de la Reserva</h3>
+                  <p>ID: {reservation.id}</p>
+                  <p>Check-in: {new Date(reservation.checkIn).toLocaleDateString()}</p>
+                  <p>Check-out: {new Date(reservation.checkOut).toLocaleDateString()}</p>
+                  <p>Huéspedes: {reservation.numberOfGuests}</p>
+                  <p>Estado: {reservation.status}</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold">Información del Cliente</h3>
+                  <p>Nombre: {reservation.User?.name}</p>
+                  <p>Email: {reservation.User?.email}</p>
+                  <h3 className="font-semibold mt-2">Información de la Habitación</h3>
+                  <p>Habitación ID: {reservation.Room?.id}</p>
+                  <p>Estado de habitación: {reservation.Room?.status}</p>
+                  <p>Tipo: {reservation.Room?.RoomType?.name}</p>
+                </div>
+              </div>
               <div className="flex justify-end space-x-2">
                 <button
                   onClick={() => handleEdit(reservation.id)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                 >
                   Editar
                 </button>
                 <button
                   onClick={() => handleConfirm(reservation.id)}
-                  className="bg-green-500 text-white px-4 py-2 rounded"
+                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
                 >
                   Confirmar
                 </button>
                 <button
                   onClick={() => handleCancel(reservation.id)}
-                  className="bg-yellow-500 text-white px-4 py-2 rounded"
+                  className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={() => handleDelete(reservation.id)}
-                  className="bg-red-500 text-white px-4 py-2 rounded"
+                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
                 >
                   Eliminar
                 </button>
