@@ -25,12 +25,20 @@ const updateReservationByAdmin = async (id, reservationData, token) => {
   const response = await axios.put(`${BASE_URL}/${id}`, reservationData, getHeaders(token));
   return response.data;
 };
-
 const deleteReservation = async (id, token) => {
-  const response = await axios.delete(`${BASE_URL}/${id}`, getHeaders(token));
-  return response.data;
-};
-
+  const response = await axios.delete(`${BASE_URL}/${id}`, {
+         ...getHeaders(token),
+         validateStatus: status => status < 500
+       });
+    
+      if (response.status === 200) {
+        return {
+          success: true,
+          data: response.data,
+          message: 'Reserva eliminada exitosamente'
+           };
+        }
+      };
 // Confirmación automática al recibir pago del usuario
 const confirmReservationAfterPayment = async (id) => {
   const response = await axios.patch(`${BASE_URL}/${id}/confirm`, { status: 'confirmed' });

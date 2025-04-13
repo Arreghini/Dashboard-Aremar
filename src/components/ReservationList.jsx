@@ -27,16 +27,16 @@ const ReservationList = () => {
     fetchReservations();
   }, [getAccessTokenSilently]);
 
-  const handleDelete = async (reservationId) => {
+  const handleDelete = async (id) => {
     try {
-      if (window.confirm('¿Estás seguro de que deseas eliminar esta reservación?')) {
-        const token = await getAccessTokenSilently();
-        await reservationService.deleteReservation(reservationId, token);
-        const updatedReservations = reservations.filter(res => res.id !== reservationId);
-        setReservations(updatedReservations);
+      const token = await getAccessTokenSilently();
+      const result = await reservationService.deleteReservation(id, token);
+      if (result.success) {
+        setReservations(prev => prev.filter(res => res.id !== id));
+        alert('Reserva eliminada exitosamente');
       }
     } catch (error) {
-      console.error('Error al eliminar la reservación:', error);
+      alert(`No se pudo eliminar: ${error.message}`);
     }
   };
 
