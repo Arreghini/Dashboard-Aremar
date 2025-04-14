@@ -25,12 +25,12 @@ const updateReservationByAdmin = async (id, reservationData, token) => {
   const response = await axios.put(`${BASE_URL}/${id}`, reservationData, getHeaders(token));
   return response.data;
 };
+
 const deleteReservation = async (id, token) => {
   const response = await axios.delete(`${BASE_URL}/${id}`, {
          ...getHeaders(token),
          validateStatus: status => status < 500
        });
-    
       if (response.status === 200) {
         return {
           success: true,
@@ -49,15 +49,49 @@ const confirmReservationAfterPayment = async (id) => {
 };
 
 // Métodos de administrador para confirmación y cancelación
-const confirmReservationByAdmin = async (id) => {
-  const response = await axios.patch(`${BASE_URL}/${id}/status`, { status: 'confirmed' });
+const confirmReservationByAdmin = async (id, token) => {
+
+  const response = await axios.patch(`${BASE_URL}/${id}/status`, { status: 'confirmed',
+    ...getHeaders(token),
+   });
   return response.data;
 };
 
-const cancelReservationByAdmin = async (id) => {
-  const response = await axios.patch(`${BASE_URL}/${id}/status`, { status: 'canceled' });
+const cancelReservationByAdmin = async (id, token) => {
+  // Cambia el estado de la reserva a "cancelada"
+  const response = await axios.patch(`${BASE_URL}/${id}/cancel`,
+    {
+      ...getHeaders(token),
+      validateStatus: status => status < 500,
+    }
+  );
   return response.data;
 };
+
+const cancelReservationWithRefund = async (id, token) => {
+  // Cambia el estado de la reserva a "cancelada" y procesa el reembolso
+  const response = await axios.patch(
+    `${BASE_URL}/${id}/cancel-with-refund`, 
+    {
+      ...getHeaders(token),
+      validateStatus: status => status < 500,
+    }
+  );
+
+  if (response.status === 200) {
+    return {
+      success: true,
+      data: response.data,
+      message: 'Reserva cancelada y reembolso procesado',
+    };
+  }
+
+  return {
+    success: false,
+    message: response.data?.message || 'No se pudo cancelar la reserva',
+  };
+};
+
 
 export default {
   createReservation,
@@ -67,4 +101,5 @@ export default {
   deleteReservation,
   confirmReservationByAdmin,
   cancelReservationByAdmin,
+  cancelReservationWithRefund,
 };

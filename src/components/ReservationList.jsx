@@ -75,13 +75,26 @@ const ReservationList = () => {
 
   const handleCancel = async (reservationId) => {
     try {
-      await reservationService.cancelReservation(reservationId);
+      const token = await getAccessTokenSilently();
+      await reservationService.cancelReservationByAdmin(reservationId, token);
       const updatedReservations = reservations.map(res =>
         res.id === reservationId ? { ...res, status: 'cancelled' } : res
       );
       setReservations(updatedReservations);
     } catch (error) {
       console.error('Error al cancelar la reservación:', error);
+    }
+  };
+  const handleCancelWithRefund = async (reservationId) => {
+    try {
+      const token = await getAccessTokenSilently();
+      await reservationService.cancelReservationWithRefund(reservationId, token);
+      const updatedReservations = reservations.map(res =>
+        res.id === reservationId ? { ...res, status: 'cancelled' } : res
+      );
+      setReservations(updatedReservations);
+    } catch (error) {
+      console.error('Error al cancelar la reservación con reembolso:', error);
     }
   };
 
@@ -118,23 +131,45 @@ const ReservationList = () => {
                 </div>
               </div>
               <div className="flex justify-end space-x-2">
-                <button
+              <button
                   onClick={() => handleEdit(reservation.id)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                  disabled={reservation.status === 'cancelled'}
+                  className={`text-white px-4 py-2 rounded 
+                    ${reservation.status === 'confirmed' || reservation.status === 'cancelled' 
+                      ? 'bg-gray-400 cursor-not-allowed' 
+                      : 'bg-yellow-500 hover:bg-yellow-600'}`}
                 >
                   Editar
                 </button>
                 <button
                   onClick={() => handleConfirm(reservation.id)}
-                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                  disabled={['confirmed', 'cancelled'].includes(reservation.status.trim())}
+                  className={`text-white px-4 py-2 rounded 
+                    ${['confirmed', 'cancelled'].includes(reservation.status.trim())
+                      ? 'bg-gray-400 cursor-not-allowed' 
+                      : 'bg-green-500 hover:bg-green-600'}`}
                 >
                   Confirmar
                 </button>
                 <button
                   onClick={() => handleCancel(reservation.id)}
-                  className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+                  disabled={['cancelled', 'pending'].includes(reservation.status.trim())}
+                  className={`text-white px-4 py-2 rounded 
+                    ${['cancelled', 'pending'].includes(reservation.status.trim())
+                      ? 'bg-gray-400 cursor-not-allowed' 
+                      : 'bg-red-500 hover:bg-red-600'}`}
                 >
                   Cancelar
+                </button>
+                <button
+                  onClick={() => handleCancelWithRefund(reservation.id)}
+                  disabled={['cancelled', 'pending'].includes(reservation.status.trim())}
+                  className={`text-white px-4 py-2 rounded 
+                    ${['cancelled', 'pending'].includes(reservation.status.trim())
+                      ? 'bg-gray-400 cursor-not-allowed' 
+                      : 'bg-orange-500 hover:bg-orange-600'}`}
+                >
+                  Cancelar con reembolso
                 </button>
                 <button
                   onClick={() => handleDelete(reservation.id)}
