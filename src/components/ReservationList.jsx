@@ -63,15 +63,29 @@ const ReservationList = () => {
 
   const handleConfirm = async (reservationId) => {
     try {
-      await reservationService.confirmReservation(reservationId);
+      const token = await getAccessTokenSilently();
+  
+      const confirmAction = window.confirm('¿Estás seguro de que deseas confirmar esta reservación?');
+      if (!confirmAction) return;
+  
+      const response = await reservationService.confirmReservationByAdmin(reservationId, token);
+  
+      if (!response) {
+        setError('No se pudo confirmar la reservación');
+        return;
+      }
+  
       const updatedReservations = reservations.map(res =>
         res.id === reservationId ? { ...res, status: 'confirmed' } : res
       );
+  
       setReservations(updatedReservations);
     } catch (error) {
       console.error('Error al confirmar la reservación:', error);
+      setError('Ocurrió un error al confirmar la reservación');
     }
   };
+ 
 
   const handleCancel = async (reservationId) => {
     try {
@@ -88,16 +102,23 @@ const ReservationList = () => {
   const handleCancelWithRefund = async (reservationId) => {
     try {
       const token = await getAccessTokenSilently();
-      await reservationService.cancelReservationWithRefund(reservationId, token);
+      const response = await reservationService.cancelReservationWithRefund(reservationId, token);
+      
       const updatedReservations = reservations.map(res =>
-        res.id === reservationId ? { ...res, status: 'cancelled' } : res
+        res.id === reservationId ? { 
+          ...res, 
+          status: 'cancelled',
+          refundAmount: response.refundAmount 
+        } : res
       );
+      console.log('Reserva actualizada:', updatedReservations);
+      
       setReservations(updatedReservations);
+      
     } catch (error) {
       console.error('Error al cancelar la reservación con reembolso:', error);
     }
-  };
-
+};
   return (
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">Lista de Reservas</h2>
@@ -128,6 +149,12 @@ const ReservationList = () => {
                   <p>Habitación ID: {reservation.Room?.id}</p>
                   <p>Estado de habitación: {reservation.Room?.status}</p>
                   <p>Tipo: {reservation.Room?.RoomType?.name}</p>
+                  {reservation.status === 'cancelled' && reservation.refundAmount &&
+                    <p className="text-sm text-green-600 font-semibold">
+                      Reembolso: ${reservation.refundAmount.toFixed(2)}
+                    </p>
+                  }
+
                 </div>
               </div>
               <div className="flex justify-end space-x-2">
@@ -185,5 +212,4 @@ const ReservationList = () => {
     </div>
   );
 };
-
 export default ReservationList;

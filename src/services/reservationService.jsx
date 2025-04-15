@@ -50,31 +50,12 @@ const confirmReservationAfterPayment = async (id) => {
 
 // Métodos de administrador para confirmación y cancelación
 const confirmReservationByAdmin = async (id, token) => {
-
-  const response = await axios.patch(`${BASE_URL}/${id}/status`, { status: 'confirmed',
-    ...getHeaders(token),
-   });
-  return response.data;
-};
-
-const cancelReservationByAdmin = async (id, token) => {
-  // Cambia el estado de la reserva a "cancelada"
-  const response = await axios.patch(`${BASE_URL}/${id}/cancel`,
-    {
-      ...getHeaders(token),
-      validateStatus: status => status < 500,
-    }
-  );
-  return response.data;
-};
-
-const cancelReservationWithRefund = async (id, token) => {
-  // Cambia el estado de la reserva a "cancelada" y procesa el reembolso
   const response = await axios.patch(
-    `${BASE_URL}/${id}/cancel-with-refund`, 
+    `${BASE_URL}/${id}/status`,
+    {}, // cuerpo vacío
     {
       ...getHeaders(token),
-      validateStatus: status => status < 500,
+      validateStatus: status => status < 500
     }
   );
 
@@ -82,10 +63,48 @@ const cancelReservationWithRefund = async (id, token) => {
     return {
       success: true,
       data: response.data,
-      message: 'Reserva cancelada y reembolso procesado',
+      message: 'Reserva confirmada exitosamente',
     };
   }
 
+  return response.data;
+};
+
+const cancelReservationByAdmin = async (id, token) => {
+  const response = await axios.patch(
+    `${BASE_URL}/${id}/cancel`,
+    { status: 'canceled' }, // cuerpo de la petición
+    {
+      ...getHeaders(token), // headers van como tercer argumento
+      validateStatus: (status) => status < 500,
+    }
+  );
+  if (response.status === 200) {
+    return {
+      success: true,
+      data: response.data,
+      message: 'Reserva cancelada exitosamente',
+    };
+  }
+  return response.data;
+};
+const cancelReservationWithRefund = async (id, token) => {
+  // Cambia el estado de la reserva a "cancelada" y procesa el reembolso
+  const response = await axios.patch(
+    `${BASE_URL}/${id}/cancel-with-refund`, 
+    { status: 'canceled' }, // cuerpo de la petición
+    {
+      ...getHeaders(token),
+      validateStatus: status => status < 500,
+    }
+  );
+  if (response.status === 200) {
+    return {
+      success: true,
+      data: response.data,
+      message: 'Reserva cancelada y reembolso procesado',
+    };
+  }
   return {
     success: false,
     message: response.data?.message || 'No se pudo cancelar la reserva',
