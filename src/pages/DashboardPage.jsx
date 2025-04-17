@@ -22,6 +22,7 @@ const DashboardPage = () => {
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [refresh, setRefresh] = useState(false);
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
+  const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
 
   const { user } = useAuth0();
 
@@ -110,7 +111,15 @@ const DashboardPage = () => {
       </button>
       {showRooms && (
         <div className="w-full">
-          <RoomList key={refresh} onEdit={setSelectedRoom} onDelete={() => setRefresh(!refresh)} />
+          <RoomList 
+            key={refresh}
+            onEdit={(room) => {
+              setSelectedRoom(room);
+              setIsRoomModalOpen(true);
+            }} 
+            onDelete={() => setRefresh(!refresh)} 
+          />
+
         </div>
       )}
     </div>
@@ -130,29 +139,45 @@ const DashboardPage = () => {
         <div className="mb-8">
           <h2 className="font-bold text-lg mb-2 text-left uppercase">RESERVAS</h2>
           <div className="flex flex-col items-start">
-            <button className="mb-2" onClick={() => setSelectedReservation({})}>Crear Reserva
+            <button className="mb-2" onClick={() => {
+              setSelectedReservation({});
+              setIsReservationModalOpen(true);
+            }}>Crear Reserva
             </button>
+            <Modal 
+                isOpen={isReservationModalOpen} 
+                onClose={() => {
+                  setIsReservationModalOpen(false);
+                  setSelectedReservation(null);
+                }}
+                width="w-11/12 md:w-2/3 lg:w-1/2 xl:w-1/3"
+              >
+              <ReservationForm
+                reservation={selectedReservation || {}}
+                onSave={() => {
+                  setRefresh(!refresh);
+                  setIsReservationModalOpen(false);
+                  setSelectedReservation(null);
+                }}
+              />
+            </Modal>
+
             <button onClick={() => setShowReservations(!showReservations)} className="mb-2">
             {showReservations ? 'Ocultar Lista de Reservas' : 'Lista de Reservas'}
           </button>
             {showReservations && (
               <div className="w-full">
-                <ReservationList key={refresh} onEdit={setSelectedReservation} onDelete={() => setRefresh(!refresh)} />
+               <ReservationList 
+                  key={refresh} 
+                  onEdit={(reservation) => {
+                    setSelectedReservation(reservation);
+                    setIsReservationModalOpen(true);
+                  }} 
+                  onDelete={() => setRefresh(!refresh)} 
+                />
               </div>
             )}
           </div>
-          {selectedReservation && (
-            <div className="mt-4">
-              <ReservationForm 
-                reservation={selectedReservation} 
-                onSave={() => {
-                  setRefresh(!refresh);
-                  setSelectedReservation(null);
-                }}
-                onClose={() => setSelectedReservation(null)}
-              />
-            </div>
-          )}
         </div>
       </div>
     </div>

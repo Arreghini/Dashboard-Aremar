@@ -11,7 +11,6 @@ const getHeaders = (token) => {
     },
   };
 };
-
 const userService = { 
   getUser: async (id,token) => {
   try {

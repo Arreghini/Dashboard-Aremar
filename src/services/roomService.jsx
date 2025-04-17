@@ -12,17 +12,17 @@ const getHeaders = (token) => ({
 const roomService = {
   getRoom: async (id, token) => {
     try {
-        const response = await axios.get(`${BASE_URL}/${id}`, getHeaders(token));
-        return response.data;
+      const response = await axios.get(`${BASE_URL}/${id}`, getHeaders(token));
+      return response.data;
     } catch (error) {
-        console.error('Error al obtener la habitación:', error);
-        throw error;
+      console.error('Error al obtener la habitación:', error);
+      throw error;
     }
-},
+  },
+
   getRooms: async (token) => {
     try {
       const response = await axios.get(`${BASE_URL}/all`, getHeaders(token));
-      console.log('Respuesta del servidor:', response.data);
       if (Array.isArray(response.data)) {
         return response.data;
       } else {
@@ -35,52 +35,54 @@ const roomService = {
     }
   },
 
+  getRoomsTypes: async (token) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/types`, getHeaders(token));
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener los tipos de habitaciones:', error);
+      throw error;
+    }
+  },
+
   createRoom: async (roomData, token) => {
     const roomPayload = {
-        id: roomData.id,
-        description: roomData.description,
-        roomTypeId: roomData.roomTypeId,
-        roomDetailId: roomData.roomDetailId,
-        price: Number(roomData.price), // Usamos el precio modificado
-        status: roomData.status,
-        photoRoom: Array.isArray(roomData.photoRoom) ? roomData.photoRoom : []
+      id: roomData.id,
+      description: roomData.description,
+      roomTypeId: roomData.roomTypeId,
+      roomDetailId: roomData.roomDetailId,
+      price: Number(roomData.price),
+      status: roomData.status,
+      photoRoom: Array.isArray(roomData.photoRoom) ? roomData.photoRoom : [],
     };
 
     try {
-        const response = await axios.post(
-            `${BASE_URL}`,
-            roomPayload,
-            getHeaders(token)
-        );
-        return response.data;
+      const response = await axios.post(`${BASE_URL}`, roomPayload, getHeaders(token));
+      return response.data;
     } catch (error) {
-        console.error('Error en createRoom:', error);
-        throw error;
+      console.error('Error en createRoom:', error);
+      throw error;
     }
-},
+  },
 
-updateRoom: async (id, roomData, token) => {
-  const roomPayload = {
-    description: roomData.description,
-    roomTypeId: roomData.roomTypeId,
-    detailRoomId: roomData.detailRoomId || roomData.roomDetailId,
-    price: Number(roomData.price), // Usamos el precio modificado
-    status: roomData.status,
-    photoRoom: Array.isArray(roomData.photoRoom) ? roomData.photoRoom : []
-  };
+  updateRoom: async (id, roomData, token) => {
+    const roomPayload = {
+      description: roomData.description,
+      roomTypeId: roomData.roomTypeId,
+      detailRoomId: roomData.detailRoomId || roomData.roomDetailId,
+      price: Number(roomData.price),
+      status: roomData.status,
+      photoRoom: Array.isArray(roomData.photoRoom) ? roomData.photoRoom : [],
+    };
 
-  try {
-    const response = await axios.patch(
-      `${BASE_URL}/${id}`, 
-      roomPayload, 
-      getHeaders(token)
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Error en la actualización:', error);
-    throw error;
-  }
-},
+    try {
+      const response = await axios.patch(`${BASE_URL}/${id}`, roomPayload, getHeaders(token));
+      return response.data;
+    } catch (error) {
+      console.error('Error en la actualización:', error);
+      throw error;
+    }
+  },
 
   deleteRoom: async (id, token) => {
     try {
@@ -91,6 +93,32 @@ updateRoom: async (id, roomData, token) => {
       throw error;
     }
   },
-};
+  getRoomTypes: async (token) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/types`, getHeaders(token));
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener los tipos de habitaciones:', error);
+      throw error;
+    }
+  },
 
+  getAvailableRoomsByType: async (token, roomTypeId, checkInDate, checkOutDate, numberOfGuests) => {
+    const params = {
+      roomType: roomTypeId,
+      checkInDate: new Date(checkInDate).toISOString().split('T')[0],
+      checkOutDate: new Date(checkOutDate).toISOString().split('T')[0],
+      numberOfGuests: parseInt(numberOfGuests, 10),
+    };
+    try {
+      const response = await axios.get(`${BASE_URL}/available`, getHeaders(token), {
+        params,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener habitaciones disponibles:', error);
+      throw error;
+    }
+  },
+};
 export default roomService;

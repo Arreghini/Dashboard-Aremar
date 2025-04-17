@@ -12,17 +12,29 @@ const getHeaders = (token) => {
 };
 
 const getReservations = async (token) => {    
-    const response = await axios.get(BASE_URL, getHeaders(token)); 
+    const response = await axios.get(`${BASE_URL}`, getHeaders(token)); 
     return Array.isArray(response.data) ? response.data : [];
 };
 
 const createReservation = async (reservationData, token) => {
-    const response = await axios.post(BASE_URL, reservationData, getHeaders(token));
+    const response = await axios.post(`${BASE_URL}`, 
+      reservationData, 
+      getHeaders(token));
     return response.data;     
 };
-
 const updateReservationByAdmin = async (id, reservationData, token) => {
-  const response = await axios.put(`${BASE_URL}/${id}`, reservationData, getHeaders(token));
+  const response = await axios.put(`${BASE_URL}/${id}`, {
+    reservationData, 
+    ...getHeaders(token),
+    validateStatus: status => status < 500
+  });
+  if (response.status === 200) {
+    return {
+      success: true,
+      data: response.data,
+      message: 'Reserva actualizada exitosamente',
+    };
+  }
   return response.data;
 };
 
