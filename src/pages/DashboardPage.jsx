@@ -134,7 +134,6 @@ const DashboardPage = () => {
       />
     </Modal>
   </div>
-
         {/* Sección de Reservas */}
         <div className="mb-8">
           <h2 className="font-bold text-lg mb-2 text-left uppercase">RESERVAS</h2>
@@ -145,15 +144,19 @@ const DashboardPage = () => {
             }}>Crear Reserva
             </button>
             <Modal 
-                isOpen={isReservationModalOpen} 
+              isOpen={isReservationModalOpen} 
+              onClose={() => {
+                setIsReservationModalOpen(false);
+                setSelectedReservation(null);
+              }}
+              width="w-11/12 md:w-2/3 lg:w-1/2 xl:w-1/3"
+            >
+              <ReservationForm
+                reservation={selectedReservation || {}}
                 onClose={() => {
                   setIsReservationModalOpen(false);
                   setSelectedReservation(null);
                 }}
-                width="w-11/12 md:w-2/3 lg:w-1/2 xl:w-1/3"
-              >
-              <ReservationForm
-                reservation={selectedReservation || {}}
                 onSave={() => {
                   setRefresh(!refresh);
                   setIsReservationModalOpen(false);
@@ -161,7 +164,6 @@ const DashboardPage = () => {
                 }}
               />
             </Modal>
-
             <button onClick={() => setShowReservations(!showReservations)} className="mb-2">
             {showReservations ? 'Ocultar Lista de Reservas' : 'Lista de Reservas'}
           </button>

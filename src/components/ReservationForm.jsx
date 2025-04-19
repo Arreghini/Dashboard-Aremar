@@ -7,21 +7,22 @@ import { useAuth0 } from '@auth0/auth0-react';
 const ReservationForm = ({ onClose, onSave }) => {
   const [users, setUsers] = useState([]);
   const [roomTypes, setRoomTypes] = useState([]);
+  const [loadingRooms, setLoadingRooms] = useState(false);
   const [availableRooms, setAvailableRooms] = useState([]);
   const [formData, setFormData] = useState({
     userId: '',
     roomId: '',
     roomTypeId: '',
-    checkInDate: '',
-    checkOutDate: '',
+    checkIn: '',
+    checkOut: '',
     numberOfGuests: 1,
   });
 
   const { getAccessTokenSilently, user } = useAuth0();
-  const userRole = user['https://aremar.com/roles']?.[0];
+  const userRole = user?.['https://aremar.com/roles']?.[0];
   const isAdmin = userRole === 'admin';
 
-  // Traer usuarios si es admin
+  // 🧠 Traer usuarios si es admin
   useEffect(() => {
     const fetchUsers = async () => {
       if (!isAdmin) return;
@@ -33,11 +34,10 @@ const ReservationForm = ({ onClose, onSave }) => {
         console.error('Error al obtener los usuarios:', error);
       }
     };
-
     fetchUsers();
   }, [getAccessTokenSilently, isAdmin]);
 
-  // Traer tipos de habitación
+  // 🏠 Traer tipos de habitación
   useEffect(() => {
     const fetchRoomTypes = async () => {
       try {
@@ -51,67 +51,89 @@ const ReservationForm = ({ onClose, onSave }) => {
     fetchRoomTypes();
   }, [getAccessTokenSilently]);
 
-  // useEffect para traer habitaciones disponibles cuando se completa toda la info relevante
+  // 🧼 Limpiar habitación si cambian los datos base
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, roomId: '' }));
+  }, [formData.roomTypeId, formData.checkIn, formData.checkOut, formData.numberOfGuests]);
+
+  // 📆 Traer habitaciones disponibles
   useEffect(() => {
     const fetchAvailableRooms = async () => {
-      const { roomTypeId, checkInDate, checkOutDate, numberOfGuests } = formData;
-  
-      // Validación: no hacer nada si falta algún campo
-      if (!roomTypeId || !checkInDate || !checkOutDate || !numberOfGuests) {
-        setAvailableRooms([]); // opcional: limpiar lista previa si se cambia algo
+      const { roomTypeId, checkIn, checkOut, numberOfGuests } = formData;
+
+      if (!roomTypeId || !checkIn || !checkOut || !numberOfGuests) {
+        setAvailableRooms([]);
         return;
       }
-  
+
+      setLoadingRooms(true);
+
       try {
         const token = await getAccessTokenSilently();
         const data = await roomService.getAvailableRoomsByType(
           token,
           roomTypeId,
-          checkInDate,
-          checkOutDate,
+          checkIn,
+          checkOut,
           numberOfGuests
         );
-        setAvailableRooms(data);
+        setAvailableRooms(data.rooms || []);
       } catch (error) {
-        console.error('Error al obtener habitaciones disponibles:', error);
         setAvailableRooms([]);
+      } finally {
+        setLoadingRooms(false);
       }
     };
-  
+
     fetchAvailableRooms();
-  }, [formData.roomTypeId, formData.checkInDate, formData.checkOutDate, formData.numberOfGuests]);
-  
+  }, [formData.roomTypeId, formData.checkIn, formData.checkOut, formData.numberOfGuests]);
+
+  // 🧾 Cambios en los inputs
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.name === 'numberOfGuests'
-        ? parseInt(e.target.value)
-        : e.target.value,
-    });
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: name === 'numberOfGuests' ? parseInt(value) : value,
+    }));
   };
 
+  // 💾 Enviar reserva
   const handleSubmit = async (e) => {
     e.preventDefault();
+  
+    if (new Date(formData.checkIn) >= new Date(formData.checkOut)) {
+      alert('La fecha de egreso debe ser posterior a la de ingreso.');
+      return;
+    }
+  
     try {
       const token = await getAccessTokenSilently();
+  
+      // Convertir a formato ISO si es necesario
       const payload = {
         ...formData,
         userId: isAdmin ? formData.userId : user.sub,
+        checkIn: new Date(formData.checkIn).toISOString(),
+        checkOut: new Date(formData.checkOut).toISOString(),
       };
+  
+      console.log("Payload a enviar:", payload);
       await reservationService.createReservation(payload, token);
       onSave();
       onClose();
+      alert('Reserva creada con éxito.');
     } catch (error) {
       console.error('Error al crear la reserva:', error);
       alert('Hubo un problema al guardar la reserva.');
     }
   };
-
+  
   return (
     <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md mx-auto">
       <h2 className="text-2xl font-semibold mb-4 text-center">Crear Nueva Reserva</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        {isAdmin && (
+
+        {isAdmin ? (
           <div>
             <label className="block text-sm font-medium mb-1">Usuario</label>
             <select
@@ -127,36 +149,34 @@ const ReservationForm = ({ onClose, onSave }) => {
               ))}
             </select>
           </div>
+        ) : (
+          <div className="text-sm text-gray-700">
+            Reservando como: <span className="font-semibold">{user?.name}</span>
+          </div>
         )}
 
         <div>
-        {availableRooms.length > 0 && (
-        <div>
-          <label className="block text-sm font-medium mb-1">Habitación Disponible</label>
+          <label className="block text-sm font-medium mb-1">Tipo de Habitación</label>
           <select
-            name="roomId"
-            value={formData.roomId}
+            name="roomTypeId"
+            value={formData.roomTypeId}
             onChange={handleChange}
             required
             className="w-full border rounded px-3 py-2"
           >
-            <option value="">Seleccione una habitación</option>
-            {availableRooms.map((room) => (
-              <option key={room.id} value={room.id}>
-                {room.id} - {room.description}
-              </option>
+            <option value="">Seleccione un tipo</option>
+            {roomTypes.map((type) => (
+              <option key={type.id} value={type.id}>{type.name}</option>
             ))}
           </select>
-        </div>
-      )}
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-1">Fecha de Ingreso</label>
           <input
             type="date"
-            name="checkInDate"
-            value={formData.checkInDate}
+            name="checkIn"
+            value={formData.checkIn}
             onChange={handleChange}
             required
             className="w-full border rounded px-3 py-2"
@@ -167,10 +187,11 @@ const ReservationForm = ({ onClose, onSave }) => {
           <label className="block text-sm font-medium mb-1">Fecha de Egreso</label>
           <input
             type="date"
-            name="checkOutDate"
-            value={formData.checkOutDate}
+            name="checkOut"
+            value={formData.checkOut}
             onChange={handleChange}
             required
+            min={formData.checkIn}
             className="w-full border rounded px-3 py-2"
           />
         </div>
@@ -189,6 +210,34 @@ const ReservationForm = ({ onClose, onSave }) => {
           />
         </div>
 
+        {formData.roomTypeId && formData.checkIn && formData.checkOut && (
+          <div>
+            <label className="block text-sm font-medium mb-1">Habitación Disponible</label>
+            <select
+              name="roomId"
+              value={formData.roomId}
+              onChange={handleChange}
+              required
+              className="w-full border rounded px-3 py-2"
+            >
+              <option value="">Seleccione una habitación</option>
+              {availableRooms.map((room) => (
+                <option key={room.id} value={room.id}>
+                  {room.id} - {room.description}
+                </option>
+              ))}
+            </select>
+
+            {!loadingRooms && availableRooms.length === 0 && (
+              
+              console.log("🚀 habitaciones disponibles", availableRooms),
+              <p className="text-sm text-red-500 mt-2">
+                No hay habitaciones disponibles para los datos seleccionados.
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="flex justify-end space-x-2 pt-4">
           <button
             type="button"
@@ -199,7 +248,8 @@ const ReservationForm = ({ onClose, onSave }) => {
           </button>
           <button
             type="submit"
-            className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+            className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+            disabled={!formData.roomId}
           >
             Guardar
           </button>

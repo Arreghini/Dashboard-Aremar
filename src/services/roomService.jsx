@@ -110,8 +110,10 @@ const roomService = {
       checkOutDate: new Date(checkOutDate).toISOString().split('T')[0],
       numberOfGuests: parseInt(numberOfGuests, 10),
     };
+  
     try {
-      const response = await axios.get(`${BASE_URL}/available`, getHeaders(token), {
+      const response = await axios.get(`${BASE_URL}/available`, {
+        ...getHeaders(token),
         params,
       });
       return response.data;
@@ -119,6 +121,6 @@ const roomService = {
       console.error('Error al obtener habitaciones disponibles:', error);
       throw error;
     }
-  },
+  }  
 };
 export default roomService;
