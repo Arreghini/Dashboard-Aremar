@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { useAuth0 } from '@auth0/auth0-react';
 import roomService from '../services/roomService';

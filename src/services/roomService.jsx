@@ -37,7 +37,7 @@ const roomService = {
 
   getRoomsTypes: async (token) => {
     try {
-      const response = await axios.get(`${BASE_URL}/types`, getHeaders(token));
+      const response = await axios.get(`${BASE_URL}/roomType`, getHeaders(token));
       return response.data;
     } catch (error) {
       console.error('Error al obtener los tipos de habitaciones:', error);
@@ -95,7 +95,7 @@ const roomService = {
   },
   getRoomTypes: async (token) => {
     try {
-      const response = await axios.get(`${BASE_URL}/types`, getHeaders(token));
+      const response = await axios.get(`${BASE_URL}/roomType`, getHeaders(token));
       return response.data;
     } catch (error) {
       console.error('Error al obtener los tipos de habitaciones:', error);

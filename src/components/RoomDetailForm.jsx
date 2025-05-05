@@ -138,7 +138,7 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
       {Object.entries(detail).map(([key, value]) => {
         if (key !== 'id' && value === true && detailNames[key]) {
           return (
-            <span key={key} className="bg-blue-100 px-2 py-1 rounded">
+            <span key={`${detail.id}-${key}`} className="bg-blue-100 px-2 py-1 rounded">
               {detailNames[key]}
             </span>
           );
@@ -158,6 +158,6 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
 ))}
     </div>
   );
-};
+}
 
 export default RoomDetailForm;

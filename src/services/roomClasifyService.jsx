@@ -44,7 +44,7 @@ const roomClasifyService = {
       }
 
       const data = {
-        name: roomTypeData.name,
+        roomType: roomTypeData.roomType,
         photos: roomTypeData.photos,
         simpleBeds: Number(roomTypeData.simpleBeds),
         trundleBeds: Number(roomTypeData.trundleBeds),

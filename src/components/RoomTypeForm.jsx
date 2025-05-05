@@ -5,7 +5,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 const RoomTypeForm = ({ onRoomTypeCreated }) => {
   const { getAccessTokenSilently } = useAuth0();
   const [roomTypeData, setRoomTypeData] = useState({
-    name: '',
+    roomType: '',
     photos: [],
     simpleBeds: '', 
     trundleBeds: '',
@@ -37,9 +37,8 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
     try {
       const token = await getAccessTokenSilently();
   
-      // Aseguramos que el precio sea un número válido
       const roomTypePayload = {
-        name: roomTypeData.name,
+        roomType: roomTypeData.roomType,
         photos: Array.isArray(roomTypeData.photos) ? roomTypeData.photos : [],
         simpleBeds: Number(roomTypeData.simpleBeds || 0),
         trundleBeds: Number(roomTypeData.trundleBeds || 0),
@@ -65,7 +64,7 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
   
       // Resetear el formulario
       setRoomTypeData({
-        name: '',
+        roomType: '',
         photos: [],
         simpleBeds: '',
         trundleBeds: '',
@@ -96,7 +95,7 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
       await loadRoomTypes(token);
       setSuccessMessage('Tipo de habitación eliminado con éxito');
       setRoomTypeData({
-        name: '',
+        roomType: '',
         photos: [],
         simpleBeds: '',
         trundleBeds: '',
@@ -106,7 +105,7 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
       });
       setRoomTypeId(null);
       setError('');
-      loadRoomTypes(token);
+      await loadRoomTypes(token);
       if (onRoomTypeCreated) onRoomTypeCreated();
     } catch (error) {
       setError(`Error al eliminar: ${error.response?.status}`);
@@ -116,7 +115,7 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
   const handleEdit = (id, roomType) => {
     setRoomTypeId(id);
     setRoomTypeData({
-      name: roomType.name,
+      roomType: roomType.roomType,
       photos: roomType.photos || [],
       simpleBeds: roomType.simpleBeds?.toString() || '0',
       trundleBeds: roomType.trundleBeds?.toString() || '0',
@@ -144,8 +143,8 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
       <form onSubmit={handleSubmit}>
         <input
           type="text"
-          value={roomTypeData.name}
-          onChange={(e) => setRoomTypeData({ ...roomTypeData, name: e.target.value })}
+          value={roomTypeData.roomType}
+          onChange={(e) => setRoomTypeData({ ...roomTypeData, roomType: e.target.value })}
           placeholder="Nombre del tipo de habitación"
           required
           className="border border-gray-300 p-2 w-full mb-2"
@@ -199,7 +198,7 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
       <ul className="mt-4">
         {roomTypes.map((item) => (
           <li key={item.id} className="flex justify-between items-center border-b border-gray-300 p-2">
-            <span>{item.name}</span>
+            <span>{item.roomType}</span>
             <div>
               <button onClick={() => handleEdit(item.id, item)} className="text-blue-500 mr-2">Editar</button>
               <button onClick={() => handleDelete(item.id)} className="text-red-500">Eliminar</button>
