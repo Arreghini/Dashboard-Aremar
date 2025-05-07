@@ -5,7 +5,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 const RoomTypeForm = ({ onRoomTypeCreated }) => {
   const { getAccessTokenSilently } = useAuth0();
   const [roomTypeData, setRoomTypeData] = useState({
-    roomType: '',
+    name: '',
     photos: [],
     simpleBeds: '', 
     trundleBeds: '',
@@ -33,12 +33,14 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+    setError('');
+    setSuccessMessage('');
+
     try {
       const token = await getAccessTokenSilently();
-  
+
       const roomTypePayload = {
-        roomType: roomTypeData.roomType,
+        name: roomTypeData.name,
         photos: Array.isArray(roomTypeData.photos) ? roomTypeData.photos : [],
         simpleBeds: Number(roomTypeData.simpleBeds || 0),
         trundleBeds: Number(roomTypeData.trundleBeds || 0),
@@ -46,25 +48,23 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
         windows: Number(roomTypeData.windows || 0),
         price: Number(roomTypeData.price || 0),
       };
-  
-      // Validación del precio
+
       if (!roomTypePayload.price || roomTypePayload.price <= 0) {
         setError('El precio es requerido y debe ser mayor que 0');
         return;
       }
-  
+
       if (roomTypeId) {
         await roomClasifyService.updateRoomType(roomTypeId, roomTypePayload, token);
+        setSuccessMessage('Tipo de habitación actualizado con éxito');
       } else {
         await roomClasifyService.createRoomType(roomTypePayload, token);
+        setSuccessMessage('Tipo de habitación creado con éxito');
       }
-  
-      // Mensaje de éxito
-      setSuccessMessage('Tipo de habitación creado con éxito');
-  
-      // Resetear el formulario
+
+      //Resetear formulario solo después de terminar
       setRoomTypeData({
-        roomType: '',
+        name: '',
         photos: [],
         simpleBeds: '',
         trundleBeds: '',
@@ -73,29 +73,28 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
         price: '',
       });
       setRoomTypeId(null);
-      setError('');
-      loadRoomTypes(token);
-  
+
+      await loadRoomTypes(token);
+
       if (onRoomTypeCreated) onRoomTypeCreated();
     } catch (error) {
       console.error('Error al guardar el tipo de habitación:', error);
       setError('Error al guardar el tipo de habitación');
     }
-  };  
-
-  const handleDelete = async (id) => {
-    if (!id) {
+  };
+  
+  const handleDelete = async (roomTypeId) => {
+    if (!roomTypeId) {
       setError('ID no válido');
       return;
     }
     
     try {
       const token = await getAccessTokenSilently();
-      await roomClasifyService.deleteRoomType(id, token);
-      await loadRoomTypes(token);
+      await roomClasifyService.deleteRoomType(roomTypeId, token);
       setSuccessMessage('Tipo de habitación eliminado con éxito');
       setRoomTypeData({
-        roomType: '',
+        name: '',
         photos: [],
         simpleBeds: '',
         trundleBeds: '',
@@ -111,20 +110,19 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
       setError(`Error al eliminar: ${error.response?.status}`);
     }
   };
-  
-  const handleEdit = (id, roomType) => {
-    setRoomTypeId(id);
+  const handleEdit = (roomTypeId, roomTypeData) => {
+    setRoomTypeId(roomTypeId); // Actualiza el ID del tipo de habitación
     setRoomTypeData({
-      roomType: roomType.roomType,
-      photos: roomType.photos || [],
-      simpleBeds: roomType.simpleBeds?.toString() || '0',
-      trundleBeds: roomType.trundleBeds?.toString() || '0',
-      kingBeds: roomType.kingBeds?.toString() || '0',
-      windows: roomType.windows?.toString() || '0',
-      price: roomType.price?.toString() || '0',
+      name: roomTypeData.name || '',
+      photos: roomTypeData.photos || [],
+      simpleBeds: roomTypeData.simpleBeds?.toString() || '',
+      trundleBeds: roomTypeData.trundleBeds?.toString() || '',
+      kingBeds: roomTypeData.kingBeds?.toString() || '',
+      windows: roomTypeData.windows?.toString() || '',
+      price: roomTypeData.price?.toString() || '',
     });
   };
-
+  
   const loadRoomTypes = async (token) => {
     try {
       const fetchedRoomTypes = await roomClasifyService.getRoomType(token);
@@ -137,14 +135,16 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
 
   return (
     <div className="p-4 border border-gray-300 rounded">
-      <h1 className="text-lg font-bold mb-4">{roomTypeId ? 'Actualizar' : 'Crear'} Tipo de Habitación</h1>
+      <h1 className="text-lg font-bold mb-4">
+        {roomTypeId ? 'Actualizar Tipo de Habitación' : 'Crear Tipo de Habitación'}
+      </h1>
       {error && <p className="text-red-500">{error}</p>}
       {successMessage && <p className="text-green-500">{successMessage}</p>}
       <form onSubmit={handleSubmit}>
         <input
           type="text"
-          value={roomTypeData.roomType}
-          onChange={(e) => setRoomTypeData({ ...roomTypeData, roomType: e.target.value })}
+          value={roomTypeData.name}
+          onChange={(e) => setRoomTypeData({ ...roomTypeData, name: e.target.value })}
           placeholder="Nombre del tipo de habitación"
           required
           className="border border-gray-300 p-2 w-full mb-2"
@@ -196,15 +196,22 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
         </button>
       </form>
       <ul className="mt-4">
-        {roomTypes.map((item) => (
-          <li key={item.id} className="flex justify-between items-center border-b border-gray-300 p-2">
-            <span>{item.roomType}</span>
-            <div>
-              <button onClick={() => handleEdit(item.id, item)} className="text-blue-500 mr-2">Editar</button>
-              <button onClick={() => handleDelete(item.id)} className="text-red-500">Eliminar</button>
-            </div>
-          </li>
-        ))}
+        {roomTypes.map((item) => {
+          console.log('Tipo de habitación:', item); // Depuración
+          return (
+            <li key={item.id} className="flex justify-between items-center border-b border-gray-300 p-2">
+              <span>{item.name}</span>
+              <div>
+                <button onClick={() => handleEdit(item.id, item)} className="text-blue-500 mr-2">
+                  Editar
+                </button>
+                <button onClick={() => handleDelete(item.id)} className="text-red-500">
+                  Eliminar
+                </button>
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

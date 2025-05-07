@@ -72,11 +72,11 @@ const RoomForm = ({ room = {}, onSave }) => {
   const handleRoomTypeChange = (e) => {
     const selectedTypeId = e.target.value;
     const selectedType = roomTypes.find(type => type.id === selectedTypeId);
-    
+
     setFormData({
       ...formData,
       roomTypeId: selectedTypeId,
-      price: selectedType ? selectedType.price : 0
+      price: selectedType ? selectedType.price : 0, // Actualiza el precio automáticamente
     });
   };
   
@@ -84,33 +84,33 @@ const RoomForm = ({ room = {}, onSave }) => {
     e.preventDefault();
 
     const formDataToSend = {
-        id: formData.id,
-        description: formData.description,
-        roomTypeId: formData.roomTypeId,
-        roomDetailId: formData.detailRoomId,
-        price: Number(formData.price), // Aseguramos que sea número
-        status: formData.status || 'available',
-        photoRoom: formData.photoRoom || []
+      id: formData.id,
+      description: formData.description,
+      roomTypeId: formData.roomTypeId,
+      roomDetailId: formData.detailRoomId,
+      price: Number(formData.price), // Asegúrate de que sea un número
+      status: formData.status || 'available',
+      photoRoom: formData.photoRoom || [],
     };
 
-    console.log('Precio a enviar:', formDataToSend.price); // Para verificar el valor
+    console.log('Datos enviados:', formDataToSend); // Verifica el precio aquí
 
     try {
-        const token = await getAccessTokenSilently();
-        if (room.id) {
-            const updatedRoom = await roomService.updateRoom(room.id, formDataToSend, token);
-            console.log('Habitación actualizada:', updatedRoom);
-            setSuccessMessage('Habitación actualizada con éxito');
-        } else {
-            const newRoom = await roomService.createRoom(formDataToSend, token);
-            console.log('Habitación creada:', newRoom);
-            setSuccessMessage('Habitación creada con éxito');
-        }
-        onSave(formDataToSend);
+      const token = await getAccessTokenSilently();
+      if (room.id) {
+        const updatedRoom = await roomService.updateRoom(room.id, formDataToSend, token);
+        console.log('Habitación actualizada:', updatedRoom);
+        setSuccessMessage('Habitación actualizada con éxito');
+      } else {
+        const newRoom = await roomService.createRoom(formDataToSend, token);
+        console.log('Habitación creada:', newRoom);
+        setSuccessMessage('Habitación creada con éxito');
+      }
+      onSave(formDataToSend);
     } catch (error) {
-        setError('Error en la operación: ' + error.response?.data || error.message);
+      setError('Error en la operación: ' + error.response?.data || error.message);
     }
-};
+  };
 
   if (loading) {
     return <p>Cargando tipos y detalles de habitación...</p>;
@@ -145,7 +145,7 @@ const RoomForm = ({ room = {}, onSave }) => {
       </label>
       <label className="block mb-2">
         Tipo de Habitación:
-       <select
+        <select
           name="roomTypeId"
           value={formData.roomTypeId}
           onChange={handleRoomTypeChange}
@@ -155,7 +155,7 @@ const RoomForm = ({ room = {}, onSave }) => {
           <option value="">Selecciona un tipo</option>
           {roomTypes.map((type) => (
             <option key={type.id} value={type.id}>
-              {type.name || type.type || type.description}
+              {type.name}
             </option>
           ))}
         </select>
@@ -189,22 +189,20 @@ const RoomForm = ({ room = {}, onSave }) => {
         </select>
       </label>
       <label className="block mb-2">
-  Precio:
-  <input
-    type="number"
-    name="price"
-    value={formData.price}
-    onChange={handleChange}
-    className="border border-gray-300 p-2 w-full"
-  />
-  {formData.roomTypeId && (
-    <span className="text-sm text-gray-500">
-      Precio sugerido: {
-        roomTypes.find(type => type.id === formData.roomTypeId)?.price || 0
-      }
-    </span>
-  )}
-</label>
+        Precio:
+        <input
+          type="number"
+          name="price"
+          value={formData.price} // El precio ahora proviene del estado
+          readOnly // Deshabilita la edición manual
+          className="border border-gray-300 p-2 w-full bg-gray-100 cursor-not-allowed"
+        />
+        {formData.roomTypeId && (
+          <span className="text-sm text-gray-500">
+            Precio sugerido: {formData.price}
+          </span>
+        )}
+      </label>
       <label className="block mb-2">
         Foto:
         <input
