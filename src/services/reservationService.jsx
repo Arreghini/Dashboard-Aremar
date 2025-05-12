@@ -22,20 +22,29 @@ const createReservation = async (reservationData, token) => {
       getHeaders(token));
     return response.data;     
 };
+
 const updateReservationByAdmin = async (id, reservationData, token) => {
-  const response = await axios.put(`${BASE_URL}/${id}`, {
-    reservationData, 
-    ...getHeaders(token),
-    validateStatus: status => status < 500
-  });
-  if (response.status === 200) {
-    return {
-      success: true,
-      data: response.data,
-      message: 'Reserva actualizada exitosamente',
-    };
+  console.log('Datos enviados al backend:', reservationData); // Depuración
+  try {
+    const response = await axios.patch(
+      `${BASE_URL}/${id}`,
+      reservationData, // Aquí se incluye `amountPaid`
+      getHeaders(token)
+    );
+
+    if (response.status === 200) {
+      return {
+        success: true,
+        data: response.data,
+        message: 'Reserva actualizada exitosamente',
+      };
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error('Error en updateReservationByAdmin:', error);
+    throw error;
   }
-  return response.data;
 };
 
 const deleteReservation = async (id, token) => {
@@ -61,25 +70,18 @@ const confirmReservationAfterPayment = async (id) => {
 };
 
 // Métodos de administrador para confirmación y cancelación
-const confirmReservationByAdmin = async (id, token) => {
+const confirmReservationByAdmin = async (id, token, amountPaid) => {
   const response = await axios.patch(
-    `${BASE_URL}/${id}/status`,
-    {}, // cuerpo vacío
-    {
-      ...getHeaders(token),
-      validateStatus: status => status < 500
-    }
+    `${BASE_URL}/${id}/confirm`,
+    { amountPaid }, // Enviar el monto pagado en el cuerpo de la solicitud
+    getHeaders(token)
   );
 
   if (response.status === 200) {
-    return {
-      success: true,
-      data: response.data,
-      message: 'Reserva confirmada exitosamente',
-    };
+    return response.data; // El backend debe devolver el nuevo total
   }
 
-  return response.data;
+  throw new Error(response.data?.message || 'No se pudo confirmar la reserva');
 };
 
 const cancelReservationByAdmin = async (id, token) => {

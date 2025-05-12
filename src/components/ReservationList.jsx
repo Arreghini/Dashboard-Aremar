@@ -1,10 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import reservationService from '../services/reservationService';
+import roomService from '../services/roomService';
+import EditReservationModal from './EditReservationModal';
 
 const ReservationList = () => {
   const { getAccessTokenSilently } = useAuth0();
   const [reservations, setReservations] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedReservation, setSelectedReservation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -22,7 +26,7 @@ const ReservationList = () => {
       setLoading(false);
     }
   };
-  
+
   useEffect(() => {
     fetchReservations();
   }, [getAccessTokenSilently]);
@@ -40,52 +44,83 @@ const ReservationList = () => {
     }
   };
 
-  const handleEdit = async (reservationId) => {
+  const handleEdit = (reservation) => {
+    const formatDate = (dateString) => {
+      const date = new Date(dateString);
+      return date.toISOString().split('T')[0];
+    };
+    console.log("Reserva al editar:", reservation);
+
+    setSelectedReservation({
+      id: reservation.id,
+      roomId: reservation.room?.id || reservation.roomId,
+      checkIn: formatDate(reservation.checkIn),
+      checkOut: formatDate(reservation.checkOut),
+      numberOfGuests: reservation.numberOfGuests,
+      totalPrice: reservation.totalPrice,
+      status: reservation.status,
+    });
+    setShowModal(true);
+  };
+
+  const handleSave = async (formData) => {
     try {
       const token = await getAccessTokenSilently();
-      if (window.confirm('¿Estás seguro de que deseas editar esta reservación?')) {
-        const response = await reservationService.updateReservationByAdmin(reservationId, token);
-        if (!response) {
-          setError('No se pudo editar la reservación');
-          return;
-        }
+      console.log('Datos enviados al backend:', formData); // Depuración
 
-        const updatedReservations = reservations.map(res =>
-          res.id === reservationId ? { ...res, ...response } : res
-        );
+      // Llamar al servicio para actualizar la reserva
+      await reservationService.updateReservationByAdmin(
+        formData.reservationId,
+        {
+          roomId: formData.roomId,
+          checkIn: formData.checkIn,
+          checkOut: formData.checkOut,
+          numberOfGuests: formData.numberOfGuests,
+          status: formData.status,
+          amountPaid: formData.amountPaid, 
+        },
+        token
+      );
 
-        setReservations(updatedReservations);
-      }
+      // Actualizar la lista de reservas
+      await fetchReservations();
+      setShowModal(false);
+      setSelectedReservation(null);
     } catch (error) {
-      console.error('Error al editar la reservación:', error);
+      console.error('Error al guardar los cambios de la reserva:', error.message);
+      alert(error.message || 'Ocurrió un error al guardar los cambios.');
     }
   };
 
   const handleConfirm = async (reservationId) => {
     try {
       const token = await getAccessTokenSilently();
-  
-      const confirmAction = window.confirm('¿Estás seguro de que deseas confirmar esta reservación?');
-      if (!confirmAction) return;
-  
-      const response = await reservationService.confirmReservationByAdmin(reservationId, token);
-  
+      const amountPaid = prompt('Ingrese el monto pagado por el usuario:'); // Solicita el monto al administrador
+
+      if (!amountPaid || isNaN(amountPaid)) {
+        alert('Debe ingresar un monto válido.');
+        return;
+      }
+
+      if (!window.confirm('¿Estás seguro de que deseas confirmar esta reservación?')) return;
+
+      const response = await reservationService.confirmReservationByAdmin(reservationId, token, amountPaid);
+
       if (!response) {
         setError('No se pudo confirmar la reservación');
         return;
       }
-  
+
       const updatedReservations = reservations.map(res =>
-        res.id === reservationId ? { ...res, status: 'confirmed' } : res
+        res.id === reservationId ? { ...res, status: 'confirmed', totalPrice: response.totalPrice } : res
       );
-  
+
       setReservations(updatedReservations);
     } catch (error) {
       console.error('Error al confirmar la reservación:', error);
       setError('Ocurrió un error al confirmar la reservación');
     }
   };
- 
 
   const handleCancel = async (reservationId) => {
     try {
@@ -99,26 +134,27 @@ const ReservationList = () => {
       console.error('Error al cancelar la reservación:', error);
     }
   };
+
   const handleCancelWithRefund = async (reservationId) => {
     try {
       const token = await getAccessTokenSilently();
       const response = await reservationService.cancelReservationWithRefund(reservationId, token);
-      
+
       const updatedReservations = reservations.map(res =>
-        res.id === reservationId ? { 
-          ...res, 
+        res.id === reservationId ? {
+          ...res,
           status: 'cancelled',
-          refundAmount: response.refundAmount 
+          refundAmount: response.refundAmount
         } : res
       );
+
       console.log('Reserva actualizada:', updatedReservations);
-      
       setReservations(updatedReservations);
-      
     } catch (error) {
       console.error('Error al cancelar la reservación con reembolso:', error);
     }
-};
+  };
+
   return (
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">Lista de Reservas</h2>
@@ -140,64 +176,68 @@ const ReservationList = () => {
                   <p>Check-out: {new Date(reservation.checkOut).toLocaleDateString()}</p>
                   <p>Huéspedes: {reservation.numberOfGuests}</p>
                   <p>Estado: {reservation.status}</p>
+                  <p>Pagó: ${reservation.amountPaid}</p>
+                  <p>Precio:${reservation.totalPrice}</p>
                 </div>
                 <div>
                   <h3 className="font-semibold">Información del Cliente</h3>
                   <p>Nombre: {reservation.User?.name}</p>
                   <p>Email: {reservation.User?.email}</p>
                   <h3 className="font-semibold mt-2">Información de la Habitación</h3>
-                  <p>Habitación ID: {reservation.Room?.id}</p>
-                  <p>Estado de habitación: {reservation.Room?.status}</p>
-                  <p>Tipo: {reservation.Room?.RoomType?.name}</p>
+                  <p>Habitación ID: {reservation.roomId}</p>
+                  <p>Habitación: {reservation.room.roomType?.name}</p>
                   {reservation.status === 'cancelled' && reservation.refundAmount &&
                     <p className="text-sm text-green-600 font-semibold">
                       Reembolso: ${reservation.refundAmount.toFixed(2)}
                     </p>
                   }
-
                 </div>
               </div>
               <div className="flex justify-end space-x-2">
-              <button
-                  onClick={() => handleEdit(reservation.id)}
+                <button
+                  onClick={() => handleEdit(reservation)}
                   disabled={reservation.status === 'cancelled'}
                   className={`text-white px-4 py-2 rounded 
-                    ${reservation.status === 'confirmed' || reservation.status === 'cancelled' 
-                      ? 'bg-gray-400 cursor-not-allowed' 
+                    ${reservation.status === 'cancelled'
+                      ? 'bg-gray-400 cursor-not-allowed'
                       : 'bg-yellow-500 hover:bg-yellow-600'}`}
                 >
                   Editar
                 </button>
+
                 <button
                   onClick={() => handleConfirm(reservation.id)}
                   disabled={['confirmed', 'cancelled'].includes(reservation.status.trim())}
                   className={`text-white px-4 py-2 rounded 
                     ${['confirmed', 'cancelled'].includes(reservation.status.trim())
-                      ? 'bg-gray-400 cursor-not-allowed' 
+                      ? 'bg-gray-400 cursor-not-allowed'
                       : 'bg-green-500 hover:bg-green-600'}`}
                 >
                   Confirmar
                 </button>
+
                 <button
                   onClick={() => handleCancel(reservation.id)}
                   disabled={['cancelled', 'pending'].includes(reservation.status.trim())}
                   className={`text-white px-4 py-2 rounded 
                     ${['cancelled', 'pending'].includes(reservation.status.trim())
-                      ? 'bg-gray-400 cursor-not-allowed' 
+                      ? 'bg-gray-400 cursor-not-allowed'
                       : 'bg-red-500 hover:bg-red-600'}`}
                 >
                   Cancelar
                 </button>
+
                 <button
                   onClick={() => handleCancelWithRefund(reservation.id)}
                   disabled={['cancelled', 'pending'].includes(reservation.status.trim())}
                   className={`text-white px-4 py-2 rounded 
                     ${['cancelled', 'pending'].includes(reservation.status.trim())
-                      ? 'bg-gray-400 cursor-not-allowed' 
+                      ? 'bg-gray-400 cursor-not-allowed'
                       : 'bg-orange-500 hover:bg-orange-600'}`}
                 >
                   Cancelar con reembolso
                 </button>
+
                 <button
                   onClick={() => handleDelete(reservation.id)}
                   className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
@@ -209,7 +249,17 @@ const ReservationList = () => {
           ))}
         </div>
       )}
+
+      {showModal && selectedReservation && (
+        <EditReservationModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          reservation={selectedReservation}
+          onSave={handleSave}
+        />
+      )}
     </div>
   );
 };
+
 export default ReservationList;
