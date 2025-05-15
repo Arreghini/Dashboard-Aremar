@@ -49,7 +49,6 @@ const ReservationList = () => {
       const date = new Date(dateString);
       return date.toISOString().split('T')[0];
     };
-    console.log("Reserva al editar:", reservation);
 
     setSelectedReservation({
       id: reservation.id,
@@ -59,16 +58,79 @@ const ReservationList = () => {
       numberOfGuests: reservation.numberOfGuests,
       totalPrice: reservation.totalPrice,
       status: reservation.status,
+      amountPaid: reservation.amountPaid,
     });
+
     setShowModal(true);
   };
 
   const handleSave = async (formData) => {
     try {
       const token = await getAccessTokenSilently();
-      console.log('Datos enviados al backend:', formData); // Depuración
 
-      // Llamar al servicio para actualizar la reserva
+      const originalReserve = reservations.find(res => res.id === formData.reservationId);
+        const validateDate = (dateString) => {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+          throw new Error(`Fecha inválida: ${dateString}`);
+        }
+        return date;
+      };
+
+      const originalCheckInDate = validateDate(originalReserve.checkIn);
+      const originalCheckOutDate = validateDate(originalReserve.checkOut);
+      const newCheckInDate = validateDate(formData.checkIn);
+      const newCheckOutDate = validateDate(formData.checkOut);
+
+      const originalDays =
+        (originalCheckOutDate - originalCheckInDate) / (1000 * 60 * 60 * 24);
+      const newDays =
+        (newCheckOutDate - newCheckInDate) / (1000 * 60 * 60 * 24);
+      const daysDifference = newDays - originalDays;
+
+      const dailyRate = originalReserve.totalPrice / originalDays;
+
+      let refundAmount = 0;
+      let additionalAmount = 0;
+
+      if (daysDifference > 0) {
+        additionalAmount = dailyRate * daysDifference;
+
+        const actualRoomType = await roomService.getRoomTypeById(formData.roomId, token);
+        console.log('Tipo de habitación actual:', actualRoomType);
+        if (!actualRoomType) {
+          throw new Error('No se encontró el tipo de habitación.');
+        }
+
+        console.log('Datos enviados a evaluar disponibilidad:', 
+          formData.reservationId,
+          actualRoomType.id,
+          formData.checkIn, 
+          formData.checkOut,
+          formData.numberOfGuests,
+        );
+
+
+        const response = await roomService.getAvailableRoomsByType(
+          formData.reservationId,
+          actualRoomType.id,
+          formData.checkIn,
+          formData.checkOut,
+          formData.numberOfGuests,
+          token
+        );
+
+        if (!response || response.length === 0) {
+          throw new Error('No hay habitaciones disponibles para las nuevas fechas.');
+        }
+
+        alert(`El usuario debe pagar un monto adicional de $${additionalAmount.toFixed(2)}.`);
+      } else if (daysDifference < 0) {
+        refundAmount = dailyRate * Math.abs(daysDifference);
+
+        alert(`Se ha calculado un reembolso de $${refundAmount.toFixed(2)} por la reducción de días.`);
+      }
+
       await reservationService.updateReservationByAdmin(
         formData.reservationId,
         {
@@ -77,15 +139,22 @@ const ReservationList = () => {
           checkOut: formData.checkOut,
           numberOfGuests: formData.numberOfGuests,
           status: formData.status,
-          amountPaid: formData.amountPaid, 
+          amountPaid: formData.amountPaid,
+          refundAmount: refundAmount,
+          additionalAmount: additionalAmount,
         },
         token
       );
 
-      // Actualizar la lista de reservas
+      console.log('Reserva actualizada:', formData);
+
       await fetchReservations();
       setShowModal(false);
       setSelectedReservation(null);
+
+      if (refundAmount > 0) {
+        alert(`Se ha reembolsado $${refundAmount.toFixed(2)} por la diferencia de días.`);
+      }
     } catch (error) {
       console.error('Error al guardar los cambios de la reserva:', error.message);
       alert(error.message || 'Ocurrió un error al guardar los cambios.');
@@ -95,7 +164,7 @@ const ReservationList = () => {
   const handleConfirm = async (reservationId) => {
     try {
       const token = await getAccessTokenSilently();
-      const amountPaid = prompt('Ingrese el monto pagado por el usuario:'); // Solicita el monto al administrador
+      const amountPaid = prompt('Ingrese el monto pagado por el usuario:');
 
       if (!amountPaid || isNaN(amountPaid)) {
         alert('Debe ingresar un monto válido.');
@@ -112,7 +181,9 @@ const ReservationList = () => {
       }
 
       const updatedReservations = reservations.map(res =>
-        res.id === reservationId ? { ...res, status: 'confirmed', totalPrice: response.totalPrice } : res
+        res.id === reservationId
+          ? { ...res, status: 'confirmed', totalPrice: response.totalPrice }
+          : res
       );
 
       setReservations(updatedReservations);
@@ -141,11 +212,13 @@ const ReservationList = () => {
       const response = await reservationService.cancelReservationWithRefund(reservationId, token);
 
       const updatedReservations = reservations.map(res =>
-        res.id === reservationId ? {
-          ...res,
-          status: 'cancelled',
-          refundAmount: response.refundAmount
-        } : res
+        res.id === reservationId
+          ? {
+              ...res,
+              status: 'cancelled',
+              refundAmount: response.refundAmount,
+            }
+          : res
       );
 
       console.log('Reserva actualizada:', updatedReservations);
@@ -177,7 +250,7 @@ const ReservationList = () => {
                   <p>Huéspedes: {reservation.numberOfGuests}</p>
                   <p>Estado: {reservation.status}</p>
                   <p>Pagó: ${reservation.amountPaid}</p>
-                  <p>Precio:${reservation.totalPrice}</p>
+                  <p>Precio: ${reservation.totalPrice}</p>
                 </div>
                 <div>
                   <h3 className="font-semibold">Información del Cliente</h3>
@@ -185,12 +258,12 @@ const ReservationList = () => {
                   <p>Email: {reservation.User?.email}</p>
                   <h3 className="font-semibold mt-2">Información de la Habitación</h3>
                   <p>Habitación ID: {reservation.roomId}</p>
-                  <p>Habitación: {reservation.room.roomType?.name}</p>
-                  {reservation.status === 'cancelled' && reservation.refundAmount &&
+                  <p>Habitación: {reservation.room?.roomType?.name}</p>
+                  {reservation.status === 'cancelled' && reservation.refundAmount && (
                     <p className="text-sm text-green-600 font-semibold">
                       Reembolso: ${reservation.refundAmount.toFixed(2)}
                     </p>
-                  }
+                  )}
                 </div>
               </div>
               <div className="flex justify-end space-x-2">

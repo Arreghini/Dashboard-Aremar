@@ -102,18 +102,30 @@ const roomService = {
       throw error;
     }
   },
-
-  getAvailableRoomsByType: async (token, roomTypeId, checkInDate, checkOutDate, numberOfGuests) => {
+  getRoomTypeById: async (id, token) => {
+    try {
+      const response = await axios.get(`http://localhost:3000/api/rooms/${id}`, getHeaders(token));
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener el tipo de habitación:', error);
+      throw error;
+    }
+  },  
+  getAvailableRoomsByType: async (reservationId, roomTypeId, checkInDate, checkOutDate, numberOfGuests, token) => {
     const params = {
-      roomType: roomTypeId,
+      reservationId,
+      roomTypeId,
       checkInDate: new Date(checkInDate).toISOString().split('T')[0],
       checkOutDate: new Date(checkOutDate).toISOString().split('T')[0],
       numberOfGuests: parseInt(numberOfGuests, 10),
     };
-  
+
     try {
       const response = await axios.get(`${BASE_URL}/available`, {
-        ...getHeaders(token),
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
         params,
       });
       return response.data;
@@ -121,6 +133,7 @@ const roomService = {
       console.error('Error al obtener habitaciones disponibles:', error);
       throw error;
     }
-  }  
+  },
 };
+
 export default roomService;
