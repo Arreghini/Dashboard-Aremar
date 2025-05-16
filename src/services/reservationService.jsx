@@ -24,11 +24,11 @@ const createReservation = async (reservationData, token) => {
 };
 
 const updateReservationByAdmin = async (id, reservationData, token) => {
-  console.log('Datos enviados al backend:', reservationData); // Depuración
+  console.log('Datos enviados al backend:', id,reservationData); // Depuración
   try {
     const response = await axios.patch(
       `${BASE_URL}/${id}`,
-      reservationData, // Aquí se incluye `amountPaid`
+      reservationData, 
       getHeaders(token)
     );
 

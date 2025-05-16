@@ -142,6 +142,7 @@ const ReservationList = () => {
           amountPaid: formData.amountPaid,
           refundAmount: refundAmount,
           additionalAmount: additionalAmount,
+          paymentId: formData.paymentId || null,
         },
         token
       );
