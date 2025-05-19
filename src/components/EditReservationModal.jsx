@@ -10,6 +10,7 @@ const EditReservationModal = ({ isOpen, onClose, reservation, onSave }) => {
     status: ['pending','confimed'],
     totalPrice: '',
     amountPaid: '', 
+    paymentId: '',
   });
 
   useEffect(() => {
@@ -24,6 +25,7 @@ const EditReservationModal = ({ isOpen, onClose, reservation, onSave }) => {
         status: reservation.status || 'pending',
         totalPrice: reservation.totalPrice || '',
         amountPaid: reservation.amountPaid || '',
+        paymentId: reservation.paymentId || '',
       });
     }
   }, [reservation]);

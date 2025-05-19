@@ -17,8 +17,8 @@ const ReservationList = () => {
       setLoading(true);
       const token = await getAccessTokenSilently();
       const reservationsData = await reservationService.getReservations(token);
+      console.log('Reservas cargadas desde el backend:', reservationsData);
       setReservations(reservationsData);
-      console.log('Reservas cargadas:', reservationsData);
     } catch (error) {
       setError(`Error de autenticación: ${error.message}`);
       console.error('Error al cargar las reservas:', error);
@@ -26,7 +26,6 @@ const ReservationList = () => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchReservations();
   }, [getAccessTokenSilently]);
@@ -56,10 +55,13 @@ const ReservationList = () => {
       checkIn: formatDate(reservation.checkIn),
       checkOut: formatDate(reservation.checkOut),
       numberOfGuests: reservation.numberOfGuests,
+      paymentId: reservation.paymentId,
       totalPrice: reservation.totalPrice,
       status: reservation.status,
       amountPaid: reservation.amountPaid,
     });
+   
+    console.log('Reserva seleccionada para editar:', reservation);
 
     setShowModal(true);
   };
@@ -67,41 +69,50 @@ const ReservationList = () => {
   const handleSave = async (formData) => {
     try {
       const token = await getAccessTokenSilently();
-
+  
       const originalReserve = reservations.find(res => res.id === formData.reservationId);
-        const validateDate = (dateString) => {
+      const validateDate = (dateString) => {
         const date = new Date(dateString);
         if (isNaN(date.getTime())) {
           throw new Error(`Fecha inválida: ${dateString}`);
         }
         return date;
       };
-
+  
       const originalCheckInDate = validateDate(originalReserve.checkIn);
       const originalCheckOutDate = validateDate(originalReserve.checkOut);
       const newCheckInDate = validateDate(formData.checkIn);
       const newCheckOutDate = validateDate(formData.checkOut);
-
+  
       const originalDays =
         (originalCheckOutDate - originalCheckInDate) / (1000 * 60 * 60 * 24);
       const newDays =
         (newCheckOutDate - newCheckInDate) / (1000 * 60 * 60 * 24);
       const daysDifference = newDays - originalDays;
-
+  
+      if (daysDifference === 0) {
+        alert('No se han realizado cambios en la reserva.');
+        return;
+      }
+      if (originalDays === 0) {
+        alert('No se puede modificar la reserva si no hay días reservados.');
+        return;
+      }
+  
       const dailyRate = originalReserve.totalPrice / originalDays;
-
+  
       let refundAmount = 0;
       let additionalAmount = 0;
-
+  
       if (daysDifference > 0) {
         additionalAmount = dailyRate * daysDifference;
-
+  
         const actualRoomType = await roomService.getRoomTypeById(formData.roomId, token);
         console.log('Tipo de habitación actual:', actualRoomType);
         if (!actualRoomType) {
           throw new Error('No se encontró el tipo de habitación.');
         }
-
+  
         console.log('Datos enviados a evaluar disponibilidad:', 
           formData.reservationId,
           actualRoomType.id,
@@ -109,8 +120,7 @@ const ReservationList = () => {
           formData.checkOut,
           formData.numberOfGuests,
         );
-
-
+  
         const response = await roomService.getAvailableRoomsByType(
           formData.reservationId,
           actualRoomType.id,
@@ -119,18 +129,20 @@ const ReservationList = () => {
           formData.numberOfGuests,
           token
         );
-
+  
         if (!response || response.length === 0) {
           throw new Error('No hay habitaciones disponibles para las nuevas fechas.');
         }
-
+  
         alert(`El usuario debe pagar un monto adicional de $${additionalAmount.toFixed(2)}.`);
       } else if (daysDifference < 0) {
         refundAmount = dailyRate * Math.abs(daysDifference);
-
+  
         alert(`Se ha calculado un reembolso de $${refundAmount.toFixed(2)} por la reducción de días.`);
       }
-
+  
+      console.log('Datos enviados al servicio:', formData);
+  
       await reservationService.updateReservationByAdmin(
         formData.reservationId,
         {
@@ -140,28 +152,29 @@ const ReservationList = () => {
           numberOfGuests: formData.numberOfGuests,
           status: formData.status,
           amountPaid: formData.amountPaid,
+          paymentId: formData.paymentId,
           refundAmount: refundAmount,
           additionalAmount: additionalAmount,
-          paymentId: formData.paymentId || null,
+          
         },
         token
       );
-
+  
       console.log('Reserva actualizada:', formData);
-
+  
       await fetchReservations();
       setShowModal(false);
       setSelectedReservation(null);
-
+  
       if (refundAmount > 0) {
         alert(`Se ha reembolsado $${refundAmount.toFixed(2)} por la diferencia de días.`);
       }
     } catch (error) {
       console.error('Error al guardar los cambios de la reserva:', error.message);
+      // Muestra el mensaje de error del backend si está disponible
       alert(error.message || 'Ocurrió un error al guardar los cambios.');
     }
   };
-
   const handleConfirm = async (reservationId) => {
     try {
       const token = await getAccessTokenSilently();
@@ -302,16 +315,15 @@ const ReservationList = () => {
                 </button>
 
                 <button
-                  onClick={() => handleCancelWithRefund(reservation.id)}
-                  disabled={['cancelled', 'pending'].includes(reservation.status.trim())}
-                  className={`text-white px-4 py-2 rounded 
-                    ${['cancelled', 'pending'].includes(reservation.status.trim())
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-orange-500 hover:bg-orange-600'}`}
-                >
-                  Cancelar con reembolso
-                </button>
-
+  onClick={() => handleCancelWithRefund(reservation.id)}
+  disabled={reservation.status.trim() !== 'confirmed'}
+  className={`text-white px-4 py-2 rounded 
+    ${reservation.status.trim() !== 'confirmed'
+      ? 'bg-gray-400 cursor-not-allowed'
+      : 'bg-blue-500 hover:bg-blue-600'}`}
+>
+  Cancelar con Reembolso
+</button>
                 <button
                   onClick={() => handleDelete(reservation.id)}
                   className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"

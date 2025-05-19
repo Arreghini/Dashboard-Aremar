@@ -22,31 +22,22 @@ const createReservation = async (reservationData, token) => {
       getHeaders(token));
     return response.data;     
 };
-
 const updateReservationByAdmin = async (id, reservationData, token) => {
-  console.log('Datos enviados al backend:', id,reservationData); // Depuración
+  console.log('Datos enviados al backend desde el servicio:', reservationData); // Log para depurar
   try {
     const response = await axios.patch(
       `${BASE_URL}/${id}`,
-      reservationData, 
+      reservationData,
       getHeaders(token)
     );
-
-    if (response.status === 200) {
-      return {
-        success: true,
-        data: response.data,
-        message: 'Reserva actualizada exitosamente',
-      };
-    }
-
     return response.data;
   } catch (error) {
-    console.error('Error en updateReservationByAdmin:', error);
+    if (error.response && error.response.status === 409) {
+      throw new Error(error.response.data.mensaje || 'Conflicto al actualizar la reserva.');
+    }
     throw error;
   }
 };
-
 const deleteReservation = async (id, token) => {
   const response = await axios.delete(`${BASE_URL}/${id}`, {
          ...getHeaders(token),
