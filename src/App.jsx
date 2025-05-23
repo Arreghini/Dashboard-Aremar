@@ -7,6 +7,7 @@ import ReservationList from './components/ReservationList';
 import ReservationForm from './components/ReservationForm';
 import { Auth0Provider } from '@auth0/auth0-react';
 import ProtectedRoute from './components/ProtectedRoute';
+import ReportsPage from './pages/ReportsPage';
 
 const domain = import.meta.env.VITE_AUTH0_DOMAIN;
 const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
@@ -78,6 +79,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+        path="/reports"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <ReportsPage />
+          </ProtectedRoute>
+        }
+      />
       </Routes>
     </Auth0Provider>
   );

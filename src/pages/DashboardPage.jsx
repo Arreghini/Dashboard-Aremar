@@ -10,6 +10,8 @@ import ReservationList from '../components/ReservationList';
 import RoomTypeForm from '../components/RoomTypeForm';
 import RoomDetailForm from '../components/RoomDetailForm';
 import Modal from '../components/Modal';
+import ReportsPage from './ReportsPage';
+import AnalyticsDataRange from '../components/AnalyticsDataRange';
 
 const DashboardPage = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -23,11 +25,16 @@ const DashboardPage = () => {
   const [refresh, setRefresh] = useState(false);
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
   const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
+  const [showReports, setShowReports] = useState(false);
 
   const { user } = useAuth0();
 
   const handleReturnToHome = () => {
     window.location.href = 'http://localhost:5173';
+  };
+
+  const handleDataRangeChange = (startDate, endDate) => {
+    console.log('Rango de fechas seleccionado:', startDate, endDate);
   };
 
   return (
@@ -179,6 +186,16 @@ const DashboardPage = () => {
                 />
               </div>
             )}
+           {/* Sección de Reportes */}
+          <button onClick={() => setShowReports(!showReports)} className="mb-2">
+            {showReports ? 'Ocultar Reportes' : 'Reportes'}
+          </button>
+
+          {showReports && (
+            <div className="w-full">
+              <ReportsPage />
+            </div>
+          )}
           </div>
         </div>
       </div>
