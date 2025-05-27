@@ -32,36 +32,37 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
   }, [getAccessTokenSilently]);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccessMessage('');
-
-    try {
-      const token = await getAccessTokenSilently();
-
-      const roomTypePayload = {
-        name: roomTypeData.name,
-        photos: Array.isArray(roomTypeData.photos) ? roomTypeData.photos : [],
-        simpleBeds: Number(roomTypeData.simpleBeds || 0),
-        trundleBeds: Number(roomTypeData.trundleBeds || 0),
-        kingBeds: Number(roomTypeData.kingBeds || 0),
-        windows: Number(roomTypeData.windows || 0),
-        price: Number(roomTypeData.price || 0),
-      };
-
-      if (!roomTypePayload.price || roomTypePayload.price <= 0) {
-        setError('El precio es requerido y debe ser mayor que 0');
-        return;
-      }
-
-      if (roomTypeId) {
-        await roomClasifyService.updateRoomType(roomTypeId, roomTypePayload, token);
-        setSuccessMessage('Tipo de habitación actualizado con éxito');
-      } else {
-        await roomClasifyService.createRoomType(roomTypePayload, token);
-        setSuccessMessage('Tipo de habitación creado con éxito');
-      }
-
+  e.preventDefault();
+  setError('');
+  setSuccessMessage('');
+  
+  try {
+    const token = await getAccessTokenSilently();
+    
+    // Primero subir las imágenes si existen
+    let imageUrls = [];
+    if (roomTypeData.photos && roomTypeData.photos.length > 0) {
+      const uploadedImages = await roomClasifyService.uploadImages(
+        roomTypeData.photos, 
+        'aremar/roomtypes', 
+        token
+      );
+      imageUrls = uploadedImages.map(img => img.secure_url);
+    }
+    
+    // Luego crear el roomType con las URLs de las imágenes
+    const roomTypePayload = {
+      name: roomTypeData.name,
+      simpleBeds: roomTypeData.simpleBeds || 0,
+      trundleBeds: roomTypeData.trundleBeds || 0,
+      kingBeds: roomTypeData.kingBeds || 0,
+      windows: roomTypeData.windows || 0,
+      price: roomTypeData.price || 0,
+      photos: imageUrls // Enviar las URLs en lugar de los archivos
+    };
+    
+    await roomClasifyService.createRoomType(roomTypePayload, token);
+    
       //Resetear formulario solo después de terminar
       setRoomTypeData({
         name: '',
@@ -177,11 +178,11 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
           placeholder="Número de ventanas"
           className="border border-gray-300 p-2 w-full mb-2"
         />
-        <input
-          type="text"
-          value={roomTypeData.photos.join(', ')}
-          onChange={(e) => setRoomTypeData({ ...roomTypeData, photos: e.target.value.split(',').map(photo => photo.trim()) })}
-          placeholder="URLs de fotos (separadas por comas)"
+       <input
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={(e) => setRoomTypeData({ ...roomTypeData, photos: Array.from(e.target.files) })}
           className="border border-gray-300 p-2 w-full mb-2"
         />
         <input

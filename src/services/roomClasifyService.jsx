@@ -35,37 +35,44 @@ const roomClasifyService = {
     }
   },
 
-  createRoomType: async (roomTypeData, token) => {
-    try {
-      // Convertimos explícitamente el precio a número
-      const price = Number(roomTypeData.price);
-      if (isNaN(price) || price <= 0) {
-        throw new Error('El precio debe ser un número válido mayor que 0');
+ uploadImages: async (files, folder, token) => {
+  try {
+    const formData = new FormData();
+    formData.append('folder', folder);
+    
+    files.forEach(file => {
+      formData.append('photos', file);
+    });
+
+    const response = await axios.post('http://localhost:3000/api/upload/multiple', formData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
       }
-
-      const data = {
-        name: roomTypeData.name,
-        photos: roomTypeData.photos,
-        simpleBeds: Number(roomTypeData.simpleBeds),
-        trundleBeds: Number(roomTypeData.trundleBeds),
-        kingBeds: Number(roomTypeData.kingBeds),
-        windows: Number(roomTypeData.windows),
-        price: price
-      };
-
-      const response = await axios.post(`${BASE_URL}/roomType`, data, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      return response.data;
-    } catch (error) {
-      console.log('Datos enviados:', roomTypeData);
-      throw error;
-    }
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error al subir imágenes:', error);
+    throw error;
+  }
 },
+
+createRoomType: async (formData, token) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/roomType`, formData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data' 
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error en createRoomType:', error);
+    throw error;
+  }
+},
+
 createRoomDetail: async (roomDetailData, token) => {
   try {
     const response = await axios.post(`${BASE_URL}/roomDetail`, roomDetailData, {
