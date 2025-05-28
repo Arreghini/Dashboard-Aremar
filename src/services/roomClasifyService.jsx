@@ -3,22 +3,44 @@ import axios from 'axios';
 const BASE_URL = 'http://localhost:3000/api/rooms/admin';
 
 const roomClasifyService = {
-  getRoomType: async (token) => {
-    try {
-      const response = await axios.get(`${BASE_URL}/roomType`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        }
-      });
-      console.log('Respuesta del servidor (tipos):', response);
-      return response.data;
-    } catch (error) {
-      console.error('Error al obtener los tipos de habitación:', error);
-      throw error;
+  // En roomClasifyService.js
+getRoomType: async (token) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/roomType`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    console.log('Respuesta del servidor (tipos):', response);
+    console.log('response.data:', response.data);
+    
+    // ✅ Manejar la estructura aquí mismo
+    const responseData = response.data;
+    
+    // Si el servidor devuelve { success: true, data: [...] }
+    if (responseData && responseData.success && Array.isArray(responseData.data)) {
+      return responseData.data; // Devolver directamente el array
     }
-  },
-
+    // Si el servidor devuelve directamente un array
+    else if (Array.isArray(responseData)) {
+      return responseData;
+    }
+    // Si hay data pero no success
+    else if (responseData && Array.isArray(responseData.data)) {
+      return responseData.data;
+    }
+    
+    // Fallback: devolver array vacío
+    console.warn('Estructura de respuesta inesperada:', responseData);
+    return [];
+    
+  } catch (error) {
+    console.error('Error al obtener los tipos de habitación:', error);
+    throw error;
+  }
+},
   getRoomDetail: async (token) => {
     try {
       const response = await axios.get(`${BASE_URL}/roomDetail`, {

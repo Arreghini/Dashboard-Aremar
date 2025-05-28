@@ -11,7 +11,7 @@ import RoomTypeForm from '../components/RoomTypeForm';
 import RoomDetailForm from '../components/RoomDetailForm';
 import Modal from '../components/Modal';
 import ReportsPage from './ReportsPage';
-import AnalyticsDataRange from '../components/AnalyticsDataRange';
+import RoomTypeList from '../components/RoomTypeList';
 
 const DashboardPage = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -31,10 +31,6 @@ const DashboardPage = () => {
 
   const handleReturnToHome = () => {
     window.location.href = 'http://localhost:5173';
-  };
-
-  const handleDataRangeChange = (startDate, endDate) => {
-    console.log('Rango de fechas seleccionado:', startDate, endDate);
   };
 
   return (
@@ -89,13 +85,23 @@ const DashboardPage = () => {
         {/* Sección de Tipos y detalles de Habitación */}
         <div className="mb-8">
           <h2 className="font-bold text-lg mb-2 text-left uppercase">TIPOS y DETALLES DE HABITACIÓN</h2>
+          <div className="flex flex-col items-start">
+            <button onClick={() => setSelectedRoom(!selectedRoom)} className="mb-2">
+              {selectedRoom ? 'Ocultar crear tipo de habitación' : 'Crear tipo de habitación'}
+            </button>
+          </div>
+          {selectedRoom && (
+            <div className="mt-4">
+              <RoomTypeForm room={selectedRoom} onSave={() => setRefresh(!refresh)} />
+              <RoomDetailForm roomDetail={selectedRoom} onSave={() => setRefresh(!refresh)} />
+            </div>
+          )}
           <button onClick={() => setShowRoomTypes(!showRoomTypes)} className="mb-2">
             {showRoomTypes ? 'Ocultar Tipos de Habitación' : 'Mostrar Tipos de Habitación'}
           </button>
           {showRoomTypes && (
             <div className="w-full">
-              <RoomTypeForm onRoomTypeCreated={() => setRefresh(!refresh)} />
-                <RoomDetailForm onRoomDetailCreated={() => setRefresh(!refresh)} />
+              <RoomTypeList key={refresh} onEdit={setSelectedRoom} onDelete={() => setRefresh(!refresh)} />
             </div>
           )}
         </div>
