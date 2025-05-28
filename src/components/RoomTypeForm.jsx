@@ -17,6 +17,8 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
   const [roomTypes, setRoomTypes] = useState([]);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [existingPhotos, setExistingPhotos] = useState([]); // Para URLs existentes
+  const [newPhotos, setNewPhotos] = useState([]); // Para archivos nuevos
 
   useEffect(() => {
     const fetchRoomTypes = async () => {
@@ -31,59 +33,58 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
     fetchRoomTypes();
   }, [getAccessTokenSilently]);
 
-  const handleSubmit = async (e) => {
+ const handleSubmit = async (e) => {
   e.preventDefault();
   setError('');
   setSuccessMessage('');
-  
+
   try {
     const token = await getAccessTokenSilently();
     
-    // Primero subir las imágenes si existen
-    let imageUrls = [];
-    if (roomTypeData.photos && roomTypeData.photos.length > 0) {
-      const uploadedImages = await roomClasifyService.uploadImages(
-        roomTypeData.photos, 
-        'aremar/roomtypes', 
-        token
-      );
-      imageUrls = uploadedImages.map(img => img.secure_url);
+    // ✅ Crear FormData con TODOS los datos
+    const formData = new FormData();
+    
+    // Agregar todos los campos del formulario
+    formData.append('name', roomTypeData.name);
+    formData.append('simpleBeds', roomTypeData.simpleBeds || '0');
+    formData.append('trundleBeds', roomTypeData.trundleBeds || '0');
+    formData.append('kingBeds', roomTypeData.kingBeds || '0');
+    formData.append('windows', roomTypeData.windows || '0');
+    formData.append('price', roomTypeData.price || '0');
+    
+    // Agregar fotos existentes como JSON string
+    if (existingPhotos.length > 0) {
+      formData.append('existingPhotos', JSON.stringify(existingPhotos));
     }
     
-    // Luego crear el roomType con las URLs de las imágenes
-    const roomTypePayload = {
-      name: roomTypeData.name,
-      simpleBeds: roomTypeData.simpleBeds || 0,
-      trundleBeds: roomTypeData.trundleBeds || 0,
-      kingBeds: roomTypeData.kingBeds || 0,
-      windows: roomTypeData.windows || 0,
-      price: roomTypeData.price || 0,
-      photos: imageUrls // Enviar las URLs en lugar de los archivos
-    };
-    
-    await roomClasifyService.createRoomType(roomTypePayload, token);
-    
-      //Resetear formulario solo después de terminar
-      setRoomTypeData({
-        name: '',
-        photos: [],
-        simpleBeds: '',
-        trundleBeds: '',
-        kingBeds: '',
-        windows: '',
-        price: '',
+    // Agregar archivos nuevos
+    if (newPhotos && newPhotos.length > 0) {
+      newPhotos.forEach(file => {
+        formData.append('photos', file);
       });
-      setRoomTypeId(null);
-
-      await loadRoomTypes(token);
-
-      if (onRoomTypeCreated) onRoomTypeCreated();
-    } catch (error) {
-      console.error('Error al guardar el tipo de habitación:', error);
-      setError('Error al guardar el tipo de habitación');
     }
-  };
-  
+    
+    // ✅ Una sola llamada que incluye todo
+    let response;
+    if (roomTypeId) {
+      response = await roomClasifyService.updateRoomTypeWithFiles(roomTypeId, formData, token);
+    } else {
+      response = await roomClasifyService.createRoomTypeWithFiles(formData, token);
+    }
+    
+    setSuccessMessage(roomTypeId ? 'Tipo actualizado con éxito' : 'Tipo creado con éxito');
+    resetForm();
+    await loadRoomTypes(token);
+    
+    if (onRoomTypeCreated) {
+      onRoomTypeCreated();
+    }
+    
+  } catch (error) {
+    console.error('Error:', error);
+    setError(`Error: ${error.response?.data?.message || error.message}`);
+  }
+};
   const handleDelete = async (roomTypeId) => {
     if (!roomTypeId) {
       setError('ID no válido');
@@ -112,10 +113,12 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
     }
   };
   const handleEdit = (roomTypeId, roomTypeData) => {
-    setRoomTypeId(roomTypeId); // Actualiza el ID del tipo de habitación
+    setRoomTypeId(roomTypeId);
+    setExistingPhotos(roomTypeData.photos || []);
+    setNewPhotos([]);
     setRoomTypeData({
       name: roomTypeData.name || '',
-      photos: roomTypeData.photos || [],
+      photos: [], // Limpiar el input de archivos
       simpleBeds: roomTypeData.simpleBeds?.toString() || '',
       trundleBeds: roomTypeData.trundleBeds?.toString() || '',
       kingBeds: roomTypeData.kingBeds?.toString() || '',
@@ -126,12 +129,30 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
   
   const loadRoomTypes = async (token) => {
     try {
+      console.log('Cargando tipos de habitación...');
       const fetchedRoomTypes = await roomClasifyService.getRoomType(token);
+      console.log('Tipos cargados exitosamente:', fetchedRoomTypes);
       setRoomTypes(fetchedRoomTypes);
     } catch (error) {
       console.error('Error al cargar los tipos de habitación:', error);
-      setError('Error al cargar los tipos de habitación');
+      // No lanzar el error, solo loguearlo
+      // setError('Error al cargar los tipos de habitación');
     }
+  };
+
+  const resetForm = () => {
+    setRoomTypeData({
+      name: '',
+      photos: [],
+      simpleBeds: '',
+      trundleBeds: '',
+      kingBeds: '',
+      windows: '',
+      price: '',
+    });
+    setRoomTypeId(null);
+    setExistingPhotos([]);
+    setNewPhotos([]);
   };
 
   return (
@@ -182,7 +203,7 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
           type="file"
           accept="image/*"
           multiple
-          onChange={(e) => setRoomTypeData({ ...roomTypeData, photos: Array.from(e.target.files) })}
+          onChange={(e) => setNewPhotos(Array.from(e.target.files))}
           className="border border-gray-300 p-2 w-full mb-2"
         />
         <input

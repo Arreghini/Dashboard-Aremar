@@ -35,72 +35,108 @@ const roomClasifyService = {
     }
   },
 
- uploadImages: async (files, folder, token) => {
+  uploadImages: async (files, folder, token) => {
+    try {
+      const formData = new FormData();
+      formData.append('folder', folder);
+      
+      files.forEach(file => {
+        formData.append('photos', file);
+      });
+
+      const response = await axios.post(`${BASE_URL}/roomType/upload`, formData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error al subir imágenes:', error);
+      throw error;
+    }
+  },
+
+  createRoomTypeWithFiles: async (formData, token) => {
+    try {
+      const response = await axios.post(`${BASE_URL}/roomType`, formData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error en createRoomTypeWithFiles:', error);
+      throw error;
+    }
+  },
+
+  updateRoomTypeWithFiles: async (id, formData, token) => {
+    try {
+      const response = await axios.patch(`${BASE_URL}/roomType/${id}`, formData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      console.log('Tipo de habitación actualizado con archivos exitosamente');
+      return response.data;
+    } catch (error) {
+      console.error('Error en updateRoomTypeWithFiles:', error);
+      throw error;
+    }
+  },
+
+  createRoomType: async (roomTypeData, token) => {
+    try {
+      const response = await axios.post(`${BASE_URL}/roomType`, roomTypeData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error en createRoomType:', error);
+      throw error;
+    }
+  },
+
+  updateRoomType: async (id, roomTypeData, token) => {
   try {
-    const formData = new FormData();
-    formData.append('folder', folder);
+    const url = `${BASE_URL}/roomType/${id}`;
+    console.log('=== DEBUG FRONTEND UPDATE ===');
+    console.log('ID enviado:', id);
+    console.log('URL completa:', url);
+    console.log('BASE_URL:', BASE_URL);
+    console.log('Datos enviados:', roomTypeData);
     
-    files.forEach(file => {
-      formData.append('photos', file);
-    });
-
-    const response = await axios.post('http://localhost:3000/api/upload/multiple', formData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-    
-    return response.data;
-  } catch (error) {
-    console.error('Error al subir imágenes:', error);
-    throw error;
-  }
-},
-
-createRoomType: async (formData, token) => {
-  try {
-    const response = await axios.post(`${BASE_URL}/roomType`, formData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data' 
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error en createRoomType:', error);
-    throw error;
-  }
-},
-
-createRoomDetail: async (roomDetailData, token) => {
-  try {
-    const response = await axios.post(`${BASE_URL}/roomDetail`, roomDetailData, {
+    const response = await axios.patch(url, roomTypeData, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
-    console.log('Detalle de habitación creado exitosamente');
-    return response;
+    return response.data;
   } catch (error) {
-    console.log('Datos enviados:', roomDetailData);
+    console.error('Error en updateRoomType:', error);
     throw error;
   }
 },
-
-  updateRoomType: async (id, roomData, token) => {
+  createRoomDetail: async (roomDetailData, token) => {
     try {
-      const response = await axios.patch(`${BASE_URL}/roomType/${id}`, roomData, {
+      const response = await axios.post(`${BASE_URL}/roomDetail`, roomDetailData, {
         headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
-      console.log('Tipo de habitación actualizado exitosamente');
-      return response.data;
+      console.log('Detalle de habitación creado exitosamente');
+      return response;
     } catch (error) {
-      console.error('Error al actualizar el tipo de habitación:', error);
+      console.log('Datos enviados:', roomDetailData);
       throw error;
     }
   },
@@ -127,7 +163,6 @@ createRoomDetail: async (roomDetailData, token) => {
         throw new Error('ID no proporcionado');
       }
   
-      // Usamos la ruta correcta del backend
       const url = `${BASE_URL}/roomType/${id}`;
       
       const response = await axios.delete(url, {
