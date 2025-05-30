@@ -8,6 +8,7 @@ import RoomList from '../components/RoomList';
 import ReservationForm from '../components/ReservationForm';
 import ReservationList from '../components/ReservationList';
 import RoomTypeForm from '../components/RoomTypeForm';
+import RoomDetailForm from '../components/RoomDetailForm'; // 🔧 IMPORTAR
 import Modal from '../components/Modal';
 import ReportsPage from './ReportsPage';
 import RoomTypeList from '../components/RoomTypeList';
@@ -18,12 +19,12 @@ const DashboardPage = () => {
   const [showRooms, setShowRooms] = useState(false);
   const [showReservations, setShowReservations] = useState(false);
   const [showRoomTypes, setShowRoomTypes] = useState(false);
+  const [showRoomDetails, setShowRoomDetails] = useState(false); // 🔧 NUEVO ESTADO
   const [selectedUser, setSelectedUser] = useState(null);
   
-  // 🔧 ESTADOS SEPARADOS PARA CADA SECCIÓN
-  const [selectedRoom, setSelectedRoom] = useState(null); // Para habitaciones
-  const [selectedRoomType, setSelectedRoomType] = useState(null); // Para tipos de habitación
-  const [showRoomTypeForm, setShowRoomTypeForm] = useState(false); // Para mostrar/ocultar form de tipos
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [selectedRoomType, setSelectedRoomType] = useState(null);
+  const [showRoomTypeForm, setShowRoomTypeForm] = useState(false);
   
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [refresh, setRefresh] = useState(false);
@@ -86,7 +87,7 @@ const DashboardPage = () => {
           )}
         </div>
 
-        {/* Sección de Tipos de Habitación - CORREGIDA */}
+        {/* Sección de Tipos de Habitación */}
         <div className="mb-8">
           <h2 className="font-bold text-lg mb-2 text-left uppercase">TIPO DE HABITACIÓN</h2>
           <div className="flex flex-col items-start">
@@ -128,7 +129,31 @@ const DashboardPage = () => {
           )}
         </div>
 
-        {/* Sección de Habitaciones - CORREGIDA */}
+        {/* 🔧 NUEVA SECCIÓN: SERVICIOS DE HABITACIÓN */}
+        <div className="mb-8">
+          <h2 className="font-bold text-lg mb-2 text-left uppercase">🛠️ SERVICIOS DE HABITACIÓN</h2>
+          <div className="flex flex-col items-start">
+            <button 
+              onClick={() => setShowRoomDetails(!showRoomDetails)} 
+              className="mb-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded transition-colors"
+            >
+              {showRoomDetails ? 'Ocultar Administrador de Servicios' : 'Administrar Combinaciones de Servicios'}
+            </button>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              Gestiona las diferentes combinaciones de servicios (WiFi, TV, etc.) que pueden tener las habitaciones
+            </p>
+          </div>
+          {showRoomDetails && (
+            <div className="w-full mt-4">
+              <RoomDetailForm 
+                key={refresh}
+                onRoomDetailCreated={() => setRefresh(!refresh)} 
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Sección de Habitaciones */}
         <div className="mb-8">
           <h2 className="font-bold text-lg mb-2 text-left uppercase">HABITACIONES</h2>
           <div className="flex flex-col items-start">
@@ -161,7 +186,7 @@ const DashboardPage = () => {
           <Modal isOpen={isRoomModalOpen} onClose={() => setIsRoomModalOpen(false)}>
             <RoomForm 
               room={selectedRoom} 
-              onSave={() => {
+              onRoomCreated={() => {
                 setRefresh(!refresh);
                 setIsRoomModalOpen(false);
               }} 

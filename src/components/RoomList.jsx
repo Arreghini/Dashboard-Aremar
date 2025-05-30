@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import roomService from '../services/roomService';
+import roomClasifyService from '../services/roomClasifyService'; // Asegúrate de tener este servicio
 
 const RoomList = ({ refresh, onUpdate }) => {
   const { getAccessTokenSilently } = useAuth0();
@@ -20,9 +21,11 @@ const RoomList = ({ refresh, onUpdate }) => {
   const [existingPhotos, setExistingPhotos] = useState([]);
   const [newPhotos, setNewPhotos] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [roomDetailsList, setRoomDetailsList] = useState([]);
 
   useEffect(() => {
     fetchRooms();
+    fetchRoomDetails();
   }, [refresh]);
 
   const fetchRooms = async () => {
@@ -59,6 +62,16 @@ const RoomList = ({ refresh, onUpdate }) => {
       setRooms([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRoomDetails = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+      const details = await roomClasifyService.getRoomDetail(token);
+      setRoomDetailsList(details || []);
+    } catch (error) {
+      console.error('Error al obtener combinaciones de detalles:', error);
     }
   };
 
@@ -206,6 +219,11 @@ const RoomList = ({ refresh, onUpdate }) => {
     return amenities;
   };
 
+  const roomsWithDetails = rooms.map(room => ({
+    ...room,
+    detailRoom: roomDetailsList.find(d => d.id === room.detailRoomId) || null
+  }));
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -248,7 +266,7 @@ const RoomList = ({ refresh, onUpdate }) => {
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {rooms.map((room) => (
+          {roomsWithDetails.map((room) => (
             <div key={room.id} className="border rounded-lg p-4 shadow-md bg-white dark:bg-gray-700 hover:shadow-lg transition-shadow">
               <div className="flex justify-between items-start mb-3">
                 <h4 className="font-semibold text-lg text-blue-600 dark:text-blue-400">

@@ -15,7 +15,9 @@ const roomService = {
       const response = await axios.get(`${BASE_URL}/${id}`, getHeaders(token));
       return response.data;
     } catch (error) {
-      console.error('Error al obtener la habitación:', error);
+      if (error.response?.status !== 404) {
+        console.error('Error al obtener la habitación:', error);
+      }
       throw error;
     }
   },
@@ -50,16 +52,13 @@ const roomService = {
       console.log('=== DEBUG CREATEROOM ===');
       console.log('Datos recibidos:', roomData);
     
-      // Si es FormData, convertir a objeto (por ahora no lo usaremos)
       if (roomData instanceof FormData) {
         console.log('⚠️ FormData detectado, pero enviando como JSON...');
-        // Por ahora forzamos el uso de JSON
         return;
       }
     
-      // Preparar payload con ID incluido
       const roomPayload = {
-        id: roomData.id || crypto.randomUUID(), // 🔧 AGREGAR ID
+        id: roomData.id,
         description: roomData.description,
         roomTypeId: roomData.roomTypeId,
         price: Number(roomData.price),
@@ -107,6 +106,7 @@ const roomService = {
       throw error;
     }
   },
+
   getRoomTypes: async (token) => {
     try {
       const response = await axios.get(`${BASE_URL}/roomType`, getHeaders(token));
@@ -116,6 +116,7 @@ const roomService = {
       throw error;
     }
   },
+
   getRoomTypeById: async (id, token) => {
     try {
       const response = await axios.get(`http://localhost:3000/api/rooms/${id}`, getHeaders(token));
@@ -125,15 +126,13 @@ const roomService = {
       throw error;
     }
   },  
+
   getAvailableRoomsByType: async (token, roomTypeId, checkIn, checkOut, numberOfGuests) => {
     try {
-      // Asegúrate de que los parámetros se pasen correctamente
       const response = await axios.get(
         `${BASE_URL}/available`, 
         {
           params: {
-            // No incluir reservationId a menos que sea necesario
-            // reservationId: no debe ser el token
             roomTypeId,
             checkInDate: checkIn,
             checkOutDate: checkOut,
@@ -150,12 +149,12 @@ const roomService = {
       throw error;
     }
   },
+
   createRoomWithDetails: async (formData, token) => {
     try {
       console.log('=== DEBUG createRoomWithDetails ===');
       console.log('Enviando FormData al backend...');
     
-      // Debug: mostrar contenido del FormData
       for (let pair of formData.entries()) {
         console.log(`${pair[0]}: ${pair[1]}`);
       }
@@ -173,6 +172,60 @@ const roomService = {
       console.error('Error en createRoomWithDetails:', error);
       console.error('Error response:', error.response?.data);
       console.error('Error status:', error.response?.status);
+      throw error;
+    }
+  },
+
+  // 🔧 USAR FETCH PARA VERIFICACIÓN SILENTIOSA (no aparece en consola)
+  checkRoomIdAvailability: async (id, token) => {
+    try {
+      const response = await fetch(`${BASE_URL}/${id}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        // Status 200: la habitación existe
+        return { exists: true, available: false };
+      } else if (response.status === 404) {
+        // Status 404: ID disponible
+        return { exists: false, available: true };
+      } else {
+        // Otros errores
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+    } catch (error) {
+      // Solo mostrar errores que NO sean de red (fetch no muestra 404 en consola)
+      if (!error.message.includes('404')) {
+        console.error('Error al verificar disponibilidad del ID:', error);
+      }
+      throw error;
+    }
+  },
+
+  // Agregar este método
+  createRoomWithFormData: async (formData, token) => {
+    try {
+      console.log('=== DEBUG createRoomWithFormData ===');
+    
+      for (let pair of formData.entries()) {
+        console.log(`${pair[0]}: ${pair[1]}`);
+      }
+    
+      const response = await axios.post(`${BASE_URL}`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    
+      console.log('Habitación creada exitosamente:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error en createRoomWithFormData:', error);
       throw error;
     }
   },
