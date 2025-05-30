@@ -8,7 +8,6 @@ import RoomList from '../components/RoomList';
 import ReservationForm from '../components/ReservationForm';
 import ReservationList from '../components/ReservationList';
 import RoomTypeForm from '../components/RoomTypeForm';
-import RoomDetailForm from '../components/RoomDetailForm';
 import Modal from '../components/Modal';
 import ReportsPage from './ReportsPage';
 import RoomTypeList from '../components/RoomTypeList';
@@ -20,7 +19,12 @@ const DashboardPage = () => {
   const [showReservations, setShowReservations] = useState(false);
   const [showRoomTypes, setShowRoomTypes] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [selectedRoom, setSelectedRoom] = useState(null);
+  
+  // 🔧 ESTADOS SEPARADOS PARA CADA SECCIÓN
+  const [selectedRoom, setSelectedRoom] = useState(null); // Para habitaciones
+  const [selectedRoomType, setSelectedRoomType] = useState(null); // Para tipos de habitación
+  const [showRoomTypeForm, setShowRoomTypeForm] = useState(false); // Para mostrar/ocultar form de tipos
+  
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [refresh, setRefresh] = useState(false);
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
@@ -82,18 +86,29 @@ const DashboardPage = () => {
           )}
         </div>
 
-        {/* Sección de Tipos y detalles de Habitación */}
+        {/* Sección de Tipos de Habitación - CORREGIDA */}
         <div className="mb-8">
-          <h2 className="font-bold text-lg mb-2 text-left uppercase">TIPOS y DETALLES DE HABITACIÓN</h2>
+          <h2 className="font-bold text-lg mb-2 text-left uppercase">TIPO DE HABITACIÓN</h2>
           <div className="flex flex-col items-start">
-            <button onClick={() => setSelectedRoom(!selectedRoom)} className="mb-2">
-              {selectedRoom ? 'Ocultar crear tipo de habitación' : 'Crear tipo de habitación'}
+            <button 
+              onClick={() => {
+                setSelectedRoomType({});
+                setShowRoomTypeForm(!showRoomTypeForm);
+              }} 
+              className="mb-2"
+            >
+              {showRoomTypeForm ? 'Ocultar crear tipo de habitación' : 'Crear tipo de habitación'}
             </button>
           </div>
-          {selectedRoom && (
+          {showRoomTypeForm && (
             <div className="mt-4">
-              <RoomTypeForm room={selectedRoom} onSave={() => setRefresh(!refresh)} />
-              <RoomDetailForm roomDetail={selectedRoom} onSave={() => setRefresh(!refresh)} />
+              <RoomTypeForm 
+                room={selectedRoomType} 
+                onSave={() => {
+                  setRefresh(!refresh);
+                  setShowRoomTypeForm(false);
+                }} 
+              />
             </div>
           )}
           <button onClick={() => setShowRoomTypes(!showRoomTypes)} className="mb-2">
@@ -101,52 +116,59 @@ const DashboardPage = () => {
           </button>
           {showRoomTypes && (
             <div className="w-full">
-              <RoomTypeList key={refresh} onEdit={setSelectedRoom} onDelete={() => setRefresh(!refresh)} />
+              <RoomTypeList 
+                key={refresh} 
+                onEdit={(roomType) => {
+                  setSelectedRoomType(roomType);
+                  setShowRoomTypeForm(true);
+                }} 
+                onDelete={() => setRefresh(!refresh)} 
+              />
             </div>
           )}
         </div>
 
-        {/* Sección de Habitaciones */}
+        {/* Sección de Habitaciones - CORREGIDA */}
         <div className="mb-8">
-    <h2 className="font-bold text-lg mb-2 text-left uppercase">HABITACIONES</h2>
-    <div className="flex flex-col items-start">
-      <button 
-        className="mb-2" 
-        onClick={() => {
-          setSelectedRoom({});
-          setIsRoomModalOpen(true);
-        }}
-      >
-        Crear Habitación
-      </button>
-      <button onClick={() => setShowRooms(!showRooms)} className="mb-2">
-        {showRooms ? 'Ocultar Lista de Habitaciones' : 'Lista de Habitaciones'}
-      </button>
-      {showRooms && (
-        <div className="w-full">
-          <RoomList 
-            key={refresh}
-            onEdit={(room) => {
-              setSelectedRoom(room);
-              setIsRoomModalOpen(true);
-            }} 
-            onDelete={() => setRefresh(!refresh)} 
-          />
-
+          <h2 className="font-bold text-lg mb-2 text-left uppercase">HABITACIONES</h2>
+          <div className="flex flex-col items-start">
+            <button 
+              className="mb-2" 
+              onClick={() => {
+                setSelectedRoom({});
+                setIsRoomModalOpen(true);
+              }}
+            >
+              Crear Habitación
+            </button>
+            <button onClick={() => setShowRooms(!showRooms)} className="mb-2">
+              {showRooms ? 'Ocultar Lista de Habitaciones' : 'Lista de Habitaciones'}
+            </button>
+            {showRooms && (
+              <div className="w-full">
+                <RoomList 
+                  key={refresh}
+                  onEdit={(room) => {
+                    setSelectedRoom(room);
+                    setIsRoomModalOpen(true);
+                  }} 
+                  onDelete={() => setRefresh(!refresh)} 
+                />
+              </div>
+            )}
+          </div>
+          
+          <Modal isOpen={isRoomModalOpen} onClose={() => setIsRoomModalOpen(false)}>
+            <RoomForm 
+              room={selectedRoom} 
+              onSave={() => {
+                setRefresh(!refresh);
+                setIsRoomModalOpen(false);
+              }} 
+            />
+          </Modal>
         </div>
-      )}
-    </div>
-    
-    <Modal isOpen={isRoomModalOpen} onClose={() => setIsRoomModalOpen(false)}>
-      <RoomForm 
-        room={selectedRoom} 
-        onSave={() => {
-          setRefresh(!refresh);
-          setIsRoomModalOpen(false);
-        }} 
-      />
-    </Modal>
-  </div>
+
         {/* Sección de Reservas */}
         <div className="mb-8">
           <h2 className="font-bold text-lg mb-2 text-left uppercase">RESERVAS</h2>
@@ -178,8 +200,8 @@ const DashboardPage = () => {
               />
             </Modal>
             <button onClick={() => setShowReservations(!showReservations)} className="mb-2">
-            {showReservations ? 'Ocultar Lista de Reservas' : 'Lista de Reservas'}
-          </button>
+              {showReservations ? 'Ocultar Lista de Reservas' : 'Lista de Reservas'}
+            </button>
             {showReservations && (
               <div className="w-full">
                <ReservationList 

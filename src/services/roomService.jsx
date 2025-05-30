@@ -46,21 +46,35 @@ const roomService = {
   },
 
   createRoom: async (roomData, token) => {
-    const roomPayload = {
-      id: roomData.id,
-      description: roomData.description,
-      roomTypeId: roomData.roomTypeId,
-      roomDetailId: roomData.roomDetailId,
-      price: Number(roomData.price),
-      status: roomData.status,
-      photoRoom: Array.isArray(roomData.photoRoom) ? roomData.photoRoom : [],
-    };
-
     try {
+      console.log('=== DEBUG CREATEROOM ===');
+      console.log('Datos recibidos:', roomData);
+    
+      // Si es FormData, convertir a objeto (por ahora no lo usaremos)
+      if (roomData instanceof FormData) {
+        console.log('⚠️ FormData detectado, pero enviando como JSON...');
+        // Por ahora forzamos el uso de JSON
+        return;
+      }
+    
+      // Preparar payload con ID incluido
+      const roomPayload = {
+        id: roomData.id || crypto.randomUUID(), // 🔧 AGREGAR ID
+        description: roomData.description,
+        roomTypeId: roomData.roomTypeId,
+        price: Number(roomData.price),
+        status: roomData.status,
+        photoRoom: Array.isArray(roomData.photoRoom) ? roomData.photoRoom : [],
+      };
+
+      console.log('Payload final enviado:', roomPayload);
+    
       const response = await axios.post(`${BASE_URL}`, roomPayload, getHeaders(token));
       return response.data;
     } catch (error) {
       console.error('Error en createRoom:', error);
+      console.error('Error response data:', error.response?.data);
+      console.error('Error status:', error.response?.status);
       throw error;
     }
   },
@@ -133,6 +147,32 @@ const roomService = {
       return response.data;
     } catch (error) {
       console.error('Error al obtener habitaciones disponibles:', error);
+      throw error;
+    }
+  },
+  createRoomWithDetails: async (formData, token) => {
+    try {
+      console.log('=== DEBUG createRoomWithDetails ===');
+      console.log('Enviando FormData al backend...');
+    
+      // Debug: mostrar contenido del FormData
+      for (let pair of formData.entries()) {
+        console.log(`${pair[0]}: ${pair[1]}`);
+      }
+    
+      const response = await axios.post(`${BASE_URL}`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    
+      console.log('Respuesta exitosa:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error en createRoomWithDetails:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
       throw error;
     }
   },

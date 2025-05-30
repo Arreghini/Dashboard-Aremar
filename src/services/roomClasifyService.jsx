@@ -3,8 +3,7 @@ import axios from 'axios';
 const BASE_URL = 'http://localhost:3000/api/rooms/admin';
 
 const roomClasifyService = {
-  // En roomClasifyService.js
-getRoomType: async (token) => {
+getRoomTypes: async (token) => {
   try {
     const response = await axios.get(`${BASE_URL}/roomType`, {
       headers: {

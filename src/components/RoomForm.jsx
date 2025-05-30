@@ -1,234 +1,419 @@
 import { useState, useEffect } from 'react';
+import { useAuth0 } from '@auth0/auth0-react';
 import roomService from '../services/roomService';
 import roomClasifyService from '../services/roomClasifyService';
-import { useAuth0 } from '@auth0/auth0-react';
 
-const RoomForm = ({ room = {}, onSave }) => {
+const RoomForm = ({ onRoomCreated }) => {
   const { getAccessTokenSilently } = useAuth0();
-  const [formData, setFormData] = useState({
-    id: room?.id || '',
-    description: room?.description || '',
-    roomTypeId: room?.roomTypeId || '',
-    detailRoomId: room?.detailRoomId || '',
-    photoRoom: room?.photoRoom || '',
-    status: room?.status || 'available',
-    price: room?.price || 0,
+  const [roomData, setRoomData] = useState({
+    id: '',
+    description: '',
+    roomTypeId: '',
+    price: '',
+    status: 'available',
+  });
+  const [roomDetails, setRoomDetails] = useState({
+    cableTvService: false,
+    smart_TV: false,
+    wifi: true,
+    microwave: false,
+    pava_electrica: false,
   });
   const [roomTypes, setRoomTypes] = useState([]);
-  const [roomDetails, setRoomDetails] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [newPhotos, setNewPhotos] = useState([]);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingId, setIsCheckingId] = useState(false);
+  const [idStatus, setIdStatus] = useState('');
+
+  const detailNames = {
+    cableTvService: "📺 TV por Cable",
+    smart_TV: "📱 Smart TV", 
+    wifi: "📶 WiFi",
+    microwave: "🔥 Microondas",
+    pava_electrica: "☕ Pava Eléctrica"
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const token = await getAccessTokenSilently();
-        const types = await roomClasifyService.getRoomType(token);
-        const details = await roomClasifyService.getRoomDetail(token);
-  
-        // Si estamos editando, buscamos el tipo de habitación correspondiente
-        if (room?.roomTypeId) {
-          const selectedType = types.find(type => type.id === room.roomTypeId);
-          setFormData(prevData => ({
-            ...prevData,
-            price: selectedType ? selectedType.price : 0
-          }));
-        }
-  
-        setRoomTypes(types);
-        setRoomDetails(details);
-      } catch (error) {
-        setError('Error al cargar datos');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [getAccessTokenSilently, room]);
-  
-  useEffect(() => {
-    // Sincronizar los valores de room con formData cuando room cambie
-    setFormData({
-      id: room?.id || '',
-      description: room?.description || '',
-      roomTypeId: room?.roomTypeId || '',
-      detailRoomId: room?.detailRoomId || '',
-      photoRoom: room?.photoRoom || '',
-      status: room?.status || 'available',
-      price: room?.price || 0,
-    });
-  }, [room]);
+    fetchRoomTypes();
+  }, []);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prevData => ({
-      ...prevData,
-      [name]: name === 'price' ? Number(value) : value,
-    }));
-  };
-  
-  const handleRoomTypeChange = (e) => {
-    const selectedTypeId = e.target.value;
-    const selectedType = roomTypes.find(type => type.id === selectedTypeId);
+  const checkIdAvailability = async (id) => {
+    if (!id || !id.trim()) {
+      setIdStatus('');
+      return;
+    }
 
-    setFormData({
-      ...formData,
-      roomTypeId: selectedTypeId,
-      price: selectedType ? selectedType.price : 0, // Actualiza el precio automáticamente
-    });
-  };
-  
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const formDataToSend = {
-      id: formData.id,
-      description: formData.description,
-      roomTypeId: formData.roomTypeId,
-      roomDetailId: formData.detailRoomId,
-      price: Number(formData.price), // Asegúrate de que sea un número
-      status: formData.status || 'available',
-      photoRoom: formData.photoRoom || [],
-    };
-
-    console.log('Datos enviados:', formDataToSend); // Verifica el precio aquí
-
+    setIsCheckingId(true);
     try {
       const token = await getAccessTokenSilently();
-      if (room.id) {
-        const updatedRoom = await roomService.updateRoom(room.id, formDataToSend, token);
-        console.log('Habitación actualizada:', updatedRoom);
-        setSuccessMessage('Habitación actualizada con éxito');
-      } else {
-        const newRoom = await roomService.createRoom(formDataToSend, token);
-        console.log('Habitación creada:', newRoom);
-        setSuccessMessage('Habitación creada con éxito');
-      }
-      onSave(formDataToSend);
+      await roomService.getRoom(id.trim(), token);
+      setIdStatus('exists');
     } catch (error) {
-      setError('Error en la operación: ' + error.response?.data || error.message);
+      if (error.response?.status === 404) {
+        setIdStatus('available');
+      } else {
+        console.error('Error al verificar ID:', error);
+        setIdStatus('error');
+      }
+    } finally {
+      setIsCheckingId(false);
     }
   };
 
-  if (loading) {
-    return <p>Cargando tipos y detalles de habitación...</p>;
-  }
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (roomData.id) {
+        checkIdAvailability(roomData.id);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [roomData.id]);
+
+  const fetchRoomTypes = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await roomClasifyService.getRoomTypes(token);
+      setRoomTypes(response || []);
+    } catch (error) {
+      console.error('Error al obtener tipos de habitación:', error);
+    }
+  };
+
+  const handleRoomDataChange = (e) => {
+    const { name, value } = e.target;
+    setRoomData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+
+    if (name === 'id') {
+      setIdStatus('');
+      setError('');
+    }
+  };
+
+  const handleDetailChange = (e) => {
+    const { name, checked } = e.target;
+    setRoomDetails(prev => ({
+      ...prev,
+      [name]: checked
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+    setIsSubmitting(true);
+
+    try {
+      const token = await getAccessTokenSilently();
+      
+      if (!roomData.id || !roomData.id.trim()) {
+        setError('El ID de la habitación es obligatorio');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (idStatus === 'exists') {
+        setError(`El ID "${roomData.id}" ya existe. Por favor, usa un ID diferente.`);
+        setIsSubmitting(false);
+        return;
+      }
+
+      try {
+        await roomService.getRoom(roomData.id.trim(), token);
+        setError(`El ID "${roomData.id}" ya existe. Por favor, usa un ID diferente.`);
+        setIsSubmitting(false);
+        return;
+      } catch (checkError) {
+        if (checkError.response?.status !== 404) {
+          console.error('Error al verificar ID:', checkError);
+          setError('Error al verificar la disponibilidad del ID');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      
+      console.log('=== DATOS ANTES DE CREAR FORMDATA ===');
+      console.log('roomData completo:', roomData);
+      console.log('roomDetails completo:', roomDetails);
+      
+      // 🔧 CREAR FORMDATA CON DETALLES INDIVIDUALES
+      const formData = new FormData();
+      formData.append('id', roomData.id.trim());
+      formData.append('description', roomData.description);
+      formData.append('roomTypeId', roomData.roomTypeId);
+      formData.append('price', roomData.price || '0');
+      formData.append('status', roomData.status);
+      
+      // 🔧 AGREGAR CADA DETALLE INDIVIDUALMENTE
+      formData.append('cableTvService', roomDetails.cableTvService);
+      formData.append('smart_TV', roomDetails.smart_TV);
+      formData.append('wifi', roomDetails.wifi);
+      formData.append('microwave', roomDetails.microwave);
+      formData.append('pava_electrica', roomDetails.pava_electrica);
+  
+      // Agregar archivos de fotos
+      if (newPhotos && newPhotos.length > 0) {
+        newPhotos.forEach(file => {
+          formData.append('photos', file);
+        });
+      }
+      
+      console.log('=== FormData antes de enviar ===');
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
+
+      await roomService.createRoomWithDetails(formData, token);
+  
+      setSuccessMessage('Habitación creada con éxito');
+      resetForm();
+      
+      if (onRoomCreated) {
+        onRoomCreated();
+      }
+      
+    } catch (error) {
+      console.error('Error al crear habitación:', error);
+      if (error.response?.data?.message?.includes('already exists')) {
+        setError(`El ID "${roomData.id}" ya existe. Por favor, usa un ID diferente.`);
+      } else {
+        setError(`Error: ${error.response?.data?.message || error.message}`);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
+    setRoomData({
+      id: '',
+      description: '',
+      roomTypeId: '',
+      price: '',
+      status: 'available',
+    });
+    setRoomDetails({
+      cableTvService: false,
+      smart_TV: false,
+      wifi: true,
+      microwave: false,
+      pava_electrica: false,
+    });
+    setNewPhotos([]);
+    setError('');
+    setSuccessMessage('');
+    setIdStatus('');
+  };
+
+  const getIdInputStyle = () => {
+    const baseStyle = "w-full border p-2 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white text-sm";
+    
+    if (isCheckingId) {
+      return `${baseStyle} border-yellow-400 bg-yellow-50`;
+    }
+    
+    switch (idStatus) {
+      case 'available':
+        return `${baseStyle} border-green-400 bg-green-50`;
+      case 'exists':
+        return `${baseStyle} border-red-400 bg-red-50`;
+      case 'error':
+        return `${baseStyle} border-orange-400 bg-orange-50`;
+      default:
+        return `${baseStyle} border-gray-300 dark:border-gray-600`;
+    }
+  };
+
+  const getIdStatusMessage = () => {
+    if (isCheckingId) {
+      return <span className="text-yellow-600 text-xs">🔍 Verificando disponibilidad...</span>;
+    }
+    
+    switch (idStatus) {
+      case 'available':
+        return <span className="text-green-600 text-xs">✅ ID disponible</span>;
+      case 'exists':
+        return <span className="text-red-600 text-xs">❌ Este ID ya existe</span>;
+      case 'error':
+        return <span className="text-orange-600 text-xs">⚠️ Error al verificar ID</span>;
+      default:
+        return null;
+    }
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 border border-gray-300 rounded">
-      <h1 className="text-lg font-bold mb-4">{room?.id ? 'Actualizar Habitación' : 'Crear Nueva Habitación'}</h1>
-      {error && <p className="text-red-500">{error}</p>}
-      {successMessage && <p className="text-green-500">{successMessage}</p>}
-      <label className="block mb-2">
-        Id:
-        <input
-          type="text"
-          name="id"
-          value={formData.id}
-          onChange={handleChange}
-          required
-          className="border border-gray-300 p-2 w-full"
-        />
-      </label>
-      <label className="block mb-2">
-        Descripción:
-        <input
-          type="text"
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          required
-          className="border border-gray-300 p-2 w-full"
-        />
-      </label>
-      <label className="block mb-2">
-        Tipo de Habitación:
-        <select
-          name="roomTypeId"
-          value={formData.roomTypeId}
-          onChange={handleRoomTypeChange}
-          required
-          className="border border-gray-300 p-2 w-full"
-        >
-          <option value="">Selecciona un tipo</option>
-          {roomTypes.map((type) => (
-            <option key={type.id} value={type.id}>
-              {type.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="block mb-2">
-        Detalles:
-        <select
-          name="detailRoomId"
-          value={formData.detailRoomId}
-          onChange={handleChange}
-          required
-          className="border border-gray-300 p-2 w-full"
-        >
-          <option value="">Selecciona un detalle</option>
-          {roomDetails.map((detail) => {
-            const servicios = [];
-            if (detail.cableTvService) servicios.push("TV por Cable");
-            if (detail.smart_TV) servicios.push("Smart TV");
-            if (detail.wifi) servicios.push("WiFi");
-            if (detail.microwave) servicios.push("Microondas");
-            if (detail.pava_electrica) servicios.push("Pava Eléctrica");
+    <div className="p-4 border border-gray-300 rounded-2xl bg-white dark:bg-gray-800 w-full max-w-9xl mx-auto shadow-xl max-h-[90vh] overflow-y-auto">
+      <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">
+        Crear Nueva Habitación
+      </h2>
+      
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded mb-3 text-sm">
+          {error}
+        </div>
+      )}
+      
+      {successMessage && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-3 py-2 rounded mb-3 text-sm">
+          {successMessage}
+        </div>
+      )}
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              ID de la Habitación *
+            </label>
+            <input
+              type="text"
+              name="id"
+              value={roomData.id}
+              onChange={handleRoomDataChange}
+              placeholder="Ej: HAB-001, A1, SUITE-VIP"
+              required
+              className={getIdInputStyle()}
+            />
+            <div className="mt-1">
+              {getIdStatusMessage()}
+            </div>
+          </div>
+          
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Descripción *
+            </label>
+            <input
+              type="text"
+              name="description"
+              value={roomData.description}
+              onChange={handleRoomDataChange}
+              placeholder="Ej: Habitación con vista al mar"
+              required
+              className="w-full border border-gray-300 dark:border-gray-600 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white text-sm"
+            />
+          </div>
 
-            const descripcion = servicios.length > 0 ? servicios.join(", ") : "Sin servicios";
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Tipo *
+            </label>
+            <select
+              name="roomTypeId"
+              value={roomData.roomTypeId}
+              onChange={handleRoomDataChange}
+              required
+              className="w-full border border-gray-300 dark:border-gray-600 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white text-sm"
+            >
+              <option value="">Seleccionar</option>
+              {roomTypes.map(type => (
+                <option key={type.id} value={type.id}>
+                  {type.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-            return (
-              <option key={detail.id} value={detail.id}>
-                {descripcion}
-              </option>
-            );
-          })}
-        </select>
-      </label>
-      <label className="block mb-2">
-        Precio:
-        <input
-          type="number"
-          name="price"
-          value={formData.price} // El precio ahora proviene del estado
-          readOnly // Deshabilita la edición manual
-          className="border border-gray-300 p-2 w-full bg-gray-100 cursor-not-allowed"
-        />
-        {formData.roomTypeId && (
-          <span className="text-sm text-gray-500">
-            Precio sugerido: {formData.price}
-          </span>
-        )}
-      </label>
-      <label className="block mb-2">
-        Foto:
-        <input
-          type="file"
-          name="photoRoom"
-          onChange={(e) => setFormData({ ...formData, photoRoom: e.target.files[0] })}
-          className="border border-gray-300 p-2 w-full"
-        />
-      </label>
-      <label className="block mb-2">
-        Estado:
-        <select
-          name="status"
-          value={formData.status}
-          onChange={handleChange}
-          required
-          className="border border-gray-300 p-2 w-full"
-        >
-          <option value="available">Disponible</option>
-          <option value="unavailable">Ocupado</option>
-        </select>
-      </label>
-      <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-        {room?.id ? 'Actualizar Habitación' : 'Crear Habitación'}
-      </button>
-    </form>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              💰 Precio/noche
+            </label>
+            <input
+              type="number"
+              name="price"
+              min="0"
+              step="0.01"
+              value={roomData.price}
+              onChange={handleRoomDataChange}
+              placeholder="0.00"
+              className="w-full border border-gray-300 dark:border-gray-600 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Estado
+            </label>
+            <select
+              name="status"
+              value={roomData.status}
+              onChange={handleRoomDataChange}
+              className="w-full border border-gray-300 dark:border-gray-600 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white text-sm"
+            >
+              <option value="available">✅ Disponible</option>
+              <option value="occupied">🔴 Ocupada</option>
+              <option value="maintenance">🔧 Mantenimiento</option>
+              <option value="cleaning">🧹 Limpieza</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
+              Servicios
+            </h3>
+            <div className="grid grid-cols-1 gap-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              {Object.entries(detailNames).map(([key, label]) => (
+                <label key={key} className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name={key}
+                    checked={roomDetails[key]}
+                    onChange={handleDetailChange}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    {label}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              📷 Fotos de la habitación
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => setNewPhotos(Array.from(e.target.files))}
+              className="w-full border border-gray-300 dark:border-gray-600 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 text-sm"
+            />
+            {newPhotos.length > 0 && (
+              <p className="text-xs text-gray-500 mt-1">
+                {newPhotos.length} archivo(s) seleccionado(s)
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+          <button
+            type="button"
+            onClick={resetForm}
+            className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors text-sm"
+          >
+            Limpiar
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting || !roomData.description.trim() || !roomData.roomTypeId || !roomData.id.trim()}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors text-sm"
+          >
+            {isSubmitting ? 'Creando...' : 'Crear Habitación'}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 };
 

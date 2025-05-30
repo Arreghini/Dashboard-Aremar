@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import roomClasifyService from '../services/roomClasifyService';
 import { useAuth0 } from '@auth0/auth0-react';
-import Modal from './Modal';
 
 const RoomTypeList = ({ refresh, onUpdate }) => {
   const { getAccessTokenSilently } = useAuth0();
@@ -32,7 +31,7 @@ const RoomTypeList = ({ refresh, onUpdate }) => {
       setLoading(true);
       setError('');
       const token = await getAccessTokenSilently();
-      const responseData = await roomClasifyService.getRoomType(token);
+      const responseData = await roomClasifyService.getRoomTypes(token);
       
       console.log('Respuesta del servicio:', responseData);
       
@@ -78,18 +77,33 @@ const RoomTypeList = ({ refresh, onUpdate }) => {
   };
 
   const handleEdit = (roomType) => {
+    console.log('Editando tipo de habitación:', roomType);
+    console.log('Abriendo modal de edición...');
+    
     setEditingRoomType(roomType);
     setEditFormData({
       name: roomType.name || '',
-      simpleBeds: roomType.simpleBeds?.toString() || '',
-      trundleBeds: roomType.trundleBeds?.toString() || '',
-      kingBeds: roomType.kingBeds?.toString() || '',
-      windows: roomType.windows?.toString() || '',
-      price: roomType.price?.toString() || '',
+      simpleBeds: roomType.simpleBeds?.toString() || '0',
+      trundleBeds: roomType.trundleBeds?.toString() || '0',
+      kingBeds: roomType.kingBeds?.toString() || '0',
+      windows: roomType.windows?.toString() || '0',
+      price: roomType.price?.toString() || '0',
     });
     setExistingPhotos(roomType.photos || []);
     setNewPhotos([]);
     setIsEditModalOpen(true);
+    setError('');
+    setSuccessMessage('');
+    
+    console.log('Estado del modal:', true);
+    console.log('Datos del formulario:', {
+      name: roomType.name || '',
+      simpleBeds: roomType.simpleBeds?.toString() || '0',
+      trundleBeds: roomType.trundleBeds?.toString() || '0',
+      kingBeds: roomType.kingBeds?.toString() || '0',
+      windows: roomType.windows?.toString() || '0',
+      price: roomType.price?.toString() || '0',
+    });
   };
 
   const handleUpdateSubmit = async (e) => {
@@ -101,7 +115,6 @@ const RoomTypeList = ({ refresh, onUpdate }) => {
     try {
       const token = await getAccessTokenSilently();
       
-      // Crear FormData con todos los datos
       const formData = new FormData();
       formData.append('name', editFormData.name);
       formData.append('simpleBeds', editFormData.simpleBeds || '0');
@@ -110,12 +123,10 @@ const RoomTypeList = ({ refresh, onUpdate }) => {
       formData.append('windows', editFormData.windows || '0');
       formData.append('price', editFormData.price || '0');
       
-      // Agregar fotos existentes como JSON string
       if (existingPhotos.length > 0) {
         formData.append('existingPhotos', JSON.stringify(existingPhotos));
       }
       
-      // Agregar archivos nuevos
       if (newPhotos && newPhotos.length > 0) {
         newPhotos.forEach(file => {
           formData.append('photos', file);
@@ -157,10 +168,12 @@ const RoomTypeList = ({ refresh, onUpdate }) => {
   };
 
   const closeEditModal = () => {
+    console.log('Cerrando modal...');
     setIsEditModalOpen(false);
     setEditingRoomType(null);
     resetEditForm();
     setError('');
+    setSuccessMessage('');
   };
 
   if (loading) {
@@ -177,6 +190,14 @@ const RoomTypeList = ({ refresh, onUpdate }) => {
   return (
     <div className="mt-6">
       <h3 className="text-lg font-bold mb-4">Lista de Tipos de Habitación</h3>
+      
+      {/* Debug info */}
+      {isEditModalOpen && (
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+          <p>🔧 DEBUG: Modal debería estar abierto. Estado: {isEditModalOpen.toString()}</p>
+          <p>Editando: {editingRoomType?.name || 'Sin datos'}</p>
+        </div>
+      )}
       
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -257,7 +278,7 @@ const RoomTypeList = ({ refresh, onUpdate }) => {
 
               {/* Fechas */}
               <div className="mb-4 text-xs text-gray-500 border-t pt-2">
-                                <p>📅 Creado: {new Date(roomType.createdAt).toLocaleDateString('es-ES')}</p>
+                <p>📅 Creado: {new Date(roomType.createdAt).toLocaleDateString('es-ES')}</p>
                 <p>🕒 Hora: {new Date(roomType.createdAt).toLocaleTimeString('es-ES')}</p>
               </div>
 
@@ -281,154 +302,178 @@ const RoomTypeList = ({ refresh, onUpdate }) => {
         </div>
       )}
 
-      {/* Modal de edición */}
+      {/* Modal de edición - VERSIÓN INTEGRADA SIN COMPONENTE EXTERNO */}
       {isEditModalOpen && (
-        <Modal onClose={closeEditModal} title="Editar Tipo de Habitación">
-          <form onSubmit={handleUpdateSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nombre del tipo de habitación *
-              </label>
-              <input
-                type="text"
-                placeholder="Nombre"
-                value={editFormData.name}
-                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                required
-                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  🛏️ Camas simples
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="Camas simples"
-                  value={editFormData.simpleBeds}
-                  onChange={(e) => setEditFormData({ ...editFormData, simpleBeds: e.target.value })}
-                  className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  🛏️ Camas cucheta
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="Camas cucheta"
-                  value={editFormData.trundleBeds}
-                  onChange={(e) => setEditFormData({ ...editFormData, trundleBeds: e.target.value })}
-                  className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  👑 Camas matrimoniales
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="Camas matrimoniales"
-                  value={editFormData.kingBeds}
-                  onChange={(e) => setEditFormData({ ...editFormData, kingBeds: e.target.value })}
-                  className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  🪟 Ventanas
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="Ventanas"
-                  value={editFormData.windows}
-                  onChange={(e) => setEditFormData({ ...editFormData, windows: e.target.value })}
-                  className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                💰 Precio por noche
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="Precio"
-                value={editFormData.price}
-                onChange={(e) => setEditFormData({ ...editFormData, price: e.target.value })}
-                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                📷 Agregar nuevas fotos
-              </label>
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={(e) => setNewPhotos(Array.from(e.target.files))}
-                className="w-full border border-gray-300 p-3 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-              />
-            </div>
-
-            {/* Fotos existentes */}
-            {existingPhotos.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fotos actuales (clic en ✕ para eliminar):
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {existingPhotos.map((photo, index) => (
-                    <div key={index} className="relative w-20 h-20">
-                      <img
-                        src={photo}
-                        alt={`foto ${index}`}
-                        className="w-full h-full object-cover rounded"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeExistingPhoto(index)}
-                        className="absolute top-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 text-xs"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className="flex justify-end gap-2">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Header del modal */}
+            <div className="flex justify-between items-center p-6 border-b">
+              <h2 className="text-xl font-bold text-gray-800">
+                Editar Tipo de Habitación
+              </h2>
               <button
-                type="button"
                 onClick={closeEditModal}
-                className="px-4 py-2 bg-gray-400 text-white rounded"
+                className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
               >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-              >
-                {isSubmitting ? 'Guardando...' : 'Guardar cambios'}
+                ×
               </button>
             </div>
-          </form>
-        </Modal>
+
+            {/* Contenido del modal */}
+            <div className="p-6">
+              {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleUpdateSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nombre del tipo de habitación *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Nombre"
+                    value={editFormData.name}
+                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                    required
+                    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      🛏️ Camas simples
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Camas simples"
+                      value={editFormData.simpleBeds}
+                      onChange={(e) => setEditFormData({ ...editFormData, simpleBeds: e.target.value })}
+                      className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      🛏️ Camas cucheta
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Camas cucheta"
+                      value={editFormData.trundleBeds}
+                      onChange={(e) => setEditFormData({ ...editFormData, trundleBeds: e.target.value })}
+                      className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      👑 Camas matrimoniales
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Camas matrimoniales"
+                      value={editFormData.kingBeds}
+                      onChange={(e) => setEditFormData({ ...editFormData, kingBeds: e.target.value })}
+                      className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      🪟 Ventanas
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Ventanas"
+                      value={editFormData.windows}
+                      onChange={(e) => setEditFormData({ ...editFormData, windows: e.target.value })}
+                      className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    💰 Precio por noche
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Precio"
+                    value={editFormData.price}
+                    onChange={(e) => setEditFormData({ ...editFormData, price: e.target.value })}
+                    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    📷 Agregar nuevas fotos
+                  </label>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => setNewPhotos(Array.from(e.target.files))}
+                    className="w-full border border-gray-300 p-3 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                </div>
+
+                {/* Fotos existentes */}
+                {existingPhotos.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Fotos actuales (clic en ✕ para eliminar):
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {existingPhotos.map((photo, index) => (
+                        <div key={index} className="relative w-20 h-20">
+                          <img
+                            src={photo}
+                            alt={`foto ${index}`}
+                            className="w-full h-full object-cover rounded"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeExistingPhoto(index)}
+                            className="absolute top-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 text-xs"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={closeEditModal}
+                    className="px-4 py-2 bg-gray-400 text-white rounded"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  >
+                    {isSubmitting ? 'Guardando...' : 'Guardar cambios'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
