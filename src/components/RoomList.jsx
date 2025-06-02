@@ -197,9 +197,9 @@ const RoomList = ({ refresh, onUpdate }) => {
     setNewPhotos([]);
   };
 
-  const removeExistingPhoto = (photoIndex) => {
-    setExistingPhotos(prev => prev.filter((_, index) => index !== photoIndex));
-  };
+  // const removeExistingPhoto = (photoIndex) => {
+  //   setExistingPhotos(prev => prev.filter((_, index) => index !== photoIndex));
+  // };
 
   const closeEditModal = () => {
     console.log('Cerrando modal...');

@@ -78,24 +78,20 @@ const roomService = {
     }
   },
 
-  updateRoom: async (id, roomData, token) => {
-    const roomPayload = {
-      description: roomData.description,
-      roomTypeId: roomData.roomTypeId,
-      detailRoomId: roomData.detailRoomId || roomData.roomDetailId,
-      price: Number(roomData.price),
-      status: roomData.status,
-      photoRoom: Array.isArray(roomData.photoRoom) ? roomData.photoRoom : [],
-    };
+updateRoom: async (id, formData, token) => {
+  try {
+    const response = await axios.patch(`${BASE_URL}/${id}`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-    try {
-      const response = await axios.patch(`${BASE_URL}/${id}`, roomPayload, getHeaders(token));
-      return response.data;
-    } catch (error) {
-      console.error('Error en la actualización:', error);
-      throw error;
-    }
-  },
+    return response.data;
+  } catch (error) {
+    console.error('Error en la actualización:', error);
+    throw error;
+  }
+},
 
   deleteRoom: async (id, token) => {
     try {
