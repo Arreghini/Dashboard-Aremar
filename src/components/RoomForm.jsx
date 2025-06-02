@@ -110,7 +110,7 @@ const RoomForm = ({ onRoomCreated }) => {
       // Agregar fotos
       if (newPhotos && newPhotos.length > 0) {
         newPhotos.forEach(file => {
-          formData.append('photos', file);
+          formData.append('photoRoom', file);
         });
       }
 

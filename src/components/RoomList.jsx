@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import roomService from '../services/roomService';
-import roomClasifyService from '../services/roomClasifyService'; // Asegúrate de tener este servicio
+import roomClasifyService from '../services/roomClasifyService';
 
 const RoomList = ({ refresh, onUpdate }) => {
   const { getAccessTokenSilently } = useAuth0();
@@ -22,11 +22,20 @@ const RoomList = ({ refresh, onUpdate }) => {
   const [newPhotos, setNewPhotos] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [roomDetailsList, setRoomDetailsList] = useState([]);
+  const [roomTypes, setRoomTypes] = useState([]);
+  const detailNames = {
+    cableTvService: 'TV Cable',
+    smart_TV: 'Smart TV',
+    wifi: 'WiFi',
+    microwave: 'Microondas',
+    pava_electrica: 'Pava Eléctrica',
+  };
 
   useEffect(() => {
     fetchRooms();
     fetchRoomDetails();
-  }, [refresh]);
+    fetchRoomTypes();
+  }, []);
 
   const fetchRooms = async () => {
     try {
@@ -63,6 +72,17 @@ const RoomList = ({ refresh, onUpdate }) => {
     } finally {
       setLoading(false);
     }
+  };
+   const fetchRoomTypes = async () => {
+  
+    try {
+      const token = await getAccessTokenSilently();
+      const types = await roomClasifyService.getRoomTypes(token);
+      setRoomTypes(types || []);
+    } catch (error) {
+      console.error('Error al obtener tipos de habitación:', error);
+      setError('Error al cargar los tipos de habitación');
+    } 
   };
 
   const fetchRoomDetails = async () => {
@@ -224,6 +244,11 @@ const RoomList = ({ refresh, onUpdate }) => {
     detailRoom: roomDetailsList.find(d => d.id === room.detailRoomId) || null
   }));
 
+  const roomsWithFullDetails = roomsWithDetails.map(room => ({
+    ...room,
+    roomType: roomTypes.find(type => type.id === room.roomTypeId) || null
+  }));
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -266,7 +291,7 @@ const RoomList = ({ refresh, onUpdate }) => {
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {roomsWithDetails.map((room) => (
+          {roomsWithFullDetails.map((room) => (
             <div key={room.id} className="border rounded-lg p-4 shadow-md bg-white dark:bg-gray-700 hover:shadow-lg transition-shadow">
               <div className="flex justify-between items-start mb-3">
                 <h4 className="font-semibold text-lg text-blue-600 dark:text-blue-400">
@@ -317,7 +342,9 @@ const RoomList = ({ refresh, onUpdate }) => {
               {/* Detalles de la habitación */}
               <div className="mb-4 text-sm space-y-1 bg-gray-50 dark:bg-gray-600 p-3 rounded">
                 <div className="grid grid-cols-1 gap-2">
-                  <p><strong>🏷️ Tipo:</strong> {room.description || 'Sin descripción'}</p>
+                  <p>
+                    <strong>🏷️ Tipo:{room.roomType?.name || 'Sin tipo'} </strong>
+                  </p>
                   <div>
                     <strong>📋 Detalles:</strong>
                     <div className="mt-1 flex flex-wrap gap-1">
@@ -415,23 +442,38 @@ const RoomList = ({ refresh, onUpdate }) => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Tipo de Habitación
                     </label>
-                    <input
-                      type="text"
+                    <select
                       className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       value={editFormData.roomTypeId}
                       onChange={(e) => setEditFormData(prev => ({ ...prev, roomTypeId: e.target.value }))}
-                    />
+                      required
+                    >
+                      <option value="">Seleccionar</option>
+                      {roomTypes.map(type => (
+                        <option key={type.id} value={type.id}>{type.name}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Detalle de Habitación
                     </label>
-                    <input
-                      type="text"
+                    <select
                       className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       value={editFormData.detailRoomId}
                       onChange={(e) => setEditFormData(prev => ({ ...prev, detailRoomId: e.target.value }))}
-                    />
+                      required
+                    >
+                      <option value="">Selecciona una combinación</option>
+                      {roomDetailsList.map(detail => (
+                        <option key={detail.id} value={detail.id}>
+                          {Object.entries(detailNames)
+                            .filter(([key]) => detail[key])
+                            .map(([key, label]) => label)
+                            .join(', ') || 'Sin servicios'}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -453,6 +495,18 @@ const RoomList = ({ refresh, onUpdate }) => {
                       className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       value={editFormData.status}
                       onChange={(e) => setEditFormData(prev => ({ ...prev, status: e.target.value }))}
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Fotos nuevas
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={e => setNewPhotos(Array.from(e.target.files))}
+                      className="w-full border border-gray-300 rounded px-2 py-1"
                     />
                   </div>
                 </div>
