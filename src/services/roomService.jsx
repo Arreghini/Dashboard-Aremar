@@ -37,15 +37,15 @@ const roomService = {
     }
   },
 
-  getRoomsTypes: async (token) => {
-    try {
-      const response = await axios.get(`${BASE_URL}/roomType`, getHeaders(token));
-      return response.data;
-    } catch (error) {
-      console.error('Error al obtener los tipos de habitaciones:', error);
-      throw error;
-    }
-  },
+  // getRoomsTypes: async (token) => {
+  //   try {
+  //     const response = await axios.get(`${BASE_URL}/roomType`, getHeaders(token));
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error('Error al obtener los tipos de habitaciones:', error);
+  //     throw error;
+  //   }
+  // },
 
   createRoom: async (roomData, token) => {
     try {
@@ -123,15 +123,16 @@ updateRoom: async (id, formData, token) => {
     }
   },  
 
-  getAvailableRoomsByType: async (token, roomTypeId, checkIn, checkOut, numberOfGuests) => {
+  getAvailableRoomsByType: async (token, reservationId,roomTypeId, checkIn, checkOut, numberOfGuests) => {
     try {
       const response = await axios.get(
         `${BASE_URL}/available`, 
         {
           params: {
+            reservationId,
             roomTypeId,
-            checkInDate: checkIn,
-            checkOutDate: checkOut,
+            checkIn: checkIn,
+            checkOut: checkOut,
             numberOfGuests
           },
           headers: {
@@ -172,7 +173,7 @@ updateRoom: async (id, formData, token) => {
     }
   },
 
-  // 🔧 USAR FETCH PARA VERIFICACIÓN SILENTIOSA (no aparece en consola)
+  // 🔧 USAR FETCH PARA VERIFICACIÓN SILENCIOSA (no aparece en consola)
   checkRoomIdAvailability: async (id, token) => {
     try {
       const response = await fetch(`${BASE_URL}/${id}`, {

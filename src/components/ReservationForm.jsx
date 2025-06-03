@@ -39,17 +39,27 @@ const ReservationForm = ({ onClose, onSave }) => {
 
   // 🏠 Traer tipos de habitación
   useEffect(() => {
-    const fetchRoomTypes = async () => {
-      try {
-        const token = await getAccessTokenSilently();
-        const data = await roomService.getRoomTypes(token);
-        setRoomTypes(data);
-      } catch (error) {
-        console.error('Error al obtener los tipos de habitación:', error);
+  const fetchRoomTypes = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await roomService.getRoomTypes(token);
+      console.log('Tipos de habitación recibidos:', response);
+
+      if (Array.isArray(response)) {
+        setRoomTypes(response);
+      } else if (Array.isArray(response.data)) {
+        setRoomTypes(response.data); // 👈 este es el caso real
+      } else {
+        setRoomTypes([]);
       }
-    };
-    fetchRoomTypes();
-  }, [getAccessTokenSilently]);
+    } catch (error) {
+      setRoomTypes([]);
+      console.error('Error al obtener los tipos de habitación:', error);
+    }
+  };
+
+  fetchRoomTypes(); // 👈 ya está dentro del useEffect, así que no hace falta llamarlo afuera
+}, [getAccessTokenSilently]);
 
   // 🧼 Limpiar habitación si cambian los datos base
   useEffect(() => {
@@ -90,13 +100,17 @@ const ReservationForm = ({ onClose, onSave }) => {
 
   // 🧾 Cambios en los inputs
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: name === 'numberOfGuests' ? parseInt(value) : value,
-    }));
-  };
+  const { name, value } = e.target;
+  const parsedValue = ['roomTypeId', 'numberOfGuests'].includes(name)
+    ? value  
+    : value;
 
+  setFormData((prevData) => ({
+    ...prevData,
+    [name]: parsedValue,
+  }));
+};
+  
   // 💾 Enviar reserva
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -127,7 +141,7 @@ const ReservationForm = ({ onClose, onSave }) => {
       alert('Hubo un problema al guardar la reserva.');
     }
   };
-  
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md mx-auto">
       <h2 className="text-2xl font-semibold mb-4 text-center">Crear Nueva Reserva</h2>
@@ -228,13 +242,11 @@ const ReservationForm = ({ onClose, onSave }) => {
               ))}
             </select>
 
-            {!loadingRooms && availableRooms.length === 0 && (
-              
-              console.log("🚀 habitaciones disponibles", availableRooms),
-              <p className="text-sm text-red-500 mt-2">
-                No hay habitaciones disponibles para los datos seleccionados.
-              </p>
-            )}
+           {!loadingRooms && availableRooms.length === 0 && (
+            <p className="text-sm text-red-500 mt-2">
+              No hay habitaciones disponibles para los datos seleccionados.
+            </p>
+          )}
           </div>
         )}
 

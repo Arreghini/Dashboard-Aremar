@@ -70,7 +70,7 @@ const ReservationList = () => {
     try {
       const token = await getAccessTokenSilently();
   
-      const originalReserve = reservations.find(res => res.id === formData.reservationId);
+      const originalReserve = reservations.find((res => res.id === formData.reservationId), token);
       const validateDate = (dateString) => {
         const date = new Date(dateString);
         if (isNaN(date.getTime())) {
@@ -122,12 +122,12 @@ const ReservationList = () => {
         );
   
         const response = await roomService.getAvailableRoomsByType(
+          token,
           formData.reservationId,
           actualRoomType.id,
           formData.checkIn,
           formData.checkOut,
           formData.numberOfGuests,
-          token
         );
   
         if (!response || response.length === 0) {
@@ -268,8 +268,8 @@ const ReservationList = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold">Información del Cliente</h3>
-                  <p>Nombre: {reservation.User?.name}</p>
-                  <p>Email: {reservation.User?.email}</p>
+                  <p>Nombre: {reservation.user?.name}</p>
+                  <p>Email: {reservation.user?.email}</p>
                   <h3 className="font-semibold mt-2">Información de la Habitación</h3>
                   <p>Habitación ID: {reservation.roomId}</p>
                   <p>Habitación: {reservation.room?.roomType?.name}</p>
