@@ -61,15 +61,15 @@ const confirmReservationAfterPayment = async (id) => {
 };
 
 // Métodos de administrador para confirmación y cancelación
-const confirmReservationByAdmin = async (id, token, amountPaid) => {
+const confirmReservationByAdmin = async (id, token, reservationData) => {
   const response = await axios.patch(
     `${BASE_URL}/${id}/confirm`,
-    { amountPaid }, // Enviar el monto pagado en el cuerpo de la solicitud
+    reservationData, // <-- envía todo el objeto
     getHeaders(token)
   );
 
   if (response.status === 200) {
-    return response.data; // El backend debe devolver el nuevo total
+    return response.data;
   }
 
   throw new Error(response.data?.message || 'No se pudo confirmar la reserva');

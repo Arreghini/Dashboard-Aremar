@@ -82,6 +82,7 @@ const ReservationForm = ({ onClose, onSave }) => {
         const token = await getAccessTokenSilently();
         const data = await roomService.getAvailableRoomsByType(
           token,
+          undefined,
           roomTypeId,
           checkIn,
           checkOut,

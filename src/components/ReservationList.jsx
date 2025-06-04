@@ -143,7 +143,7 @@ const ReservationList = () => {
   
       console.log('Datos enviados al servicio:', formData);
   
-      await reservationService.updateReservationByAdmin(
+      const response = await reservationService.updateReservationByAdmin(
         formData.reservationId,
         {
           roomId: formData.roomId,
@@ -155,12 +155,18 @@ const ReservationList = () => {
           paymentId: formData.paymentId,
           refundAmount: refundAmount,
           additionalAmount: additionalAmount,
-          
         },
         token
       );
   
       console.log('Reserva actualizada:', formData);
+  
+      const updatedReservations = reservations.map(res =>
+        res.id === formData.reservationId
+          ? { ...res, ...response.data }
+          : res
+      );
+      setReservations(updatedReservations);
   
       await fetchReservations();
       setShowModal(false);
@@ -187,7 +193,20 @@ const ReservationList = () => {
 
       if (!window.confirm('¿Estás seguro de que deseas confirmar esta reservación?')) return;
 
-      const response = await reservationService.confirmReservationByAdmin(reservationId, token, amountPaid);
+      const reservation = reservations.find(res => res.id === reservationId);
+
+      const response = await reservationService.confirmReservationByAdmin(
+        reservationId,
+        token,
+        {
+          amountPaid: Number(amountPaid),
+          totalPrice: reservation.totalPrice,
+          roomId: reservation.roomId,
+          checkIn: reservation.checkIn,
+          checkOut: reservation.checkOut,
+          numberOfGuests: reservation.numberOfGuests,
+        }
+      );
 
       if (!response) {
         setError('No se pudo confirmar la reservación');
@@ -196,10 +215,9 @@ const ReservationList = () => {
 
       const updatedReservations = reservations.map(res =>
         res.id === reservationId
-          ? { ...res, status: 'confirmed', totalPrice: response.totalPrice }
+          ? { ...res, ...response.data }
           : res
       );
-
       setReservations(updatedReservations);
     } catch (error) {
       console.error('Error al confirmar la reservación:', error);
