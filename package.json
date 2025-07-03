@@ -17,6 +17,8 @@
     "@fluentui/font-icons-mdl2": "^8.5.47",
     "@mui/icons-material": "^5.16.4",
     "@mui/material": "^5.16.4",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.16",
     "axios": "^1.7.3",
     "file-saver": "^2.0.5",
     "jwt-decode": "^4.0.0",

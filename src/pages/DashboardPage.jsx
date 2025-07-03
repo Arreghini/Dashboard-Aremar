@@ -8,7 +8,7 @@ import RoomList from '../components/RoomList';
 import ReservationForm from '../components/ReservationForm';
 import ReservationList from '../components/ReservationList';
 import RoomTypeForm from '../components/RoomTypeForm';
-import RoomDetailForm from '../components/RoomDetailForm'; // 🔧 IMPORTAR
+import RoomDetailForm from '../components/RoomDetailForm';
 import Modal from '../components/Modal';
 import ReportsPage from './ReportsPage';
 import RoomTypeList from '../components/RoomTypeList';
@@ -19,59 +19,77 @@ const DashboardPage = () => {
   const [showRooms, setShowRooms] = useState(false);
   const [showReservations, setShowReservations] = useState(false);
   const [showRoomTypes, setShowRoomTypes] = useState(false);
-  const [showRoomDetails, setShowRoomDetails] = useState(false); // 🔧 NUEVO ESTADO
+  const [showRoomDetails, setShowRoomDetails] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [selectedRoomType, setSelectedRoomType] = useState(null);
   const [showRoomTypeForm, setShowRoomTypeForm] = useState(false);
-  
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [refresh, setRefresh] = useState(false);
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
   const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
   const [showReports, setShowReports] = useState(false);
 
-  const { user } = useAuth0();
+  const { user, getAccessTokenSilently } = useAuth0();
 
   const handleReturnToHome = () => {
     window.location.href = 'http://localhost:5173';
   };
 
+  const buttonBase = `mb-2 px-4 py-2 rounded font-body transition-colors`;
+
+  const fetchData = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+      console.log('Token obtenido:', token);
+    } catch (error) {
+      console.error('Error al obtener el token:', error);
+    }
+  };
+
   return (
-    <div className={`flex flex-col min-h-screen ${darkMode ? 'bg-gray-800 text-white' : 'bg-gray-200 text-black'}`}>
-      <div className="flex justify-between items-center p-6 shadow-md">
-        <h1 className="font-bold text-2xl uppercase">DASHBOARD DEL ADMINISTRADOR</h1>
+    <div className={`flex flex-col min-h-screen transition-colors duration-300 ${darkMode ? 'bg-neutral-oscuro text-neutral-claro' : 'bg-neutral-claro text-neutral-oscuro'}`}>
+      {/* HEADER */}
+      <div className="flex justify-between items-center p-6 shadow-md bg-mar-profundo text-white">
+        <h1 className="font-heading text-2xl font-bold uppercase">DASHBOARD DEL ADMINISTRADOR</h1>
+       <div className="flex gap-2">
         <button
           onClick={() => setDarkMode(!darkMode)}
-          className={`px-4 py-2 rounded flex items-center ${darkMode ? 'text-white' : 'text-black'}`}
+          className={`${buttonBase} flex items-center gap-2 ${darkMode ? 'bg-neutral-oscuro text-white' : 'bg-playa-sol text-neutral-oscuro'}`}
         >
-          {darkMode ? <DarkModeIcon className="w-6 h-6 mr-2" /> : <LightModeIcon className="w-6 h-6 mr-2" />}
+          {darkMode ? <DarkModeIcon className="w-5 h-5" /> : <LightModeIcon className="w-5 h-5" />}
           {darkMode ? 'Modo Claro' : 'Modo Oscuro'}
         </button>
+
         <button
           onClick={handleReturnToHome}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className={`${buttonBase} bg-mar-claro text-white hover:bg-mar-profundo`}
         >
           Volver a Inicio
         </button>
       </div>
+      </div>
 
-      <div className={`flex flex-col flex-grow p-6 ${darkMode ? 'bg-gray-900' : 'bg-blue-200'} shadow-md`}>
+      {/* CONTENIDO */}
+      <div className={`flex flex-col flex-grow p-6 transition-colors ${darkMode ? 'bg-neutral-oscuro' : 'bg-playa-arena'} shadow-md`}>
         {user && (
           <div className="mb-4 text-center">
-            <h2 className="font-bold text-lg">Bienvenido, {user.name}</h2>
-            <p>Email: {user.email}</p>
-            <p>Rol: {user['https://aremar.com/roles'][0]}</p>
+            <h2 className="font-heading text-lg font-bold mb-2 text-left uppercase text-mar-profundo dark:text-playa-sol">
+              Bienvenido, {user.name}
+            </h2>
+            <p className="text-sm font-body text-neutral-oscuro dark:text-neutral-claro">Email: {user.email}</p>
+            <p className="text-sm font-body text-neutral-oscuro dark:text-neutral-claro">Rol: {user['https://aremar.com/roles'][0]}</p>
           </div>
         )}
 
-        {/* Sección de Usuarios */}
+        {/* USUARIOS */}
         <div className="mb-8">
-          <h2 className="font-bold text-lg mb-2 text-left uppercase">USUARIOS</h2>
+          <h2 className="font-heading text-lg font-bold mb-2 text-left uppercase text-mar-profundo dark:text-playa-sol">Usuarios</h2>
           <div className="flex flex-col items-start">
-            <button className="mb-2" onClick={() => setSelectedUser({})}>Crear Usuario</button>
-            <button onClick={() => setShowUsers(!showUsers)} className="mb-2">
+            <button className={`${buttonBase} bg-mar-claro hover:bg-mar-profundo text-white`} onClick={() => setSelectedUser({})}>
+              Crear Usuario
+            </button>
+            <button className={`${buttonBase} bg-mar-claro hover:bg-mar-profundo text-white`} onClick={() => setShowUsers(!showUsers)}>
               {showUsers ? 'Ocultar Lista de Usuarios' : 'Lista de Usuarios'}
             </button>
             {showUsers && (
@@ -87,124 +105,118 @@ const DashboardPage = () => {
           )}
         </div>
 
-        {/* Sección de Tipos de Habitación */}
+        {/* TIPO DE HABITACIÓN */}
         <div className="mb-8">
-          <h2 className="font-bold text-lg mb-2 text-left uppercase">TIPO DE HABITACIÓN</h2>
+          <h2 className="font-heading text-lg font-bold mb-2 text-left uppercase text-mar-profundo dark:text-playa-sol">Tipo de Habitación</h2>
           <div className="flex flex-col items-start">
-            <button 
+            <button
+              className={`${buttonBase} bg-mar-claro hover:bg-mar-profundo text-white`}
               onClick={() => {
                 setSelectedRoomType({});
                 setShowRoomTypeForm(!showRoomTypeForm);
-              }} 
-              className="mb-2"
+              }}
             >
-              {showRoomTypeForm ? 'Ocultar crear tipo de habitación' : 'Crear tipo de habitación'}
+              {showRoomTypeForm ? 'Ocultar Crear Tipo de Habitación' : 'Crear Tipo de Habitación'}
             </button>
+            {showRoomTypeForm && (
+              <div className="mt-4">
+                <RoomTypeForm
+                  room={selectedRoomType}
+                  onSave={() => {
+                    setRefresh(!refresh);
+                    setShowRoomTypeForm(false);
+                  }}
+                />
+              </div>
+            )}
+            <button className={`${buttonBase} bg-mar-claro hover:bg-mar-profundo text-white`} onClick={() => setShowRoomTypes(!showRoomTypes)}>
+              {showRoomTypes ? 'Ocultar Tipos de Habitación' : 'Mostrar Tipos de Habitación'}
+            </button>
+            {showRoomTypes && (
+              <div className="w-full">
+                <RoomTypeList
+                  key={refresh}
+                  onEdit={(roomType) => {
+                    setSelectedRoomType(roomType);
+                    setShowRoomTypeForm(true);
+                  }}
+                  onDelete={() => setRefresh(!refresh)}
+                />
+              </div>
+            )}
           </div>
-          {showRoomTypeForm && (
-            <div className="mt-4">
-              <RoomTypeForm 
-                room={selectedRoomType} 
-                onSave={() => {
-                  setRefresh(!refresh);
-                  setShowRoomTypeForm(false);
-                }} 
-              />
-            </div>
-          )}
-          <button onClick={() => setShowRoomTypes(!showRoomTypes)} className="mb-2">
-            {showRoomTypes ? 'Ocultar Tipos de Habitación' : 'Mostrar Tipos de Habitación'}
-          </button>
-          {showRoomTypes && (
-            <div className="w-full">
-              <RoomTypeList 
-                key={refresh} 
-                onEdit={(roomType) => {
-                  setSelectedRoomType(roomType);
-                  setShowRoomTypeForm(true);
-                }} 
-                onDelete={() => setRefresh(!refresh)} 
-              />
-            </div>
-          )}
         </div>
 
-        {/* 🔧 NUEVA SECCIÓN: SERVICIOS DE HABITACIÓN */}
+        {/* SERVICIOS DE HABITACIÓN */}
         <div className="mb-8">
-          <h2 className="font-bold text-lg mb-2 text-left uppercase">🛠️ SERVICIOS DE HABITACIÓN</h2>
+          <h2 className="font-heading text-lg font-bold mb-2 text-left uppercase text-mar-profundo dark:text-playa-sol">🛠️ Servicios de Habitación</h2>
           <div className="flex flex-col items-start">
-            <button 
-              onClick={() => setShowRoomDetails(!showRoomDetails)} 
+            <button
+              onClick={() => setShowRoomDetails(!showRoomDetails)}
               className="mb-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded transition-colors"
             >
               {showRoomDetails ? 'Ocultar Administrador de Servicios' : 'Administrar Combinaciones de Servicios'}
             </button>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+            <p className="text-sm font-body text-neutral-oscuro dark:text-neutral-claro mb-2">
               Gestiona las diferentes combinaciones de servicios (WiFi, TV, etc.) que pueden tener las habitaciones
             </p>
           </div>
           {showRoomDetails && (
             <div className="w-full mt-4">
-              <RoomDetailForm 
-                key={refresh}
-                onRoomDetailCreated={() => setRefresh(!refresh)} 
-              />
+              <RoomDetailForm key={refresh} onRoomDetailCreated={() => setRefresh(!refresh)} />
             </div>
           )}
         </div>
 
-        {/* Sección de Habitaciones */}
+        {/* HABITACIONES */}
         <div className="mb-8">
-          <h2 className="font-bold text-lg mb-2 text-left uppercase">HABITACIONES</h2>
+          <h2 className="font-heading text-lg font-bold mb-2 text-left uppercase text-mar-profundo dark:text-playa-sol">Habitaciones</h2>
           <div className="flex flex-col items-start">
-            <button 
-              className="mb-2" 
-              onClick={() => {
-                setSelectedRoom({});
-                setIsRoomModalOpen(true);
-              }}
-            >
+            <button className={`${buttonBase} bg-mar-claro hover:bg-mar-profundo text-white`} onClick={() => {
+              setSelectedRoom({});
+              setIsRoomModalOpen(true);
+            }}>
               Crear Habitación
             </button>
-            <button onClick={() => setShowRooms(!showRooms)} className="mb-2">
+            <button className={`${buttonBase} bg-mar-claro hover:bg-mar-profundo text-white`} onClick={() => setShowRooms(!showRooms)}>
               {showRooms ? 'Ocultar Lista de Habitaciones' : 'Lista de Habitaciones'}
             </button>
             {showRooms && (
               <div className="w-full">
-                <RoomList 
+                <RoomList
                   key={refresh}
                   onEdit={(room) => {
                     setSelectedRoom(room);
                     setIsRoomModalOpen(true);
-                  }} 
-                  onDelete={() => setRefresh(!refresh)} 
+                  }}
+                  onDelete={() => setRefresh(!refresh)}
                 />
               </div>
             )}
           </div>
-          
           <Modal isOpen={isRoomModalOpen} onClose={() => setIsRoomModalOpen(false)}>
-            <RoomForm 
-              room={selectedRoom} 
+            <RoomForm
+              room={selectedRoom}
               onRoomCreated={() => {
                 setRefresh(!refresh);
                 setIsRoomModalOpen(false);
-              }} 
+              }}
             />
           </Modal>
         </div>
 
-        {/* Sección de Reservas */}
+        {/* RESERVAS */}
         <div className="mb-8">
-          <h2 className="font-bold text-lg mb-2 text-left uppercase">RESERVAS</h2>
+          <h2 className="font-heading text-lg font-bold mb-2 text-left uppercase text-mar-profundo dark:text-playa-sol">Reservas</h2>
           <div className="flex flex-col items-start">
-            <button className="mb-2" onClick={() => {
+            <button className={`${buttonBase} bg-mar-claro hover:bg-mar-profundo text-white`} onClick={() => {
               setSelectedReservation({});
               setIsReservationModalOpen(true);
-            }}>Crear Reserva
+            }}>
+              Crear Reserva
             </button>
-            <Modal 
-              isOpen={isReservationModalOpen} 
+            <Modal
+              isOpen={isReservationModalOpen}
               onClose={() => {
                 setIsReservationModalOpen(false);
                 setSelectedReservation(null);
@@ -224,31 +236,29 @@ const DashboardPage = () => {
                 }}
               />
             </Modal>
-            <button onClick={() => setShowReservations(!showReservations)} className="mb-2">
+            <button className={`${buttonBase} bg-mar-claro hover:bg-mar-profundo text-white`} onClick={() => setShowReservations(!showReservations)}>
               {showReservations ? 'Ocultar Lista de Reservas' : 'Lista de Reservas'}
             </button>
             {showReservations && (
               <div className="w-full">
-               <ReservationList 
-                  key={refresh} 
+                <ReservationList
+                  key={refresh}
                   onEdit={(reservation) => {
                     setSelectedReservation(reservation);
                     setIsReservationModalOpen(true);
-                  }} 
-                  onDelete={() => setRefresh(!refresh)} 
+                  }}
+                  onDelete={() => setRefresh(!refresh)}
                 />
               </div>
             )}
-           {/* Sección de Reportes */}
-          <button onClick={() => setShowReports(!showReports)} className="mb-2">
-            {showReports ? 'Ocultar Reportes' : 'Reportes'}
-          </button>
-
-          {showReports && (
-            <div className="w-full">
-              <ReportsPage />
-            </div>
-          )}
+            <button className={`${buttonBase} bg-mar-claro hover:bg-mar-profundo text-white`} onClick={() => setShowReports(!showReports)}>
+              {showReports ? 'Ocultar Reportes' : 'Reportes'}
+            </button>
+            {showReports && (
+              <div className="w-full">
+                <ReportsPage />
+              </div>
+            )}
           </div>
         </div>
       </div>

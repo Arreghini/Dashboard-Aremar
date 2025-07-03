@@ -37,16 +37,6 @@ const roomService = {
     }
   },
 
-  // getRoomsTypes: async (token) => {
-  //   try {
-  //     const response = await axios.get(`${BASE_URL}/roomType`, getHeaders(token));
-  //     return response.data;
-  //   } catch (error) {
-  //     console.error('Error al obtener los tipos de habitaciones:', error);
-  //     throw error;
-  //   }
-  // },
-
   createRoom: async (roomData, token) => {
     try {
       console.log('=== DEBUG CREATEROOM ===');

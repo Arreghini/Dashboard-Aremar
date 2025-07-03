@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import reservationService from '../services/reservationService';
 import roomService from '../services/roomService';
@@ -17,25 +17,26 @@ const ReservationList = () => {
       setLoading(true);
       const token = await getAccessTokenSilently();
       const reservationsData = await reservationService.getReservations(token);
-      console.log('Reservas cargadas desde el backend:', reservationsData);
       setReservations(reservationsData);
     } catch (error) {
-      setError(`Error de autenticación: ${error.message}`);
       console.error('Error al cargar las reservas:', error);
+      setError(`Error al cargar las reservas: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     fetchReservations();
   }, [getAccessTokenSilently]);
 
   const handleDelete = async (id) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar esta reserva?')) return;
     try {
       const token = await getAccessTokenSilently();
       const result = await reservationService.deleteReservation(id, token);
       if (result.success) {
-        setReservations(prev => prev.filter(res => res.id !== id));
+        setReservations((prev) => prev.filter((res) => res.id !== id));
         alert('Reserva eliminada exitosamente');
       }
     } catch (error) {
@@ -44,10 +45,8 @@ const ReservationList = () => {
   };
 
   const handleEdit = (reservation) => {
-    const formatDate = (dateString) => {
-      const date = new Date(dateString);
-      return date.toISOString().split('T')[0];
-    };
+    const formatDate = (date) =>
+      new Date(date).toISOString().split('T')[0];
 
     setSelectedReservation({
       id: reservation.id,
@@ -60,8 +59,6 @@ const ReservationList = () => {
       status: reservation.status,
       amountPaid: reservation.amountPaid,
     });
-   
-    console.log('Reserva seleccionada para editar:', reservation);
 
     setShowModal(true);
   };
@@ -69,282 +66,226 @@ const ReservationList = () => {
   const handleSave = async (formData) => {
     try {
       const token = await getAccessTokenSilently();
-  
-      const originalReserve = reservations.find((res => res.id === formData.reservationId), token);
-      const validateDate = (dateString) => {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) {
-          throw new Error(`Fecha inválida: ${dateString}`);
-        }
-        return date;
+
+      const originalReserve = reservations.find(res => res.id === formData.reservationId);
+      if (!originalReserve) throw new Error('Reserva original no encontrada.');
+
+      const toDate = (str) => {
+        const d = new Date(str);
+        if (isNaN(d)) throw new Error(`Fecha inválida: ${str}`);
+        return d;
       };
-  
-      const originalCheckInDate = validateDate(originalReserve.checkIn);
-      const originalCheckOutDate = validateDate(originalReserve.checkOut);
-      const newCheckInDate = validateDate(formData.checkIn);
-      const newCheckOutDate = validateDate(formData.checkOut);
-  
-      const originalDays =
-        (originalCheckOutDate - originalCheckInDate) / (1000 * 60 * 60 * 24);
-      const newDays =
-        (newCheckOutDate - newCheckInDate) / (1000 * 60 * 60 * 24);
-      const daysDifference = newDays - originalDays;
-  
-      if (daysDifference === 0) {
-        alert('No se han realizado cambios en la reserva.');
-        return;
-      }
-      if (originalDays === 0) {
-        alert('No se puede modificar la reserva si no hay días reservados.');
-        return;
-      }
-  
+
+      const originalCheckIn = toDate(originalReserve.checkIn);
+      const originalCheckOut = toDate(originalReserve.checkOut);
+      const newCheckIn = toDate(formData.checkIn);
+      const newCheckOut = toDate(formData.checkOut);
+
+      const originalDays = (originalCheckOut - originalCheckIn) / (1000 * 60 * 60 * 24);
+      const newDays = (newCheckOut - newCheckIn) / (1000 * 60 * 60 * 24);
+      const diff = newDays - originalDays;
+
+      if (originalDays <= 0) return alert('La reserva original tiene duración inválida.');
+      if (diff === 0) return alert('No se han realizado cambios en la reserva.');
+
       const dailyRate = originalReserve.totalPrice / originalDays;
-  
       let refundAmount = 0;
       let additionalAmount = 0;
-  
-      if (daysDifference > 0) {
-        additionalAmount = dailyRate * daysDifference;
-  
-        const actualRoomType = await roomService.getRoomTypeById(formData.roomId, token);
-        console.log('Tipo de habitación actual:', actualRoomType);
-        if (!actualRoomType) {
-          throw new Error('No se encontró el tipo de habitación.');
-        }
-  
-        console.log('Datos enviados a evaluar disponibilidad:', 
-          formData.reservationId,
-          actualRoomType.id,
-          formData.checkIn, 
-          formData.checkOut,
-          formData.numberOfGuests,
-        );
-  
-        const response = await roomService.getAvailableRoomsByType(
+
+      if (diff > 0) {
+        additionalAmount = dailyRate * diff;
+
+        const roomType = await roomService.getRoomTypeById(formData.roomId, token);
+        if (!roomType) throw new Error('No se encontró el tipo de habitación.');
+
+        const available = await roomService.getAvailableRoomsByType(
           token,
           formData.reservationId,
-          actualRoomType.id,
+          roomType.id,
           formData.checkIn,
           formData.checkOut,
-          formData.numberOfGuests,
+          formData.numberOfGuests
         );
-  
-        if (!response || response.length === 0) {
-          throw new Error('No hay habitaciones disponibles para las nuevas fechas.');
-        }
-  
+
+        if (!available?.length) throw new Error('No hay habitaciones disponibles para las nuevas fechas.');
         alert(`El usuario debe pagar un monto adicional de $${additionalAmount.toFixed(2)}.`);
-      } else if (daysDifference < 0) {
-        refundAmount = dailyRate * Math.abs(daysDifference);
-  
-        alert(`Se ha calculado un reembolso de $${refundAmount.toFixed(2)} por la reducción de días.`);
+      } else {
+        refundAmount = dailyRate * Math.abs(diff);
+        alert(`Se ha calculado un reembolso de $${refundAmount.toFixed(2)}.`);
       }
-  
-      console.log('Datos enviados al servicio:', formData);
-  
+
       const response = await reservationService.updateReservationByAdmin(
         formData.reservationId,
         {
-          roomId: formData.roomId,
-          checkIn: formData.checkIn,
-          checkOut: formData.checkOut,
-          numberOfGuests: formData.numberOfGuests,
-          status: formData.status,
-          amountPaid: formData.amountPaid,
-          paymentId: formData.paymentId,
-          refundAmount: refundAmount,
-          additionalAmount: additionalAmount,
+          ...formData,
+          refundAmount,
+          additionalAmount,
         },
         token
       );
-  
-      console.log('Reserva actualizada:', formData);
-  
-      const updatedReservations = reservations.map(res =>
-        res.id === formData.reservationId
-          ? { ...res, ...response.data }
-          : res
+
+      const updated = reservations.map((res) =>
+        res.id === formData.reservationId ? { ...res, ...response.data } : res
       );
-      setReservations(updatedReservations);
-  
+      setReservations(updated);
       await fetchReservations();
       setShowModal(false);
       setSelectedReservation(null);
-  
-      if (refundAmount > 0) {
-        alert(`Se ha reembolsado $${refundAmount.toFixed(2)} por la diferencia de días.`);
-      }
     } catch (error) {
-      console.error('Error al guardar los cambios de la reserva:', error.message);
-      // Muestra el mensaje de error del backend si está disponible
-      alert(error.message || 'Ocurrió un error al guardar los cambios.');
+      console.error('Error al guardar la reserva:', error);
+      alert(error?.response?.data?.message || error.message);
     }
   };
+
   const handleConfirm = async (reservationId) => {
     try {
       const token = await getAccessTokenSilently();
-      const amountPaid = prompt('Ingrese el monto pagado por el usuario:');
+      const amountPaid = prompt('Ingrese el monto pagado:');
 
-      if (!amountPaid || isNaN(amountPaid)) {
-        alert('Debe ingresar un monto válido.');
-        return;
-      }
-
-      if (!window.confirm('¿Estás seguro de que deseas confirmar esta reservación?')) return;
+      if (!amountPaid || isNaN(amountPaid)) return alert('Debe ingresar un monto válido.');
+      if (!window.confirm('¿Confirmar esta reserva?')) return;
 
       const reservation = reservations.find(res => res.id === reservationId);
-
       const response = await reservationService.confirmReservationByAdmin(
         reservationId,
         token,
         {
+          ...reservation,
           amountPaid: Number(amountPaid),
-          totalPrice: reservation.totalPrice,
-          roomId: reservation.roomId,
-          checkIn: reservation.checkIn,
-          checkOut: reservation.checkOut,
-          numberOfGuests: reservation.numberOfGuests,
         }
       );
 
-      if (!response) {
-        setError('No se pudo confirmar la reservación');
-        return;
-      }
+      if (!response) return setError('No se pudo confirmar la reserva.');
 
-      const updatedReservations = reservations.map(res =>
-        res.id === reservationId
-          ? { ...res, ...response.data }
-          : res
+      const updated = reservations.map(res =>
+        res.id === reservationId ? { ...res, ...response.data } : res
       );
-      setReservations(updatedReservations);
+      setReservations(updated);
     } catch (error) {
-      console.error('Error al confirmar la reservación:', error);
-      setError('Ocurrió un error al confirmar la reservación');
+      console.error('Error al confirmar:', error);
+      setError('Error al confirmar la reserva.');
     }
   };
 
-  const handleCancel = async (reservationId) => {
+  const handleCancel = async (id) => {
     try {
       const token = await getAccessTokenSilently();
-      await reservationService.cancelReservationByAdmin(reservationId, token);
-      const updatedReservations = reservations.map(res =>
-        res.id === reservationId ? { ...res, status: 'cancelled' } : res
-      );
-      setReservations(updatedReservations);
+      await reservationService.cancelReservationByAdmin(id, token);
+      setReservations(reservations.map(res =>
+        res.id === id ? { ...res, status: 'cancelled' } : res
+      ));
     } catch (error) {
-      console.error('Error al cancelar la reservación:', error);
+      console.error('Error al cancelar:', error);
     }
   };
 
-  const handleCancelWithRefund = async (reservationId) => {
+  const handleCancelWithRefund = async (id) => {
     try {
       const token = await getAccessTokenSilently();
-      const response = await reservationService.cancelReservationWithRefund(reservationId, token);
+      const response = await reservationService.cancelReservationWithRefund(id, token);
 
-      const updatedReservations = reservations.map(res =>
-        res.id === reservationId
-          ? {
-              ...res,
-              status: 'cancelled',
-              refundAmount: response.refundAmount,
-            }
+      setReservations(reservations.map(res =>
+        res.id === id
+          ? { ...res, status: 'cancelled', refundAmount: response.refundAmount }
           : res
-      );
-
-      console.log('Reserva actualizada:', updatedReservations);
-      setReservations(updatedReservations);
+      ));
     } catch (error) {
-      console.error('Error al cancelar la reservación con reembolso:', error);
+      console.error('Error al cancelar con reembolso:', error);
     }
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-4">Lista de Reservas</h2>
+    <div className="p-4 bg-neutral-claro min-h-screen font-body">
+      <h2 className="text-2xl font-heading text-mar-profundo mb-6">Lista de Reservas</h2>
+
       {loading ? (
-        <p>Cargando reservas...</p>
+        <p className="text-mar-claro">Cargando reservas...</p>
       ) : error ? (
-        <p className="text-red-500">{error}</p>
+        <p className="text-red-600">{error}</p>
       ) : reservations.length === 0 ? (
-        <p>No hay reservas disponibles</p>
+        <p className="text-neutral-oscuro">No hay reservas disponibles</p>
       ) : (
-        <div className="grid gap-4">
-          {reservations.map((reservation) => (
-            <div key={reservation.id} className="border p-4 rounded shadow-md">
-              <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid gap-6">
+          {reservations.map((r) => (
+            <div key={r.id} className="border border-mar-profundo bg-white p-6 rounded-xl shadow-md">
+              <div className="grid md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <h3 className="font-semibold">Detalles de la Reserva</h3>
-                  <p>ID: {reservation.id}</p>
-                  <p>Check-in: {new Date(reservation.checkIn).toLocaleDateString()}</p>
-                  <p>Check-out: {new Date(reservation.checkOut).toLocaleDateString()}</p>
-                  <p>Huéspedes: {reservation.numberOfGuests}</p>
-                  <p>Estado: {reservation.status}</p>
-                  <p>Pagó: ${reservation.amountPaid}</p>
-                  <p>Precio: ${reservation.totalPrice}</p>
+                  <h3 className="font-semibold text-mar-profundo">Detalles de la Reserva</h3>
+                  <p><strong>ID:</strong> {r.id}</p>
+                  <p><strong>Check-in:</strong> {new Date(r.checkIn).toLocaleDateString()}</p>
+                  <p><strong>Check-out:</strong> {new Date(r.checkOut).toLocaleDateString()}</p>
+                  <p><strong>Huéspedes:</strong> {r.numberOfGuests}</p>
+                  <p><strong>Estado:</strong> {r.status}</p>
+                  <p><strong>Pagó:</strong> ${r.amountPaid}</p>
+                  <p><strong>Precio:</strong> ${r.totalPrice}</p>
                 </div>
                 <div>
-                  <h3 className="font-semibold">Información del Cliente</h3>
-                  <p>Nombre: {reservation.user?.name}</p>
-                  <p>Email: {reservation.user?.email}</p>
-                  <h3 className="font-semibold mt-2">Información de la Habitación</h3>
-                  <p>Habitación ID: {reservation.roomId}</p>
-                  <p>Habitación: {reservation.room?.roomType?.name}</p>
-                  {reservation.status === 'cancelled' && reservation.refundAmount && (
-                    <p className="text-sm text-green-600 font-semibold">
-                      Reembolso: ${reservation.refundAmount.toFixed(2)}
+                  <h3 className="font-semibold text-mar-profundo">Información del Cliente</h3>
+                  <p><strong>Nombre:</strong> {r.user?.name}</p>
+                  <p><strong>Email:</strong> {r.user?.email}</p>
+                  <h3 className="font-semibold mt-2 text-mar-profundo">Habitación</h3>
+                  <p><strong>ID:</strong> {r.roomId}</p>
+                  <p><strong>Tipo:</strong> {r.room?.roomType?.name}</p>
+                  {r.status === 'cancelled' && r.refundAmount && (
+                    <p className="text-sm text-green-600 font-semibold mt-1">
+                      Reembolso: ${r.refundAmount.toFixed(2)}
                     </p>
                   )}
                 </div>
               </div>
-              <div className="flex justify-end space-x-2">
+
+              <div className="flex flex-wrap justify-end gap-2 mt-4">
                 <button
-                  onClick={() => handleEdit(reservation)}
-                  disabled={reservation.status === 'cancelled'}
-                  className={`text-white px-4 py-2 rounded 
-                    ${reservation.status === 'cancelled'
+                  onClick={() => handleEdit(r)}
+                  disabled={r.status === 'cancelled'}
+                  className={`text-white px-4 py-2 rounded font-semibold transition ${
+                    r.status === 'cancelled'
                       ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-yellow-500 hover:bg-yellow-600'}`}
+                      : 'bg-playa-sol hover:bg-yellow-400'
+                  }`}
                 >
                   Editar
                 </button>
 
                 <button
-                  onClick={() => handleConfirm(reservation.id)}
-                  disabled={['confirmed', 'cancelled'].includes(reservation.status.trim())}
-                  className={`text-white px-4 py-2 rounded 
-                    ${['confirmed', 'cancelled'].includes(reservation.status.trim())
+                  onClick={() => handleConfirm(r.id)}
+                  disabled={['confirmed', 'cancelled'].includes(r.status.trim())}
+                  className={`text-white px-4 py-2 rounded font-semibold transition ${
+                    ['confirmed', 'cancelled'].includes(r.status.trim())
                       ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-green-500 hover:bg-green-600'}`}
+                      : 'bg-mar-claro hover:bg-mar-profundo'
+                  }`}
                 >
                   Confirmar
                 </button>
 
                 <button
-                  onClick={() => handleCancel(reservation.id)}
-                  disabled={['cancelled', 'pending'].includes(reservation.status.trim())}
-                  className={`text-white px-4 py-2 rounded 
-                    ${['cancelled', 'pending'].includes(reservation.status.trim())
+                  onClick={() => handleCancel(r.id)}
+                  disabled={['cancelled', 'pending'].includes(r.status.trim())}
+                  className={`text-white px-4 py-2 rounded font-semibold transition ${
+                    ['cancelled', 'pending'].includes(r.status.trim())
                       ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-red-500 hover:bg-red-600'}`}
+                      : 'bg-red-500 hover:bg-red-600'
+                  }`}
                 >
                   Cancelar
                 </button>
 
                 <button
-  onClick={() => handleCancelWithRefund(reservation.id)}
-  disabled={reservation.status.trim() !== 'confirmed'}
-  className={`text-white px-4 py-2 rounded 
-    ${reservation.status.trim() !== 'confirmed'
-      ? 'bg-gray-400 cursor-not-allowed'
-      : 'bg-blue-500 hover:bg-blue-600'}`}
->
-  Cancelar con Reembolso
-</button>
+                  onClick={() => handleCancelWithRefund(r.id)}
+                  disabled={r.status.trim() !== 'confirmed'}
+                  className={`text-white px-4 py-2 rounded font-semibold transition ${
+                    r.status.trim() !== 'confirmed'
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-espuma hover:bg-playa-sol text-neutral-oscuro'
+                  }`}
+                >
+                  Cancelar con Reembolso
+                </button>
+
                 <button
-                  onClick={() => handleDelete(reservation.id)}
-                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                  onClick={() => handleDelete(r.id)}
+                  className="bg-red-600 text-white px-4 py-2 rounded font-semibold hover:bg-red-700"
                 >
                   Eliminar
                 </button>

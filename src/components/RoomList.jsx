@@ -23,6 +23,7 @@ const RoomList = ({ refresh, onUpdate }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [roomDetailsList, setRoomDetailsList] = useState([]);
   const [roomTypes, setRoomTypes] = useState([]);
+  
   const detailNames = {
     cableTvService: 'TV Cable',
     smart_TV: 'Smart TV',
@@ -43,9 +44,7 @@ const RoomList = ({ refresh, onUpdate }) => {
       setError('');
       const token = await getAccessTokenSilently();
       const responseData = await roomService.getRooms(token);
-      
-      console.log('Respuesta del servicio de habitaciones:', responseData);
-      
+
       let roomsArray = [];
       if (responseData) {
         if (responseData.success && Array.isArray(responseData.data)) {
@@ -56,33 +55,29 @@ const RoomList = ({ refresh, onUpdate }) => {
           roomsArray = responseData.rooms;
         }
       }
-      
-      // Mapeo las fotos de cada habitación para que sean un array
+
       const roomsWithPhotoArray = roomsArray.map(room => ({
         ...room,
         photoRoom: room.photoRoom || []
       }));
-      
-      console.log('Habitaciones cargadas:', roomsWithPhotoArray);
+
       setRooms(roomsWithPhotoArray);
     } catch (error) {
-      console.error('Error al obtener habitaciones:', error);
       setError('Error al cargar las habitaciones');
       setRooms([]);
     } finally {
       setLoading(false);
     }
   };
-   const fetchRoomTypes = async () => {
-  
+
+  const fetchRoomTypes = async () => {
     try {
       const token = await getAccessTokenSilently();
       const types = await roomClasifyService.getRoomTypes(token);
       setRoomTypes(types || []);
     } catch (error) {
-      console.error('Error al obtener tipos de habitación:', error);
       setError('Error al cargar los tipos de habitación');
-    } 
+    }
   };
 
   const fetchRoomDetails = async () => {
@@ -91,15 +86,13 @@ const RoomList = ({ refresh, onUpdate }) => {
       const details = await roomClasifyService.getRoomDetail(token);
       setRoomDetailsList(details || []);
     } catch (error) {
-      console.error('Error al obtener combinaciones de detalles:', error);
+      // Error opcional manejar
     }
   };
 
   const handleDelete = async (roomId) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta habitación?')) {
-      return;
-    }
-    
+    if (!confirm('¿Estás seguro de que quieres eliminar esta habitación?')) return;
+
     try {
       setError('');
       setSuccessMessage('');
@@ -109,15 +102,11 @@ const RoomList = ({ refresh, onUpdate }) => {
       await fetchRooms();
       if (onUpdate) onUpdate();
     } catch (error) {
-      console.error('Error al eliminar:', error);
       setError(`Error al eliminar: ${error.response?.data?.message || error.message}`);
     }
   };
 
   const handleEdit = (room) => {
-    console.log('Editando habitación:', room);
-    console.log('Abriendo modal de edición...');
-    
     setEditingRoom(room);
     setEditFormData({
       description: room.description || '',
@@ -131,15 +120,6 @@ const RoomList = ({ refresh, onUpdate }) => {
     setIsEditModalOpen(true);
     setError('');
     setSuccessMessage('');
-    
-    console.log('Estado del modal:', true);
-    console.log('Datos del formulario:', {
-      description: room.description || '',
-      roomTypeId: room.roomTypeId?.toString() || '',
-      detailRoomId: room.detailRoomId?.toString() || '',
-      price: room.price?.toString() || '0',
-      status: room.status || 'available',
-    });
   };
 
   const handleUpdateSubmit = async (e) => {
@@ -150,35 +130,26 @@ const RoomList = ({ refresh, onUpdate }) => {
 
     try {
       const token = await getAccessTokenSilently();
-      
       const formData = new FormData();
       formData.append('description', editFormData.description);
       formData.append('roomTypeId', editFormData.roomTypeId);
       formData.append('detailRoomId', editFormData.detailRoomId);
       formData.append('price', editFormData.price || '0');
       formData.append('status', editFormData.status);
-      
       if (existingPhotos.length > 0) {
         formData.append('existingPhotos', JSON.stringify(existingPhotos));
       }
-      
-      if (newPhotos && newPhotos.length > 0) {
-        newPhotos.forEach(file => {
-          formData.append('newPhotos', file);
-        });
+      if (newPhotos.length > 0) {
+        newPhotos.forEach(file => formData.append('newPhotos', file));
       }
-      
       await roomService.updateRoom(editingRoom.id, formData, token);
-      
       setSuccessMessage('Habitación actualizada con éxito');
       setIsEditModalOpen(false);
       setEditingRoom(null);
       resetEditForm();
       await fetchRooms();
       if (onUpdate) onUpdate();
-      
     } catch (error) {
-      console.error('Error al actualizar:', error);
       setError(`Error al actualizar: ${error.response?.data?.message || error.message}`);
     } finally {
       setIsSubmitting(false);
@@ -197,12 +168,7 @@ const RoomList = ({ refresh, onUpdate }) => {
     setNewPhotos([]);
   };
 
-  // const removeExistingPhoto = (photoIndex) => {
-  //   setExistingPhotos(prev => prev.filter((_, index) => index !== photoIndex));
-  // };
-
   const closeEditModal = () => {
-    console.log('Cerrando modal...');
     setIsEditModalOpen(false);
     setEditingRoom(null);
     resetEditForm();
@@ -210,6 +176,7 @@ const RoomList = ({ refresh, onUpdate }) => {
     setSuccessMessage('');
   };
 
+  // Badges para estados con clases claras
   const getStatusBadge = (status) => {
     const statusConfig = {
       available: { bg: 'bg-green-100', text: 'text-green-800', label: '✅ Disponible' },
@@ -217,25 +184,30 @@ const RoomList = ({ refresh, onUpdate }) => {
       maintenance: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: '🔧 Mantenimiento' },
       cleaning: { bg: 'bg-blue-100', text: 'text-blue-800', label: '🧹 Limpieza' }
     };
-    
     const config = statusConfig[status] || statusConfig.available;
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
+      <span className={`${config.bg} ${config.text} px-2 py-1 rounded-full text-xs font-medium`}>
         {config.label}
       </span>
     );
   };
 
+  // Amenities con colores definidos en un objeto para Tailwind
+  const amenityColors = {
+    blue: 'bg-blue-100 text-blue-800',
+    green: 'bg-green-100 text-green-800',
+    yellow: 'bg-yellow-100 text-yellow-800',
+    purple: 'bg-purple-100 text-purple-800',
+  };
+
   const getRoomAmenities = (detailRoom) => {
     if (!detailRoom) return [];
-    
     const amenities = [];
     if (detailRoom.cableTvService) amenities.push({ label: '📺 TV Cable', color: 'blue' });
     if (detailRoom.smart_TV) amenities.push({ label: '📱 Smart TV', color: 'blue' });
     if (detailRoom.wifi) amenities.push({ label: '📶 WiFi', color: 'green' });
     if (detailRoom.microwave) amenities.push({ label: '🔥 Microondas', color: 'yellow' });
     if (detailRoom.pava_electrica) amenities.push({ label: '☕ Pava Eléctrica', color: 'purple' });
-    
     return amenities;
   };
 
@@ -253,7 +225,7 @@ const RoomList = ({ refresh, onUpdate }) => {
     return (
       <div className="flex justify-center items-center py-8">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mar-profundo mx-auto mb-2"></div>
           <p>Cargando habitaciones...</p>
         </div>
       </div>
@@ -262,45 +234,36 @@ const RoomList = ({ refresh, onUpdate }) => {
 
   return (
     <div className="mt-6">
-      <h3 className="text-lg font-bold mb-4">Lista de Habitaciones</h3>
-      
-      {/* Debug info */}
-      {isEditModalOpen && (
-        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-          <p>🔧 DEBUG: Modal debería estar abierto. Estado: {isEditModalOpen.toString()}</p>
-          <p>Editando: {editingRoom?.description || 'Sin datos'}</p>
-        </div>
-      )}
-      
+      <h3 className="text-lg font-bold mb-4 text-mar-profundo dark:text-mar-espuma">Lista de Habitaciones</h3>
+
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {error}
         </div>
       )}
-      
+
       {successMessage && (
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
           {successMessage}
         </div>
       )}
-      
+
       {rooms.length === 0 ? (
-        <div className="text-center py-8 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <div className="text-center py-8 bg-neutral.claro dark:bg-neutral.oscuro rounded-lg">
           <p className="text-gray-500 text-lg">No hay habitaciones registradas</p>
           <p className="text-gray-400 text-sm mt-2">Crea la primera habitación usando el formulario de arriba</p>
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {roomsWithFullDetails.map((room) => (
-            <div key={room.id} className="border rounded-lg p-4 shadow-md bg-white dark:bg-gray-700 hover:shadow-lg transition-shadow">
+          {roomsWithFullDetails.map(room => (
+            <div key={room.id} className="border rounded-lg p-4 shadow-md bg-white dark:bg-neutral.oscuro hover:shadow-lg transition-shadow">
               <div className="flex justify-between items-start mb-3">
-                <h4 className="font-semibold text-lg text-blue-600 dark:text-blue-400">
+                <h4 className="font-semibold text-lg text-mar-profundo dark:text-mar-espuma">
                   {room.id || `Habitación ${room.id}`}
                 </h4>
                 {getStatusBadge(room.status)}
               </div>
-              
-              {/* Sección de Fotos */}
+
               {room.photoRoom && room.photoRoom.length > 0 ? (
                 <div className="mb-4">
                   <h5 className="font-medium text-sm mb-2 text-gray-700 dark:text-gray-300">
@@ -309,28 +272,21 @@ const RoomList = ({ refresh, onUpdate }) => {
                   <div className="grid grid-cols-2 gap-2">
                     {room.photoRoom.slice(0, 4).map((photo, index) => (
                       <div key={index} className="relative group">
-                        <img 
-                          src={photo} 
+                        <img
+                          src={photo}
                           alt={`${room.description} - foto ${index + 1}`}
                           className="w-full h-20 object-cover rounded border hover:opacity-80 transition-opacity cursor-pointer"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            console.error('Error cargando imagen:', photo);
-                          }}
+                          onError={e => e.target.style.display = 'none'}
                           onClick={() => window.open(photo, '_blank')}
                         />
                         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded flex items-center justify-center">
-                          <span className="text-white text-xs opacity-0 group-hover:opacity-100 font-medium">
-                            👁️ Ver
-                          </span>
+                          <span className="text-white text-xs opacity-0 group-hover:opacity-100 font-medium">👁️ Ver</span>
                         </div>
                       </div>
                     ))}
                   </div>
                   {room.photoRoom.length > 4 && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      +{room.photoRoom.length - 4} foto(s) más
-                    </p>
+                    <p className="text-xs text-gray-500 mt-1">+{room.photoRoom.length - 4} foto(s) más</p>
                   )}
                 </div>
               ) : (
@@ -339,28 +295,20 @@ const RoomList = ({ refresh, onUpdate }) => {
                 </div>
               )}
 
-              {/* Detalles de la habitación */}
-              <div className="mb-4 text-sm space-y-1 bg-gray-50 dark:bg-gray-600 p-3 rounded">
-                <div className="grid grid-cols-1 gap-2">
-                  <p>
-                    <strong>🏷️ Tipo:{room.roomType?.name || 'Sin tipo'} </strong>
-                  </p>
-                  <div>
-                    <strong>📋 Detalles:</strong>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {getRoomAmenities(room.detailRoom).length > 0 ? (
-                        getRoomAmenities(room.detailRoom).map((amenity, index) => (
-                          <span 
-                            key={index}
-                            className={`bg-${amenity.color}-100 text-${amenity.color}-800 px-2 py-1 rounded text-xs`}
-                          >
-                            {amenity.label}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-gray-500 text-xs">Sin servicios especificados</span>
-                      )}
-                    </div>
+              <div className="mb-4 text-sm space-y-1 bg-gray-50 dark:bg-neutral.oscuro p-3 rounded">
+                <p><strong>🏷️ Tipo:</strong> {room.roomType?.name || 'Sin tipo'}</p>
+                <div>
+                  <strong>📋 Detalles:</strong>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {getRoomAmenities(room.detailRoom).length > 0 ? (
+                      getRoomAmenities(room.detailRoom).map((amenity, i) => (
+                        <span key={i} className={`${amenityColors[amenity.color]} px-2 py-1 rounded text-xs font-medium`}>
+                          {amenity.label}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-gray-500 text-xs">Sin servicios especificados</span>
+                    )}
                   </div>
                 </div>
                 <p className="text-center mt-2 font-semibold text-green-600 dark:text-green-400">
@@ -368,7 +316,6 @@ const RoomList = ({ refresh, onUpdate }) => {
                 </p>
               </div>
 
-              {/* Fechas */}
               {room.createdAt && (
                 <div className="mb-4 text-xs text-gray-500 border-t pt-2">
                   <p>📅 Creado: {new Date(room.createdAt).toLocaleDateString('es-ES')}</p>
@@ -376,16 +323,15 @@ const RoomList = ({ refresh, onUpdate }) => {
                 </div>
               )}
 
-              {/* Botones de acción */}
               <div className="flex justify-end gap-2">
                 <button
-                  className="text-sm bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded"
+                  className="text-sm bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded shadow transition"
                   onClick={() => handleEdit(room)}
                 >
                   ✏️ Editar
                 </button>
                 <button
-                  className="text-sm bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded"
+                  className="text-sm bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded shadow transition"
                   onClick={() => handleDelete(room.id)}
                 >
                   🗑️ Eliminar
@@ -396,131 +342,126 @@ const RoomList = ({ refresh, onUpdate }) => {
         </div>
       )}
 
-      {/* Modal de edición - VERSIÓN INTEGRADA SIN COMPONENTE EXTERNO */}
+      {/* Modal para editar */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Header del modal */}
-            <div className="flex justify-between items-center p-6 border-b">
-              <h2 className="text-xl font-bold text-gray-800">
-                Editar Habitación
-              </h2>
-              <button
-                onClick={closeEditModal}
-                className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
-              >
-                ×
-              </button>
-            </div>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+          onClick={closeEditModal}
+        >
+          <div
+            className="bg-white dark:bg-neutral.oscuro rounded-lg shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-semibold mb-4 text-mar-profundo dark:text-mar-espuma">
+              Editar habitación {editingRoom?.id}
+            </h3>
 
-            {/* Contenido del modal */}
-            <div className="p-6">
-              {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                  {error}
-                </div>
-              )}
-              {successMessage && (
-                <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                  {successMessage}
-                </div>
-              )}
-              <form onSubmit={handleUpdateSubmit}>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Descripción
-                    </label>
-                    <input
-                      type="text"
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={editFormData.description}
-                      onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Tipo de Habitación
-                    </label>
-                    <select
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={editFormData.roomTypeId}
-                      onChange={(e) => setEditFormData(prev => ({ ...prev, roomTypeId: e.target.value }))}
-                      required
-                    >
-                      <option value="">Seleccionar</option>
-                      {roomTypes.map(type => (
-                        <option key={type.id} value={type.id}>{type.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Detalle de Habitación
-                    </label>
-                    <select
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={editFormData.detailRoomId}
-                      onChange={(e) => setEditFormData(prev => ({ ...prev, detailRoomId: e.target.value }))}
-                      required
-                    >
-                      <option value="">Selecciona una combinación</option>
-                      {roomDetailsList.map(detail => (
-                        <option key={detail.id} value={detail.id}>
-                          {Object.entries(detailNames)
-                            .filter(([key]) => detail[key])
-                            .map(([key, label]) => label)
-                            .join(', ') || 'Sin servicios'}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Precio
-                    </label>
-                    <input
-                      type="text"
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={editFormData.price}
-                      onChange={(e) => setEditFormData(prev => ({ ...prev, price: e.target.value }))}
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Estado
-                    </label>
-                    <input
-                      type="text"
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={editFormData.status}
-                      onChange={(e) => setEditFormData(prev => ({ ...prev, status: e.target.value }))}
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Fotos nuevas
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={e => setNewPhotos(Array.from(e.target.files))}
-                      className="w-full border border-gray-300 rounded px-2 py-1"
-                    />
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <button
-                    type="submit"
-                    className="inline-flex items-center px-4 py-2 bg-blue-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-600 active:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition disabled:opacity-25"
-                    disabled={isSubmitting}
-                  >
-                    Guardar
-                  </button>
-                </div>
-              </form>
-            </div>
+            {error && (
+              <div className="mb-4 text-red-700 bg-red-100 p-2 rounded">{error}</div>
+            )}
+            {successMessage && (
+              <div className="mb-4 text-green-700 bg-green-100 p-2 rounded">{successMessage}</div>
+            )}
+
+            <form onSubmit={handleUpdateSubmit} className="space-y-4">
+              <div>
+                <label className="block font-medium mb-1" htmlFor="description">Descripción</label>
+                <input
+                  type="text"
+                  id="description"
+                  value={editFormData.description}
+                  onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                  className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-mar-profundo"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block font-medium mb-1" htmlFor="roomType">Tipo de Habitación</label>
+                <select
+                  id="roomType"
+                  value={editFormData.roomTypeId}
+                  onChange={(e) => setEditFormData({ ...editFormData, roomTypeId: e.target.value })}
+                  className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-mar-profundo"
+                  required
+                >
+                  <option value="">Seleccione un tipo</option>
+                  {roomTypes.map(type => (
+                    <option key={type.id} value={type.id}>
+                      {type.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-medium mb-1" htmlFor="detailRoom">Detalle de Habitación</label>
+                <select
+                  id="detailRoom"
+                  value={editFormData.detailRoomId}
+                  onChange={(e) => setEditFormData({ ...editFormData, detailRoomId: e.target.value })}
+                  className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-mar-profundo"
+                  required
+                >
+                  <option value="">Seleccione un detalle</option>
+                  {roomDetailsList.map(detail => (
+                    <option key={detail.id} value={detail.id}>
+                      {detail.description || detailNames[detail.name] || detail.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-medium mb-1" htmlFor="price">Precio</label>
+                <input
+                  type="number"
+                  id="price"
+                  value={editFormData.price}
+                  onChange={(e) => setEditFormData({ ...editFormData, price: e.target.value })}
+                  className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-mar-profundo"
+                  min="0"
+                  step="0.01"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block font-medium mb-1" htmlFor="status">Estado</label>
+                <select
+                  id="status"
+                  value={editFormData.status}
+                  onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                  className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-mar-profundo"
+                >
+                  <option value="available">Disponible</option>
+                  <option value="occupied">Ocupada</option>
+                  <option value="maintenance">Mantenimiento</option>
+                  <option value="cleaning">Limpieza</option>
+                </select>
+              </div>
+
+              {/* Aquí puedes agregar el manejo para fotos (existingPhotos y newPhotos) si quieres */}
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"
+                  onClick={closeEditModal}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`px-4 py-2 rounded-md font-semibold text-white transition ${
+                    isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-mar-profundo hover:bg-mar-claro'
+                  }`}
+                >
+                  {isSubmitting ? 'Guardando...' : 'Guardar'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

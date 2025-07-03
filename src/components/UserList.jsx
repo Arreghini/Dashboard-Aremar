@@ -20,19 +20,22 @@ const UserList = () => {
     isActive: true,
   });
   
-    const fetchUsers = async () => {
-      try {
-        const token = await getAccessTokenSilently();
-        const usersData = await userService.getUsers(token);
-        setUsers(usersData);
-      } catch (error) {
-        console.error('Error al obtener los usuarios:', error);
-      }
-    };
-
     useEffect(() => {
-    fetchUsers();
-  }, []);
+      const fetchUsers = async () => {
+        try {
+          const token = await getAccessTokenSilently();
+          if (!token) {
+            console.error('No se pudo obtener el token');
+            return;
+          }
+          const usersData = await userService.getUsers(token);
+          setUsers(usersData);
+        } catch (error) {
+          console.error('Error al obtener los usuarios:', error);
+        }
+      };
+      fetchUsers();
+    }, [getAccessTokenSilently]);
   
   const handleEdit = async (user) => {
     setIsModalOpen(true);
