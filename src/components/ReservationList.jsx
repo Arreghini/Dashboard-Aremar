@@ -195,19 +195,21 @@ const ReservationList = () => {
   };
 
   return (
-    <div className="p-4 bg-neutral-claro min-h-screen font-body">
-      <h2 className="text-2xl font-heading text-mar-profundo mb-6">Lista de Reservas</h2>
+    <div className="pt-36 px-6 pb-10 bg-neutral-oscuro min-h-screen font-body text-neutral-800 dark:text-neutral-100">
+      <h2 className="text-3xl font-heading text-playa-arena dark:text-mar-espuma mb-8">
+        Lista de Reservas
+      </h2>
 
       {loading ? (
         <p className="text-mar-claro">Cargando reservas...</p>
       ) : error ? (
         <p className="text-red-600">{error}</p>
       ) : reservations.length === 0 ? (
-        <p className="text-neutral-oscuro">No hay reservas disponibles</p>
+        <p className="text-neutral-300">No hay reservas disponibles</p>
       ) : (
         <div className="grid gap-6">
           {reservations.map((r) => (
-            <div key={r.id} className="border border-mar-profundo bg-white p-6 rounded-xl shadow-md">
+            <div key={r.id} className="bg-neutral-claro rounded-xl shadow-lg border border-mar-claro p-6">
               <div className="grid md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <h3 className="font-semibold text-mar-profundo">Detalles de la Reserva</h3>
@@ -277,7 +279,7 @@ const ReservationList = () => {
                   className={`text-white px-4 py-2 rounded font-semibold transition ${
                     r.status.trim() !== 'confirmed'
                       ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-espuma hover:bg-playa-sol text-neutral-oscuro'
+                      : 'bg-mar-claro hover:bg-playa-sol text-neutral-oscuro'
                   }`}
                 >
                   Cancelar con Reembolso

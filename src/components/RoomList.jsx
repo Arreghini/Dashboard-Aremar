@@ -247,101 +247,106 @@ const RoomList = ({ refresh, onUpdate }) => {
           {successMessage}
         </div>
       )}
+{rooms.length === 0 ? (
+  <div className="text-center py-8 bg-neutral.claro dark:bg-neutral.oscuro rounded-lg">
+    <p className="text-gray-500 text-lg">No hay habitaciones registradas</p>
+    <p className="text-gray-400 text-sm mt-2">Crea la primera habitación usando el formulario de arriba</p>
+  </div>
+) : (
+  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    {roomsWithFullDetails.map(room => (
+      <div
+        key={room.id}
+        className="border rounded-lg p-4 shadow-md bg-white dark:bg-neutral.oscuro hover:shadow-lg transition-shadow flex flex-col h-full min-h-[500px]"
+      >
+        <div className="flex-grow">
+          <div className="flex justify-between items-start mb-3">
+            <h4 className="font-semibold text-lg text-mar-profundo dark:text-mar-espuma">
+              {room.id || `Habitación ${room.id}`}
+            </h4>
+            {getStatusBadge(room.status)}
+          </div>
 
-      {rooms.length === 0 ? (
-        <div className="text-center py-8 bg-neutral.claro dark:bg-neutral.oscuro rounded-lg">
-          <p className="text-gray-500 text-lg">No hay habitaciones registradas</p>
-          <p className="text-gray-400 text-sm mt-2">Crea la primera habitación usando el formulario de arriba</p>
-        </div>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {roomsWithFullDetails.map(room => (
-            <div key={room.id} className="border rounded-lg p-4 shadow-md bg-white dark:bg-neutral.oscuro hover:shadow-lg transition-shadow">
-              <div className="flex justify-between items-start mb-3">
-                <h4 className="font-semibold text-lg text-mar-profundo dark:text-mar-espuma">
-                  {room.id || `Habitación ${room.id}`}
-                </h4>
-                {getStatusBadge(room.status)}
-              </div>
-
-              {room.photoRoom && room.photoRoom.length > 0 ? (
-                <div className="mb-4">
-                  <h5 className="font-medium text-sm mb-2 text-gray-700 dark:text-gray-300">
-                    Fotos ({room.photoRoom.length}):
-                  </h5>
-                  <div className="grid grid-cols-2 gap-2">
-                    {room.photoRoom.slice(0, 4).map((photo, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={photo}
-                          alt={`${room.description} - foto ${index + 1}`}
-                          className="w-full h-20 object-cover rounded border hover:opacity-80 transition-opacity cursor-pointer"
-                          onError={e => e.target.style.display = 'none'}
-                          onClick={() => window.open(photo, '_blank')}
-                        />
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded flex items-center justify-center">
-                          <span className="text-white text-xs opacity-0 group-hover:opacity-100 font-medium">👁️ Ver</span>
-                        </div>
-                      </div>
-                    ))}
+          {room.photoRoom && room.photoRoom.length > 0 ? (
+            <div className="mb-4">
+              <h5 className="font-medium text-sm mb-2 text-gray-700 dark:text-gray-300">
+                Fotos ({room.photoRoom.length}):
+              </h5>
+              <div className="grid grid-cols-2 gap-2">
+                {room.photoRoom.slice(0, 4).map((photo, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={photo}
+                      alt={`${room.description} - foto ${index + 1}`}
+                      className="w-full h-20 object-cover rounded border hover:opacity-80 transition-opacity cursor-pointer"
+                      onError={e => e.target.style.display = 'none'}
+                      onClick={() => window.open(photo, '_blank')}
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded flex items-center justify-center">
+                      <span className="text-white text-xs opacity-0 group-hover:opacity-100 font-medium">👁️ Ver</span>
+                    </div>
                   </div>
-                  {room.photoRoom.length > 4 && (
-                    <p className="text-xs text-gray-500 mt-1">+{room.photoRoom.length - 4} foto(s) más</p>
-                  )}
-                </div>
-              ) : (
-                <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-600 rounded text-center">
-                  <p className="text-sm text-gray-500">📷 Sin fotos</p>
-                </div>
-              )}
-
-              <div className="mb-4 text-sm space-y-1 bg-gray-50 dark:bg-neutral.oscuro p-3 rounded">
-                <p><strong>🏷️ Tipo:</strong> {room.roomType?.name || 'Sin tipo'}</p>
-                <div>
-                  <strong>📋 Detalles:</strong>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {getRoomAmenities(room.detailRoom).length > 0 ? (
-                      getRoomAmenities(room.detailRoom).map((amenity, i) => (
-                        <span key={i} className={`${amenityColors[amenity.color]} px-2 py-1 rounded text-xs font-medium`}>
-                          {amenity.label}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-gray-500 text-xs">Sin servicios especificados</span>
-                    )}
-                  </div>
-                </div>
-                <p className="text-center mt-2 font-semibold text-green-600 dark:text-green-400">
-                  <strong>💰 Precio:</strong> ${room.price?.toLocaleString() || 'No definido'}
-                </p>
+                ))}
               </div>
-
-              {room.createdAt && (
-                <div className="mb-4 text-xs text-gray-500 border-t pt-2">
-                  <p>📅 Creado: {new Date(room.createdAt).toLocaleDateString('es-ES')}</p>
-                  <p>🕒 Hora: {new Date(room.createdAt).toLocaleTimeString('es-ES')}</p>
-                </div>
+              {room.photoRoom.length > 4 && (
+                <p className="text-xs text-gray-500 mt-1">+{room.photoRoom.length - 4} foto(s) más</p>
               )}
+            </div>
+          ) : (
+            <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-600 rounded text-center">
+              <p className="text-sm text-gray-500">📷 Sin fotos</p>
+            </div>
+          )}
 
-              <div className="flex justify-end gap-2">
-                <button
-                  className="text-sm bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded shadow transition"
-                  onClick={() => handleEdit(room)}
-                >
-                  ✏️ Editar
-                </button>
-                <button
-                  className="text-sm bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded shadow transition"
-                  onClick={() => handleDelete(room.id)}
-                >
-                  🗑️ Eliminar
-                </button>
+          <div className="mb-4 text-sm space-y-1 bg-gray-50 dark:bg-neutral.oscuro p-3 rounded">
+            <p><strong>🏷️ Tipo:</strong> {room.roomType?.name || 'Sin tipo'}</p>
+            <div>
+              <strong>📋 Detalles:</strong>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {getRoomAmenities(room.detailRoom).length > 0 ? (
+                  getRoomAmenities(room.detailRoom).map((amenity, i) => (
+                    <span key={i} className={`${amenityColors[amenity.color]} px-2 py-1 rounded text-xs font-medium`}>
+                      {amenity.label}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-gray-500 text-xs">Sin servicios especificados</span>
+                )}
               </div>
             </div>
-          ))}
+            <p className="text-center mt-2 font-semibold text-green-600 dark:text-green-400">
+              <strong>💰 Precio:</strong> ${room.price?.toLocaleString() || 'No definido'}
+            </p>
+          </div>
         </div>
-      )}
 
+        {/* Footer fijo abajo */}
+        <div className="mt-auto border-t pt-2">
+          {room.createdAt && (
+            <div className="text-xs text-gray-500 mb-2">
+              <p>📅 Creado: {new Date(room.createdAt).toLocaleDateString('es-ES')}</p>
+              <p>🕒 Hora: {new Date(room.createdAt).toLocaleTimeString('es-ES')}</p>
+            </div>
+          )}
+          <div className="flex justify-end gap-2">
+            <button
+              className="text-sm bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded shadow transition"
+              onClick={() => handleEdit(room)}
+            >
+              ✏️ Editar
+            </button>
+            <button
+              className="text-sm bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded shadow transition"
+              onClick={() => handleDelete(room.id)}
+            >
+              🗑️ Eliminar
+            </button>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
       {/* Modal para editar */}
       {isEditModalOpen && (
         <div

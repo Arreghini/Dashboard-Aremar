@@ -33,7 +33,7 @@ const DashboardPage = () => {
   const { user, getAccessTokenSilently } = useAuth0();
 
   const handleReturnToHome = () => {
-    window.location.href = 'http://localhost:5173';
+    window.location.href = 'http://localhost:5173/home';
   };
 
   const buttonBase = `mb-2 px-4 py-2 rounded font-body transition-colors`;
