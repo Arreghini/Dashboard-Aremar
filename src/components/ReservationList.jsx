@@ -94,7 +94,7 @@ const ReservationList = () => {
 
       if (diff > 0) {
         additionalAmount = dailyRate * diff;
-
+    console.log('tipo de habitación:', formData.roomId);
         const roomType = await roomService.getRoomTypeById(formData.roomId, token);
         if (!roomType) throw new Error('No se encontró el tipo de habitación.');
 
@@ -106,8 +106,10 @@ const ReservationList = () => {
           formData.checkOut,
           formData.numberOfGuests
         );
+        console.log('Habitaciones disponibles recibidas:', available);
 
-        if (!available?.length) throw new Error('No hay habitaciones disponibles para las nuevas fechas.');
+        const availableRooms = Array.isArray(available.rooms) ? available.rooms : [];
+        if (!availableRooms.length) throw new Error('No hay habitaciones disponibles para las nuevas fechas.');
         alert(`El usuario debe pagar un monto adicional de $${additionalAmount.toFixed(2)}.`);
       } else {
         refundAmount = dailyRate * Math.abs(diff);
