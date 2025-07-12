@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 
 const EditReservationModal = ({ isOpen, onClose, reservation, onSave }) => {
   const [formData, setFormData] = useState({
@@ -7,9 +8,9 @@ const EditReservationModal = ({ isOpen, onClose, reservation, onSave }) => {
     checkIn: '',
     checkOut: '',
     numberOfGuests: 1,
-    status: ['pending','confimed'],
+    status: ['pending', 'confimed'],
     totalPrice: '',
-    amountPaid: '', 
+    amountPaid: '',
     paymentId: '',
   });
 
@@ -50,7 +51,9 @@ const EditReservationModal = ({ isOpen, onClose, reservation, onSave }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded shadow-md w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4">Editar Reserva #{formData.reservationId}</h2>
+        <h2 className="text-xl font-bold mb-4">
+          Editar Reserva #{formData.reservationId}
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-3">
           <label className="block">
             ID Habitación:
@@ -127,10 +130,17 @@ const EditReservationModal = ({ isOpen, onClose, reservation, onSave }) => {
             />
           </label>
           <div className="mt-4 flex justify-end space-x-2">
-            <button type="button" onClick={onClose} className="bg-gray-400 text-white px-4 py-2 rounded">
+            <button
+              type="button"
+              onClick={onClose}
+              className="bg-gray-400 text-white px-4 py-2 rounded"
+            >
               Cancelar
             </button>
-            <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+            <button
+              type="submit"
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
               Guardar
             </button>
           </div>
@@ -138,6 +148,13 @@ const EditReservationModal = ({ isOpen, onClose, reservation, onSave }) => {
       </div>
     </div>
   );
+};
+
+EditReservationModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  reservation: PropTypes.object,
+  onSave: PropTypes.func.isRequired,
 };
 
 export default EditReservationModal;

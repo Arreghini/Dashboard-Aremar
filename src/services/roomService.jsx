@@ -41,12 +41,12 @@ const roomService = {
     try {
       console.log('=== DEBUG CREATEROOM ===');
       console.log('Datos recibidos:', roomData);
-    
+
       if (roomData instanceof FormData) {
         console.log('⚠️ FormData detectado, pero enviando como JSON...');
         return;
       }
-    
+
       const roomPayload = {
         id: roomData.id,
         description: roomData.description,
@@ -57,8 +57,12 @@ const roomService = {
       };
 
       console.log('Payload final enviado:', roomPayload);
-    
-      const response = await axios.post(`${BASE_URL}`, roomPayload, getHeaders(token));
+
+      const response = await axios.post(
+        `${BASE_URL}`,
+        roomPayload,
+        getHeaders(token)
+      );
       return response.data;
     } catch (error) {
       console.error('Error en createRoom:', error);
@@ -68,20 +72,20 @@ const roomService = {
     }
   },
 
-updateRoom: async (id, formData, token) => {
-  try {
-    const response = await axios.patch(`${BASE_URL}/${id}`, formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  updateRoom: async (id, formData, token) => {
+    try {
+      const response = await axios.patch(`${BASE_URL}/${id}`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    return response.data;
-  } catch (error) {
-    console.error('Error en la actualización:', error);
-    throw error;
-  }
-},
+      return response.data;
+    } catch (error) {
+      console.error('Error en la actualización:', error);
+      throw error;
+    }
+  },
 
   deleteRoom: async (id, token) => {
     try {
@@ -95,7 +99,10 @@ updateRoom: async (id, formData, token) => {
 
   getRoomTypes: async (token) => {
     try {
-      const response = await axios.get(`${BASE_URL}/roomType`, getHeaders(token));
+      const response = await axios.get(
+        `${BASE_URL}/roomType`,
+        getHeaders(token)
+      );
       return response.data;
     } catch (error) {
       console.error('Error al obtener los tipos de habitaciones:', error);
@@ -105,31 +112,38 @@ updateRoom: async (id, formData, token) => {
 
   getRoomTypeById: async (id, token) => {
     try {
-      const response = await axios.get(`http://localhost:3000/api/rooms/${id}`, getHeaders(token));
+      const response = await axios.get(
+        `http://localhost:3000/api/rooms/${id}`,
+        getHeaders(token)
+      );
       return response.data;
     } catch (error) {
       console.error('Error al obtener el tipo de habitación:', error);
       throw error;
     }
-  },  
+  },
 
-  getAvailableRoomsByType: async (token, reservationId,roomTypeId, checkIn, checkOut, numberOfGuests) => {
+  getAvailableRoomsByType: async (
+    token,
+    reservationId,
+    roomTypeId,
+    checkIn,
+    checkOut,
+    numberOfGuests
+  ) => {
     try {
-      const response = await axios.get(
-        `${BASE_URL}/available`, 
-        {
-          params: {
-            reservationId,
-            roomTypeId,
-            checkIn: checkIn,
-            checkOut: checkOut,
-            numberOfGuests
-          },
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const response = await axios.get(`${BASE_URL}/available`, {
+        params: {
+          reservationId,
+          roomTypeId,
+          checkIn: checkIn,
+          checkOut: checkOut,
+          numberOfGuests,
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       return response.data;
     } catch (error) {
       console.error('Error al obtener habitaciones disponibles:', error);
@@ -141,18 +155,18 @@ updateRoom: async (id, formData, token) => {
     try {
       console.log('=== DEBUG createRoomWithDetails ===');
       console.log('Enviando FormData al backend...');
-    
+
       for (let pair of formData.entries()) {
         console.log(`${pair[0]}: ${pair[1]}`);
       }
-    
+
       const response = await axios.post(`${BASE_URL}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
         },
       });
-    
+
       console.log('Respuesta exitosa:', response.data);
       return response.data;
     } catch (error) {
@@ -169,7 +183,7 @@ updateRoom: async (id, formData, token) => {
       const response = await fetch(`${BASE_URL}/${id}`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -197,18 +211,18 @@ updateRoom: async (id, formData, token) => {
   createRoomWithFormData: async (formData, token) => {
     try {
       console.log('=== DEBUG createRoomWithFormData ===');
-    
+
       for (let pair of formData.entries()) {
         console.log(`${pair[0]}: ${pair[1]}`);
       }
-    
+
       const response = await axios.post(`${BASE_URL}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
         },
       });
-    
+
       console.log('Habitación creada exitosamente:', response.data);
       return response.data;
     } catch (error) {

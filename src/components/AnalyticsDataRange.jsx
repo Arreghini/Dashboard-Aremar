@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PropTypes from 'prop-types';
 
 const AnalyticsDataRange = ({ onDateChange }) => {
   const [startDate, setStartDate] = useState('');
@@ -6,7 +7,7 @@ const AnalyticsDataRange = ({ onDateChange }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
- //   console.log('Rango de fechas seleccionado:', startDate, endDate);
+    //   console.log('Rango de fechas seleccionado:', startDate, endDate);
     onDateChange(startDate, endDate);
   };
 
@@ -34,6 +35,10 @@ const AnalyticsDataRange = ({ onDateChange }) => {
       </form>
     </div>
   );
+};
+
+AnalyticsDataRange.propTypes = {
+  onDateChange: PropTypes.func.isRequired,
 };
 
 export default AnalyticsDataRange;

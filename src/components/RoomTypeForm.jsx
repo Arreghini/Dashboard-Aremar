@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import roomClasifyService from '../services/roomClasifyService';
 import { useAuth0 } from '@auth0/auth0-react';
+import PropTypes from 'prop-types';
 
 const RoomTypeForm = ({ onRoomTypeCreated }) => {
   const { getAccessTokenSilently } = useAuth0();
   const [roomTypeData, setRoomTypeData] = useState({
     name: '',
-    simpleBeds: '', 
+    simpleBeds: '',
     trundleBeds: '',
     kingBeds: '',
     windows: '',
@@ -25,7 +26,7 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
 
     try {
       const token = await getAccessTokenSilently();
-      
+
       // Crear FormData con todos los datos
       const formData = new FormData();
       formData.append('name', roomTypeData.name);
@@ -34,23 +35,22 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
       formData.append('kingBeds', roomTypeData.kingBeds || '0');
       formData.append('windows', roomTypeData.windows || '0');
       formData.append('price', roomTypeData.price || '0');
-      
+
       // Agregar archivos de fotos
       if (newPhotos && newPhotos.length > 0) {
-        newPhotos.forEach(file => {
+        newPhotos.forEach((file) => {
           formData.append('photos', file);
         });
       }
-      
+
       await roomClasifyService.createRoomTypeWithFiles(formData, token);
-      
+
       setSuccessMessage('Tipo de habitación creado con éxito');
       resetForm();
-      
+
       if (onRoomTypeCreated) {
         onRoomTypeCreated();
       }
-      
     } catch (error) {
       console.error('Error al crear tipo de habitación:', error);
       setError(`Error: ${error.response?.data?.message || error.message}`);
@@ -78,19 +78,19 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
       <h2 className="text-xl font-bold mb-6 text-gray-800 dark:text-white">
         Crear Nuevo Tipo de Habitación
       </h2>
-      
+
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {error}
         </div>
       )}
-      
+
       {successMessage && (
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
           {successMessage}
         </div>
       )}
-      
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -99,7 +99,9 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
           <input
             type="text"
             value={roomTypeData.name}
-            onChange={(e) => setRoomTypeData({ ...roomTypeData, name: e.target.value })}
+            onChange={(e) =>
+              setRoomTypeData({ ...roomTypeData, name: e.target.value })
+            }
             placeholder="Ej: Suite Deluxe, Habitación Estándar..."
             required
             className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
@@ -115,7 +117,9 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
               type="number"
               min="0"
               value={roomTypeData.simpleBeds}
-              onChange={(e) => setRoomTypeData({ ...roomTypeData, simpleBeds: e.target.value })}
+              onChange={(e) =>
+                setRoomTypeData({ ...roomTypeData, simpleBeds: e.target.value })
+              }
               className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             />
           </div>
@@ -128,7 +132,12 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
               type="number"
               min="0"
               value={roomTypeData.trundleBeds}
-              onChange={(e) => setRoomTypeData({ ...roomTypeData, trundleBeds: e.target.value })}
+              onChange={(e) =>
+                setRoomTypeData({
+                  ...roomTypeData,
+                  trundleBeds: e.target.value,
+                })
+              }
               className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             />
           </div>
@@ -141,7 +150,9 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
               type="number"
               min="0"
               value={roomTypeData.kingBeds}
-              onChange={(e) => setRoomTypeData({ ...roomTypeData, kingBeds: e.target.value })}
+              onChange={(e) =>
+                setRoomTypeData({ ...roomTypeData, kingBeds: e.target.value })
+              }
               className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             />
           </div>
@@ -154,7 +165,9 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
               type="number"
               min="0"
               value={roomTypeData.windows}
-              onChange={(e) => setRoomTypeData({ ...roomTypeData, windows: e.target.value })}
+              onChange={(e) =>
+                setRoomTypeData({ ...roomTypeData, windows: e.target.value })
+              }
               className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             />
           </div>
@@ -169,7 +182,9 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
             min="0"
             step="0.01"
             value={roomTypeData.price}
-            onChange={(e) => setRoomTypeData({ ...roomTypeData, price: e.target.value })}
+            onChange={(e) =>
+              setRoomTypeData({ ...roomTypeData, price: e.target.value })
+            }
             placeholder="0.00"
             className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
           />
@@ -212,6 +227,9 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
       </form>
     </div>
   );
+};
+RoomTypeForm.propTypes = {
+  onRoomTypeCreated: PropTypes.func,
 };
 
 export default RoomTypeForm;

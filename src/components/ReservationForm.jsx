@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import userService from '../services/userService';
 import reservationService from '../services/reservationService';
 import roomService from '../services/roomService';
 import { useAuth0 } from '@auth0/auth0-react';
+import PropTypes from 'prop-types';
 
 const ReservationForm = ({ onClose, onSave }) => {
   const [users, setUsers] = useState([]);
@@ -38,92 +39,94 @@ const ReservationForm = ({ onClose, onSave }) => {
   }, [getAccessTokenSilently, isAdmin]);
 
   // 🏠 Traer tipos de habitación
-  useEffect(() => {
-  const fetchRoomTypes = async () => {
+  const fetchRoomTypes = useCallback(async () => {
     try {
       const token = await getAccessTokenSilently();
       const response = await roomService.getRoomTypes(token);
-      console.log('Tipos de habitación recibidos:', response);
-
       if (Array.isArray(response)) {
         setRoomTypes(response);
       } else if (Array.isArray(response.data)) {
-        setRoomTypes(response.data); // 👈 este es el caso real
+        setRoomTypes(response.data);
       } else {
         setRoomTypes([]);
       }
     } catch (error) {
-      setRoomTypes([]);
       console.error('Error al obtener los tipos de habitación:', error);
+      setRoomTypes([]);
     }
-  };
+  }, [getAccessTokenSilently]);
 
-  fetchRoomTypes(); // 👈 ya está dentro del useEffect, así que no hace falta llamarlo afuera
-}, [getAccessTokenSilently]);
+  useEffect(() => {
+    fetchRoomTypes();
+  }, [fetchRoomTypes]);
 
   // 🧼 Limpiar habitación si cambian los datos base
   useEffect(() => {
-    setFormData(prev => ({ ...prev, roomId: '' }));
-  }, [formData.roomTypeId, formData.checkIn, formData.checkOut, formData.numberOfGuests]);
+    setFormData((prev) => ({ ...prev, roomId: '' }));
+  }, [
+    formData.roomTypeId,
+    formData.checkIn,
+    formData.checkOut,
+    formData.numberOfGuests,
+  ]);
 
   // 📆 Traer habitaciones disponibles
+  const fetchAvailableRooms = useCallback(async () => {
+    const { roomTypeId, checkIn, checkOut, numberOfGuests } = formData;
+
+    if (!roomTypeId || !checkIn || !checkOut || !numberOfGuests) {
+      setAvailableRooms([]);
+      return;
+    }
+
+    setLoadingRooms(true);
+
+    try {
+      const token = await getAccessTokenSilently();
+      const data = await roomService.getAvailableRoomsByType(
+        token,
+        undefined,
+        roomTypeId,
+        checkIn,
+        checkOut,
+        numberOfGuests
+      );
+      setAvailableRooms(data.rooms || []);
+    } catch (error) {
+      setAvailableRooms([]);
+    } finally {
+      setLoadingRooms(false);
+    }
+  }, [formData, getAccessTokenSilently]);
   useEffect(() => {
-    const fetchAvailableRooms = async () => {
-      const { roomTypeId, checkIn, checkOut, numberOfGuests } = formData;
-
-      if (!roomTypeId || !checkIn || !checkOut || !numberOfGuests) {
-        setAvailableRooms([]);
-        return;
-      }
-
-      setLoadingRooms(true);
-
-      try {
-        const token = await getAccessTokenSilently();
-        const data = await roomService.getAvailableRoomsByType(
-          token,
-          undefined,
-          roomTypeId,
-          checkIn,
-          checkOut,
-          numberOfGuests
-        );
-        setAvailableRooms(data.rooms || []);
-      } catch (error) {
-        setAvailableRooms([]);
-      } finally {
-        setLoadingRooms(false);
-      }
-    };
-
     fetchAvailableRooms();
-  }, [formData.roomTypeId, formData.checkIn, formData.checkOut, formData.numberOfGuests]);
+  }, [fetchAvailableRooms]);
 
   // 🧾 Cambios en los inputs
   const handleChange = (e) => {
-  const { name, value } = e.target;
-  const parsedValue = ['roomTypeId', 'numberOfGuests'].includes(name)
-    ? value  
-    : value;
+    const { name, value } = e.target;
+    const parsedValue = ['roomTypeId', 'numberOfGuests'].includes(name)
+      ? value
+      : value;
 
-  setFormData((prevData) => ({
-    ...prevData,
-    [name]: parsedValue,
-  }));
-};
-  
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: parsedValue,
+    }));
+  };
+
   // 💾 Enviar reserva
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (new Date(formData.checkIn) >= new Date(formData.checkOut)) {
       alert('La fecha de egreso debe ser posterior a la de ingreso.');
       return;
     }
-  
+
     try {
       const token = await getAccessTokenSilently();
-  
+
       // Convertir a formato ISO si es necesario
       const payload = {
         ...formData,
@@ -131,8 +134,8 @@ const ReservationForm = ({ onClose, onSave }) => {
         checkIn: new Date(formData.checkIn).toISOString(),
         checkOut: new Date(formData.checkOut).toISOString(),
       };
-  
-      console.log("Payload a enviar:", payload);
+
+      console.log('Payload a enviar:', payload);
       await reservationService.createReservation(payload, token);
       onSave();
       onClose();
@@ -145,9 +148,10 @@ const ReservationForm = ({ onClose, onSave }) => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md mx-auto">
-      <h2 className="text-2xl font-semibold mb-4 text-center">Crear Nueva Reserva</h2>
+      <h2 className="text-2xl font-semibold mb-4 text-center">
+        Crear Nueva Reserva
+      </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-
         {isAdmin ? (
           <div>
             <label className="block text-sm font-medium mb-1">Usuario</label>
@@ -160,7 +164,9 @@ const ReservationForm = ({ onClose, onSave }) => {
             >
               <option value="">Seleccione un usuario</option>
               {users.map((u) => (
-                <option key={u.id} value={u.id}>{u.name}</option>
+                <option key={u.id} value={u.id}>
+                  {u.name}
+                </option>
               ))}
             </select>
           </div>
@@ -171,7 +177,9 @@ const ReservationForm = ({ onClose, onSave }) => {
         )}
 
         <div>
-          <label className="block text-sm font-medium mb-1">Tipo de Habitación</label>
+          <label className="block text-sm font-medium mb-1">
+            Tipo de Habitación
+          </label>
           <select
             name="roomTypeId"
             value={formData.roomTypeId}
@@ -181,13 +189,17 @@ const ReservationForm = ({ onClose, onSave }) => {
           >
             <option value="">Seleccione un tipo</option>
             {roomTypes.map((type) => (
-              <option key={type.id} value={type.id}>{type.name}</option>
+              <option key={type.id} value={type.id}>
+                {type.name}
+              </option>
             ))}
           </select>
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Fecha de Ingreso</label>
+          <label className="block text-sm font-medium mb-1">
+            Fecha de Ingreso
+          </label>
           <input
             type="date"
             name="checkIn"
@@ -199,7 +211,9 @@ const ReservationForm = ({ onClose, onSave }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Fecha de Egreso</label>
+          <label className="block text-sm font-medium mb-1">
+            Fecha de Egreso
+          </label>
           <input
             type="date"
             name="checkOut"
@@ -212,7 +226,9 @@ const ReservationForm = ({ onClose, onSave }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Cantidad de Huéspedes</label>
+          <label className="block text-sm font-medium mb-1">
+            Cantidad de Huéspedes
+          </label>
           <input
             type="number"
             name="numberOfGuests"
@@ -227,7 +243,9 @@ const ReservationForm = ({ onClose, onSave }) => {
 
         {formData.roomTypeId && formData.checkIn && formData.checkOut && (
           <div>
-            <label className="block text-sm font-medium mb-1">Habitación Disponible</label>
+            <label className="block text-sm font-medium mb-1">
+              Habitación Disponible
+            </label>
             <select
               name="roomId"
               value={formData.roomId}
@@ -243,11 +261,11 @@ const ReservationForm = ({ onClose, onSave }) => {
               ))}
             </select>
 
-           {!loadingRooms && availableRooms.length === 0 && (
-            <p className="text-sm text-red-500 mt-2">
-              No hay habitaciones disponibles para los datos seleccionados.
-            </p>
-          )}
+            {!loadingRooms && availableRooms.length === 0 && (
+              <p className="text-sm text-red-500 mt-2">
+                No hay habitaciones disponibles para los datos seleccionados.
+              </p>
+            )}
           </div>
         )}
 
@@ -270,6 +288,10 @@ const ReservationForm = ({ onClose, onSave }) => {
       </form>
     </div>
   );
+};
+ReservationForm.propTypes = {
+  onSave: PropTypes.func,
+  onClose: PropTypes.func,
 };
 
 export default ReservationForm;

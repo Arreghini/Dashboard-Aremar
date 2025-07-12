@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';  
+import { useState } from 'react';
+import { useAuth0 } from '@auth0/auth0-react';
 import userService from '../services/userService';
 
 const UserForm = () => {
-  const { getAccessTokenSilently } = useAuth0();  // Usa Auth0 para obtener el token de acceso
+  const { getAccessTokenSilently } = useAuth0(); // Usa Auth0 para obtener el token de acceso
   const [formData, setFormData] = useState({
     id: '',
     name: '',
     email: '',
-    emailVerified: false,  // Cambiado a booleano
+    emailVerified: false, // Cambiado a booleano
     picture: '',
-    phone: '',  
+    phone: '',
     dni: '',
     address: '',
-    isActive: true,    
+    isActive: true,
   });
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);  
+  const [isLoading, setIsLoading] = useState(false);
 
   // Maneja los cambios en los campos del formulario
   const handleChange = (e) => {
@@ -31,11 +31,11 @@ const UserForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    console.log('formData:', formData); 
+    console.log('formData:', formData);
     try {
       const token = await getAccessTokenSilently();
       await userService.createUser(formData, token);
-      
+
       setFormData({
         id: '',
         name: '',
@@ -59,7 +59,6 @@ const UserForm = () => {
       setIsLoading(false);
     }
   };
-  
 
   return (
     <form onSubmit={handleSubmit}>
@@ -90,7 +89,7 @@ const UserForm = () => {
         <input
           type="checkbox"
           name="emailVerified"
-          checked={formData.emailVerified}  // Usa checked para checkbox
+          checked={formData.emailVerified} // Usa checked para checkbox
           onChange={handleChange}
         />
       </label>
@@ -128,14 +127,14 @@ const UserForm = () => {
           name="address"
           value={formData.address}
           onChange={handleChange}
-        />        
+        />
       </label>
       <label>
         Is Active:
         <input
           type="checkbox"
           name="isActive"
-          checked={formData.isActive}  // Usa checked para checkbox
+          checked={formData.isActive} // Usa checked para checkbox
           onChange={handleChange}
         />
       </label>

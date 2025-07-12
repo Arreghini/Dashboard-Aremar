@@ -25,10 +25,7 @@ function App() {
     >
       <Routes>
         {/* Ruta por defecto que redirige al dashboard si está autenticado */}
-        <Route
-          path="/"
-          element={<Navigate to="/dashboard" />}
-        />
+        <Route path="/" element={<Navigate to="/dashboard" />} />
 
         {/* Define rutas individuales */}
         <Route
@@ -80,13 +77,13 @@ function App() {
           }
         />
         <Route
-        path="/reports"
-        element={
-          <ProtectedRoute requiredRole="admin">
-            <ReportsPage />
-          </ProtectedRoute>
-        }
-      />
+          path="/reports"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <ReportsPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </Auth0Provider>
   );

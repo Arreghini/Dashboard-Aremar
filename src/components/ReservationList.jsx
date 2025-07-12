@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import reservationService from '../services/reservationService';
 import roomService from '../services/roomService';
@@ -12,7 +12,7 @@ const ReservationList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchReservations = async () => {
+  const fetchReservations = useCallback(async () => {
     try {
       setLoading(true);
       const token = await getAccessTokenSilently();
@@ -24,14 +24,15 @@ const ReservationList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAccessTokenSilently]);
 
   useEffect(() => {
     fetchReservations();
-  }, [getAccessTokenSilently]);
+  }, [fetchReservations]);
 
   const handleDelete = async (id) => {
-    if (!window.confirm('¿Estás seguro de que deseas eliminar esta reserva?')) return;
+    if (!window.confirm('¿Estás seguro de que deseas eliminar esta reserva?'))
+      return;
     try {
       const token = await getAccessTokenSilently();
       const result = await reservationService.deleteReservation(id, token);
@@ -45,8 +46,7 @@ const ReservationList = () => {
   };
 
   const handleEdit = (reservation) => {
-    const formatDate = (date) =>
-      new Date(date).toISOString().split('T')[0];
+    const formatDate = (date) => new Date(date).toISOString().split('T')[0];
 
     setSelectedReservation({
       id: reservation.id,
@@ -67,7 +67,9 @@ const ReservationList = () => {
     try {
       const token = await getAccessTokenSilently();
 
-      const originalReserve = reservations.find(res => res.id === formData.reservationId);
+      const originalReserve = reservations.find(
+        (res) => res.id === formData.reservationId
+      );
       if (!originalReserve) throw new Error('Reserva original no encontrada.');
 
       const toDate = (str) => {
@@ -81,12 +83,15 @@ const ReservationList = () => {
       const newCheckIn = toDate(formData.checkIn);
       const newCheckOut = toDate(formData.checkOut);
 
-      const originalDays = (originalCheckOut - originalCheckIn) / (1000 * 60 * 60 * 24);
+      const originalDays =
+        (originalCheckOut - originalCheckIn) / (1000 * 60 * 60 * 24);
       const newDays = (newCheckOut - newCheckIn) / (1000 * 60 * 60 * 24);
       const diff = newDays - originalDays;
 
-      if (originalDays <= 0) return alert('La reserva original tiene duración inválida.');
-      if (diff === 0) return alert('No se han realizado cambios en la reserva.');
+      if (originalDays <= 0)
+        return alert('La reserva original tiene duración inválida.');
+      if (diff === 0)
+        return alert('No se han realizado cambios en la reserva.');
 
       const dailyRate = originalReserve.totalPrice / originalDays;
       let refundAmount = 0;
@@ -94,8 +99,11 @@ const ReservationList = () => {
 
       if (diff > 0) {
         additionalAmount = dailyRate * diff;
-    console.log('tipo de habitación:', formData.roomId);
-        const roomType = await roomService.getRoomTypeById(formData.roomId, token);
+        console.log('tipo de habitación:', formData.roomId);
+        const roomType = await roomService.getRoomTypeById(
+          formData.roomId,
+          token
+        );
         if (!roomType) throw new Error('No se encontró el tipo de habitación.');
 
         const available = await roomService.getAvailableRoomsByType(
@@ -108,9 +116,16 @@ const ReservationList = () => {
         );
         console.log('Habitaciones disponibles recibidas:', available);
 
-        const availableRooms = Array.isArray(available.rooms) ? available.rooms : [];
-        if (!availableRooms.length) throw new Error('No hay habitaciones disponibles para las nuevas fechas.');
-        alert(`El usuario debe pagar un monto adicional de $${additionalAmount.toFixed(2)}.`);
+        const availableRooms = Array.isArray(available.rooms)
+          ? available.rooms
+          : [];
+        if (!availableRooms.length)
+          throw new Error(
+            'No hay habitaciones disponibles para las nuevas fechas.'
+          );
+        alert(
+          `El usuario debe pagar un monto adicional de $${additionalAmount.toFixed(2)}.`
+        );
       } else {
         refundAmount = dailyRate * Math.abs(diff);
         alert(`Se ha calculado un reembolso de $${refundAmount.toFixed(2)}.`);
@@ -144,10 +159,11 @@ const ReservationList = () => {
       const token = await getAccessTokenSilently();
       const amountPaid = prompt('Ingrese el monto pagado:');
 
-      if (!amountPaid || isNaN(amountPaid)) return alert('Debe ingresar un monto válido.');
+      if (!amountPaid || isNaN(amountPaid))
+        return alert('Debe ingresar un monto válido.');
       if (!window.confirm('¿Confirmar esta reserva?')) return;
 
-      const reservation = reservations.find(res => res.id === reservationId);
+      const reservation = reservations.find((res) => res.id === reservationId);
       const response = await reservationService.confirmReservationByAdmin(
         reservationId,
         token,
@@ -159,7 +175,7 @@ const ReservationList = () => {
 
       if (!response) return setError('No se pudo confirmar la reserva.');
 
-      const updated = reservations.map(res =>
+      const updated = reservations.map((res) =>
         res.id === reservationId ? { ...res, ...response.data } : res
       );
       setReservations(updated);
@@ -173,9 +189,11 @@ const ReservationList = () => {
     try {
       const token = await getAccessTokenSilently();
       await reservationService.cancelReservationByAdmin(id, token);
-      setReservations(reservations.map(res =>
-        res.id === id ? { ...res, status: 'cancelled' } : res
-      ));
+      setReservations(
+        reservations.map((res) =>
+          res.id === id ? { ...res, status: 'cancelled' } : res
+        )
+      );
     } catch (error) {
       console.error('Error al cancelar:', error);
     }
@@ -184,13 +202,22 @@ const ReservationList = () => {
   const handleCancelWithRefund = async (id) => {
     try {
       const token = await getAccessTokenSilently();
-      const response = await reservationService.cancelReservationWithRefund(id, token);
+      const response = await reservationService.cancelReservationWithRefund(
+        id,
+        token
+      );
 
-      setReservations(reservations.map(res =>
-        res.id === id
-          ? { ...res, status: 'cancelled', refundAmount: response.refundAmount }
-          : res
-      ));
+      setReservations(
+        reservations.map((res) =>
+          res.id === id
+            ? {
+                ...res,
+                status: 'cancelled',
+                refundAmount: response.refundAmount,
+              }
+            : res
+        )
+      );
     } catch (error) {
       console.error('Error al cancelar con reembolso:', error);
     }
@@ -211,25 +238,58 @@ const ReservationList = () => {
       ) : (
         <div className="grid gap-6">
           {reservations.map((r) => (
-            <div key={r.id} className="bg-neutral-claro rounded-xl shadow-lg border border-mar-claro p-6">
+            <div
+              key={r.id}
+              className="bg-neutral-claro rounded-xl shadow-lg border border-mar-claro p-6"
+            >
               <div className="grid md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <h3 className="font-semibold text-mar-profundo">Detalles de la Reserva</h3>
-                  <p><strong>ID:</strong> {r.id}</p>
-                  <p><strong>Check-in:</strong> {new Date(r.checkIn).toLocaleDateString()}</p>
-                  <p><strong>Check-out:</strong> {new Date(r.checkOut).toLocaleDateString()}</p>
-                  <p><strong>Huéspedes:</strong> {r.numberOfGuests}</p>
-                  <p><strong>Estado:</strong> {r.status}</p>
-                  <p><strong>Pagó:</strong> ${r.amountPaid}</p>
-                  <p><strong>Precio:</strong> ${r.totalPrice}</p>
+                  <h3 className="font-semibold text-mar-profundo">
+                    Detalles de la Reserva
+                  </h3>
+                  <p>
+                    <strong>ID:</strong> {r.id}
+                  </p>
+                  <p>
+                    <strong>Check-in:</strong>{' '}
+                    {new Date(r.checkIn).toLocaleDateString()}
+                  </p>
+                  <p>
+                    <strong>Check-out:</strong>{' '}
+                    {new Date(r.checkOut).toLocaleDateString()}
+                  </p>
+                  <p>
+                    <strong>Huéspedes:</strong> {r.numberOfGuests}
+                  </p>
+                  <p>
+                    <strong>Estado:</strong> {r.status}
+                  </p>
+                  <p>
+                    <strong>Pagó:</strong> ${r.amountPaid}
+                  </p>
+                  <p>
+                    <strong>Precio:</strong> ${r.totalPrice}
+                  </p>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-mar-profundo">Información del Cliente</h3>
-                  <p><strong>Nombre:</strong> {r.user?.name}</p>
-                  <p><strong>Email:</strong> {r.user?.email}</p>
-                  <h3 className="font-semibold mt-2 text-mar-profundo">Habitación</h3>
-                  <p><strong>ID:</strong> {r.roomId}</p>
-                  <p><strong>Tipo:</strong> {r.room?.roomType?.name}</p>
+                  <h3 className="font-semibold text-mar-profundo">
+                    Información del Cliente
+                  </h3>
+                  <p>
+                    <strong>Nombre:</strong> {r.user?.name}
+                  </p>
+                  <p>
+                    <strong>Email:</strong> {r.user?.email}
+                  </p>
+                  <h3 className="font-semibold mt-2 text-mar-profundo">
+                    Habitación
+                  </h3>
+                  <p>
+                    <strong>ID:</strong> {r.roomId}
+                  </p>
+                  <p>
+                    <strong>Tipo:</strong> {r.room?.roomType?.name}
+                  </p>
                   {r.status === 'cancelled' && r.refundAmount && (
                     <p className="text-sm text-green-600 font-semibold mt-1">
                       Reembolso: ${r.refundAmount.toFixed(2)}
@@ -253,7 +313,9 @@ const ReservationList = () => {
 
                 <button
                   onClick={() => handleConfirm(r.id)}
-                  disabled={['confirmed', 'cancelled'].includes(r.status.trim())}
+                  disabled={['confirmed', 'cancelled'].includes(
+                    r.status.trim()
+                  )}
                   className={`text-white px-4 py-2 rounded font-semibold transition ${
                     ['confirmed', 'cancelled'].includes(r.status.trim())
                       ? 'bg-gray-400 cursor-not-allowed'

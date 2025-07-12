@@ -1,7 +1,13 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import ReactDOM from 'react-dom';
+import PropTypes from 'prop-types';
 
-const Modal = ({ isOpen, onClose, children, width = "w-11/12 md:w-5/6 lg:w-4/5 xl:w-3/4" }) => {
+const Modal = ({
+  isOpen,
+  onClose,
+  children,
+  width = 'w-11/12 md:w-5/6 lg:w-4/5 xl:w-3/4',
+}) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -23,7 +29,10 @@ const Modal = ({ isOpen, onClose, children, width = "w-11/12 md:w-5/6 lg:w-4/5 x
         role="dialog"
         aria-modal="true"
       >
-        <button className="absolute top-2 right-2 text-gray-600 hover:text-gray-800 z-10 text-xl font-bold" onClick={onClose}>
+        <button
+          className="absolute top-2 right-2 text-gray-600 hover:text-gray-800 z-10 text-xl font-bold"
+          onClick={onClose}
+        >
           &times;
         </button>
         {children}
@@ -31,6 +40,13 @@ const Modal = ({ isOpen, onClose, children, width = "w-11/12 md:w-5/6 lg:w-4/5 x
     </div>,
     document.body
   );
+};
+
+Modal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  children: PropTypes.node.isRequired,
+  width: PropTypes.string,
 };
 
 export default Modal;
