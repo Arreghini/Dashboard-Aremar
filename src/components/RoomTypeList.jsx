@@ -24,10 +24,7 @@ const RoomTypeList = ({ refresh, onUpdate }) => {
   const [newPhotos, setNewPhotos] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchRoomTypes();
-  }, [refresh, fetchRoomTypes]);
-
+  
   const fetchRoomTypes = useCallback(async () => {
     try {
       setLoading(true);
@@ -45,7 +42,7 @@ const RoomTypeList = ({ refresh, onUpdate }) => {
           roomTypesArray = responseData.roomTypes;
         }
       }
-
+      
       setRoomTypes(roomTypesArray);
     } catch (error) {
       console.error('Error al obtener tipos de habitación:', error);
@@ -55,7 +52,11 @@ const RoomTypeList = ({ refresh, onUpdate }) => {
       setLoading(false);
     }
   }, [getAccessTokenSilently]);
-
+  
+  useEffect(() => {
+    fetchRoomTypes();
+  }, [refresh, fetchRoomTypes]);
+  
   const handleDelete = async (roomTypeId) => {
     if (
       !confirm('¿Estás seguro de que quieres eliminar este tipo de habitación?')

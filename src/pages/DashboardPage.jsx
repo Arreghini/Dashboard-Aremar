@@ -36,21 +36,25 @@ const DashboardPage = () => {
     window.location.href = 'http://localhost:5173/home';
   };
 
-  const buttonBase = `mb-2 px-4 py-2 rounded font-body transition-colors`;
+  // ✅ Clases comunes para todos los botones
+  const buttonBase = `mb-2 w-60 px-4 py-2 rounded font-body text-base transition-colors`;
+  const buttonColor = darkMode
+    ? 'bg-mar-espuma text-neutral-oscuro hover:text-neutral-claro'
+    : 'bg-mar-claro text-neutral-claro hover:text-neutral-oscuro';
 
   return (
     <div
       className={`flex flex-col min-h-screen transition-colors duration-300 ${darkMode ? 'bg-neutral-oscuro text-neutral-claro' : 'bg-neutral-claro text-neutral-oscuro'}`}
     >
       {/* HEADER */}
-      <div className="flex justify-between items-center p-6 shadow-md bg-mar-profundo text-white">
+      <div className="flex justify-between items-center p-6 shadow-md bg-mar-profundo text-neutral-claro">
         <h1 className="font-heading text-2xl font-bold uppercase">
           DASHBOARD DEL ADMINISTRADOR
         </h1>
         <div className="flex gap-2">
           <button
             onClick={() => setDarkMode(!darkMode)}
-            className={`${buttonBase} flex items-center gap-2 ${darkMode ? 'bg-neutral-oscuro text-white' : 'bg-playa-sol text-neutral-oscuro'}`}
+            className={`${buttonBase} ${buttonColor} flex items-center gap-2`}
           >
             {darkMode ? (
               <DarkModeIcon className="w-5 h-5" />
@@ -62,7 +66,7 @@ const DashboardPage = () => {
 
           <button
             onClick={handleReturnToHome}
-            className={`${buttonBase} bg-mar-claro text-white hover:bg-mar-profundo`}
+            className={`${buttonBase} ${buttonColor}`}
           >
             Volver a Inicio
           </button>
@@ -70,77 +74,59 @@ const DashboardPage = () => {
       </div>
 
       {/* CONTENIDO */}
-      <div
-        className={`flex flex-col flex-grow p-6 transition-colors ${darkMode ? 'bg-neutral-oscuro' : 'bg-playa-arena'} shadow-md`}
-      >
+        <div className={`px-4 py-8flex flex-col min-h-screen transition-colors duration-300 ${darkMode ? 'dark' : ''}`}>
         {user && (
-          <div className="mb-4 text-center">
-            <h2 className="font-heading text-lg font-bold mb-2 text-left uppercase text-mar-profundo dark:text-playa-sol">
-              Bienvenido, {user.name}
-            </h2>
-            <p className="text-sm font-body text-neutral-oscuro dark:text-neutral-claro">
-              Email: {user.email}
-            </p>
-            <p className="text-sm font-body text-neutral-oscuro dark:text-neutral-claro">
-              Rol: {user['https://aremar.com/roles'][0]}
-            </p>
-          </div>
-        )}
+  <div className="mb-4 text-left font-body text-base leading-relaxed">
+    <h2 className="font-heading text-lg font-bold mb-2 uppercase text-mar-profundo dark:text-playa-arena">
+      Bienvenido, {user.name}
+    </h2>
+    <p className="mb-1 text-neutral-oscuro dark:text-neutral-claro">
+      <span className="font-semibold">Email:</span> {user.email}
+    </p>
+    <p className="text-neutral-oscuro dark:text-neutral-claro">
+      <span className="font-semibold">Rol:</span>{' '}
+      {user['https://aremar.com/roles']?.[0] || 'No asignado'}
+    </p>
+  </div>
+)} 
 
         {/* USUARIOS */}
         <div className="mb-8">
-          <h2 className="font-heading text-lg font-bold mb-2 text-left uppercase text-mar-profundo dark:text-playa-sol">
-            Usuarios
+          <h2 className="font-heading text-lg font-bold mb-2 text-left uppercase text-mar-profundo dark:text-playa-arena">
+          Usuarios
           </h2>
           <div className="flex flex-col items-start">
-            <button
-              className={`${buttonBase} bg-mar-claro hover:bg-mar-profundo text-white`}
-              onClick={() => setSelectedUser({})}
-            >
-              Crear Usuario
-            </button>
-            <button
-              className={`${buttonBase} bg-mar-claro hover:bg-mar-profundo text-white`}
-              onClick={() => setShowUsers(!showUsers)}
-            >
+            <button className={`${buttonBase} ${buttonColor}`} onClick={() => setSelectedUser({})}>Crear Usuario</button>
+            <button className={`${buttonBase} ${buttonColor}`} onClick={() => setShowUsers(!showUsers)}>
               {showUsers ? 'Ocultar Lista de Usuarios' : 'Lista de Usuarios'}
             </button>
             {showUsers && (
               <div className="w-full">
-                <UserList
-                  key={refresh}
-                  onEdit={setSelectedUser}
-                  onDelete={() => setRefresh(!refresh)}
-                />
+                <UserList key={refresh} onEdit={setSelectedUser} onDelete={() => setRefresh(!refresh)} />
               </div>
             )}
           </div>
           {selectedUser && (
             <div className="mt-4">
-              <UserForm
-                user={selectedUser}
-                onSave={() => setRefresh(!refresh)}
-              />
+              <UserForm user={selectedUser} onSave={() => setRefresh(!refresh)} />
             </div>
           )}
         </div>
 
         {/* TIPO DE HABITACIÓN */}
         <div className="mb-8">
-          <h2 className="font-heading text-lg font-bold mb-2 text-left uppercase text-mar-profundo dark:text-playa-sol">
-            Tipo de Habitación
+          <h2 className="font-heading text-lg font-bold mb-2 text-left uppercase text-mar-profundo dark:text-playa-arena">
+          Tipo de Habitación
           </h2>
           <div className="flex flex-col items-start">
             <button
-              className={`${buttonBase} bg-mar-claro hover:bg-mar-profundo text-white`}
+              className={`${buttonBase} ${buttonColor}`}
               onClick={() => {
                 setSelectedRoomType({});
                 setShowRoomTypeForm(!showRoomTypeForm);
               }}
             >
-              {showRoomTypeForm
-                ? 'Ocultar Crear Tipo de Habitación'
-                : 'Crear Tipo de Habitación'}
+              {showRoomTypeForm ? 'Ocultar Crear Tipo de Habitación' : 'Crear Tipo de Habitación'}
             </button>
             {showRoomTypeForm && (
               <div className="mt-4">
@@ -154,12 +140,10 @@ const DashboardPage = () => {
               </div>
             )}
             <button
-              className={`${buttonBase} bg-mar-claro hover:bg-mar-profundo text-white`}
+              className={`${buttonBase} ${buttonColor}`}
               onClick={() => setShowRoomTypes(!showRoomTypes)}
             >
-              {showRoomTypes
-                ? 'Ocultar Tipos de Habitación'
-                : 'Mostrar Tipos de Habitación'}
+              {showRoomTypes ? 'Ocultar Tipos de Habitación' : 'Mostrar Tipos de Habitación'}
             </button>
             {showRoomTypes && (
               <div className="w-full">
@@ -178,41 +162,34 @@ const DashboardPage = () => {
 
         {/* SERVICIOS DE HABITACIÓN */}
         <div className="mb-8">
-          <h2 className="font-heading text-lg font-bold mb-2 text-left uppercase text-mar-profundo dark:text-playa-sol">
+          <h2 className="font-heading text-lg font-bold mb-2 w-60 text-left uppercase text-mar-profundo dark:text-playa-arena">
             🛠️ Servicios de Habitación
           </h2>
           <div className="flex flex-col items-start">
             <button
               onClick={() => setShowRoomDetails(!showRoomDetails)}
-              className="mb-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded transition-colors"
+              className={`${buttonBase} ${buttonColor}`}
             >
               {showRoomDetails
                 ? 'Ocultar Administrador de Servicios'
                 : 'Administrar Combinaciones de Servicios'}
             </button>
-            <p className="text-sm font-body text-neutral-oscuro dark:text-neutral-claro mb-2">
-              Gestiona las diferentes combinaciones de servicios (WiFi, TV,
-              etc.) que pueden tener las habitaciones
-            </p>
           </div>
           {showRoomDetails && (
             <div className="w-full mt-4">
-              <RoomDetailForm
-                key={refresh}
-                onRoomDetailCreated={() => setRefresh(!refresh)}
-              />
+              <RoomDetailForm key={refresh} onRoomDetailCreated={() => setRefresh(!refresh)} />
             </div>
           )}
         </div>
 
         {/* HABITACIONES */}
         <div className="mb-8">
-          <h2 className="font-heading text-lg font-bold mb-2 text-left uppercase text-mar-profundo dark:text-playa-sol">
-            Habitaciones
+          <h2 className="font-heading text-lg font-bold mb-2 text-left uppercase text-mar-profundo dark:text-playa-arena">
+          Habitaciones
           </h2>
           <div className="flex flex-col items-start">
             <button
-              className={`${buttonBase} bg-mar-claro hover:bg-mar-profundo text-white`}
+              className={`${buttonBase} ${buttonColor}`}
               onClick={() => {
                 setSelectedRoom({});
                 setIsRoomModalOpen(true);
@@ -221,12 +198,10 @@ const DashboardPage = () => {
               Crear Habitación
             </button>
             <button
-              className={`${buttonBase} bg-mar-claro hover:bg-mar-profundo text-white`}
+              className={`${buttonBase} ${buttonColor}`}
               onClick={() => setShowRooms(!showRooms)}
             >
-              {showRooms
-                ? 'Ocultar Lista de Habitaciones'
-                : 'Lista de Habitaciones'}
+              {showRooms ? 'Ocultar Lista de Habitaciones' : 'Lista de Habitaciones'}
             </button>
             {showRooms && (
               <div className="w-full">
@@ -241,10 +216,7 @@ const DashboardPage = () => {
               </div>
             )}
           </div>
-          <Modal
-            isOpen={isRoomModalOpen}
-            onClose={() => setIsRoomModalOpen(false)}
-          >
+          <Modal isOpen={isRoomModalOpen} onClose={() => setIsRoomModalOpen(false)}>
             <RoomForm
               room={selectedRoom}
               onRoomCreated={() => {
@@ -257,12 +229,12 @@ const DashboardPage = () => {
 
         {/* RESERVAS */}
         <div className="mb-8">
-          <h2 className="font-heading text-lg font-bold mb-2 text-left uppercase text-mar-profundo dark:text-playa-sol">
-            Reservas
+          <h2 className="font-heading text-lg font-bold mb-2 text-left uppercase text-mar-profundo dark:text-playa-arena">
+          Reservas
           </h2>
           <div className="flex flex-col items-start">
             <button
-              className={`${buttonBase} bg-mar-claro hover:bg-mar-profundo text-white`}
+              className={`${buttonBase} ${buttonColor}`}
               onClick={() => {
                 setSelectedReservation({});
                 setIsReservationModalOpen(true);
@@ -292,12 +264,10 @@ const DashboardPage = () => {
               />
             </Modal>
             <button
-              className={`${buttonBase} bg-mar-claro hover:bg-mar-profundo text-white`}
+              className={`${buttonBase} ${buttonColor}`}
               onClick={() => setShowReservations(!showReservations)}
             >
-              {showReservations
-                ? 'Ocultar Lista de Reservas'
-                : 'Lista de Reservas'}
+              {showReservations ? 'Ocultar Lista de Reservas' : 'Lista de Reservas'}
             </button>
             {showReservations && (
               <div className="w-full">
@@ -312,7 +282,7 @@ const DashboardPage = () => {
               </div>
             )}
             <button
-              className={`${buttonBase} bg-mar-claro hover:bg-mar-profundo text-white`}
+              className={`${buttonBase} ${buttonColor}`}
               onClick={() => setShowReports(!showReports)}
             >
               {showReports ? 'Ocultar Reportes' : 'Reportes'}

@@ -11,9 +11,8 @@ const ReportsPage = () => {
       const token = await getAccessTokenSilently();
 
       // Construir la URL con los parámetros de fecha
-      let url = 'http://localhost:3000/api/admin/export/excel/analytics';
+     let url = 'http://localhost:3000/api/admin/export/excel/analytics';
 
-      // Agregar parámetros de fecha si están definidos
       if (startDate && endDate) {
         url += `?startDate=${startDate}&endDate=${endDate}`;
       }
