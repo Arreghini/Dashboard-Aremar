@@ -224,7 +224,7 @@ const ReservationList = () => {
   };
 
   return (
-    <div className="pt-36 px-6 pb-10 bg-neutral-oscuro min-h-screen font-body text-neutral-800 dark:text-neutral-100">
+    <div className="pt-4 px-6 pb-10 bg-neutral-oscuro min-h-screen font-body text-neutral-800 dark:text-neutral-100">
       <h2 className="text-3xl font-heading text-playa-arena dark:text-mar-espuma mb-8">
         Lista de Reservas
       </h2>
@@ -264,12 +264,16 @@ const ReservationList = () => {
                   <p>
                     <strong>Estado:</strong> {r.status}
                   </p>
+                    <p>
+                    <strong>Precio:</strong> ${r.totalPrice}
+                  </p>
                   <p>
                     <strong>Pagó:</strong> ${r.amountPaid}
                   </p>
                   <p>
-                    <strong>Precio:</strong> ${r.totalPrice}
+                    <strong className='text-red-600'>Saldo pendiente:</strong> ${r.totalPrice - r.amountPaid} 
                   </p>
+                
                 </div>
                 <div>
                   <h3 className="font-semibold text-mar-profundo">
