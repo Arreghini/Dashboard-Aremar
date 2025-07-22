@@ -56,8 +56,12 @@ const deleteReservation = async (id, token) => {
   }
 };
 // Confirmación automática al recibir pago del usuario
-const confirmReservationAfterPayment = async (id) => {
+const confirmReservationAfterPayment = async (id, token) => {
   const response = await axios.patch(`${BASE_URL}/${id}/confirm`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
     status: 'confirmed',
   });
   if (response.status !== 200) {
@@ -68,8 +72,7 @@ const confirmReservationAfterPayment = async (id) => {
 
 // Métodos de administrador para confirmación y cancelación
 const confirmReservationByAdmin = async (id, token, reservationData) => {
-  const response = await axios.patch(
-    `${BASE_URL}/${id}/confirm`,
+  const response = await axios.patch(`${BASE_URL}/${id}/confirm`,
     reservationData, // <-- envía todo el objeto
     getHeaders(token)
   );

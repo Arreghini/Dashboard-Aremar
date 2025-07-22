@@ -7,17 +7,27 @@ import EditReservationModal from './EditReservationModal';
 const ReservationList = () => {
   const { getAccessTokenSilently } = useAuth0();
   const [reservations, setReservations] = useState([]);
+  const [filteredReservations, setFilteredReservations] = useState([]); // estado para filtros
   const [showModal, setShowModal] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState(null);
+  const [sinceDate, setSinceDate] = useState('');
+  const [untilDate, setUntilDate] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showDateRange, setShowDateRange] = useState(false); // controla mostrar inputs fecha
 
   const fetchReservations = useCallback(async () => {
     try {
       setLoading(true);
       const token = await getAccessTokenSilently();
       const reservationsData = await reservationService.getReservations(token);
-      setReservations(reservationsData);
+      const reservationsSorted = reservationsData.sort((a, b) => {
+        const dateA = new Date(a.checkIn);
+        const dateB = new Date(b.checkIn);
+        return dateA - dateB;
+      });
+      setReservations(reservationsSorted);
+      setFilteredReservations(reservationsSorted); // Mostrar todas al cargar
     } catch (error) {
       console.error('Error al cargar las reservas:', error);
       setError(`Error al cargar las reservas: ${error.message}`);
@@ -30,6 +40,71 @@ const ReservationList = () => {
     fetchReservations();
   }, [fetchReservations]);
 
+  // --- Funciones de filtro ---
+  const filterByRangeReservations = () => {
+    const since = new Date(sinceDate);
+    const until = new Date(untilDate);
+
+    if (isNaN(since) || isNaN(until)) {
+      alert('Por favor, ingrese fechas válidas.');
+      return;
+    }
+
+    if (since > until) {
+      alert('La fecha de inicio no puede ser posterior a la fecha de fin.');
+      return;
+    }
+
+    const filtered = reservations.filter((res) => {
+      const checkInDate = new Date(res.checkIn);
+      return checkInDate >= since && checkInDate <= until;
+    });
+
+    setFilteredReservations(filtered);
+    if (filtered.length === 0) {
+      alert('No se encontraron reservas en el rango de fechas seleccionado.');
+    }
+  };
+
+  const filterByTotalPayment = () => {
+    const filtered = reservations.filter(
+      (res) => res.totalPrice - res.amountPaid === 0
+    );
+    setFilteredReservations(filtered);
+    if (filtered.length === 0) {
+      alert('No se encontraron reservas con saldo saldado.');
+    }
+  };
+
+  const filterByNoTotalPayment = () => {
+    const filtered = reservations.filter(
+      (res) => res.totalPrice - res.amountPaid > 0
+    );
+    setFilteredReservations(filtered);
+    if (filtered.length === 0) {
+      alert('No se encontraron reservas con saldo pendiente.');
+    }
+  };
+
+  const filterByName = (name) => {
+    const filtered = reservations.filter((res) =>
+      res.user?.name.toLowerCase().includes(name.toLowerCase())
+    );
+    setFilteredReservations(filtered);
+    if (filtered.length === 0) {
+      alert(`No se encontraron reservas para el usuario "${name}".`);
+    }
+  };
+
+  const filterByRoomId = (roomId) => {
+    const filtered = reservations.filter((res) => res.roomId === roomId);
+    setFilteredReservations(filtered);
+    if (filtered.length === 0) {
+      alert(`No se encontraron reservas para la habitación ID "${roomId}".`);
+    }
+  };
+
+  // --- Funciones existentes (editar, eliminar, confirmar, cancelar, etc.) ---
   const handleDelete = async (id) => {
     if (!window.confirm('¿Estás seguro de que deseas eliminar esta reserva?'))
       return;
@@ -38,6 +113,7 @@ const ReservationList = () => {
       const result = await reservationService.deleteReservation(id, token);
       if (result.success) {
         setReservations((prev) => prev.filter((res) => res.id !== id));
+        setFilteredReservations((prev) => prev.filter((res) => res.id !== id));
         alert('Reserva eliminada exitosamente');
       }
     } catch (error) {
@@ -99,7 +175,6 @@ const ReservationList = () => {
 
       if (diff > 0) {
         additionalAmount = dailyRate * diff;
-        console.log('tipo de habitación:', formData.roomId);
         const roomType = await roomService.getRoomTypeById(
           formData.roomId,
           token
@@ -114,7 +189,6 @@ const ReservationList = () => {
           formData.checkOut,
           formData.numberOfGuests
         );
-        console.log('Habitaciones disponibles recibidas:', available);
 
         const availableRooms = Array.isArray(available.rooms)
           ? available.rooms
@@ -124,7 +198,9 @@ const ReservationList = () => {
             'No hay habitaciones disponibles para las nuevas fechas.'
           );
         alert(
-          `El usuario debe pagar un monto adicional de $${additionalAmount.toFixed(2)}.`
+          `El usuario debe pagar un monto adicional de $${additionalAmount.toFixed(
+            2
+          )}.`
         );
       } else {
         refundAmount = dailyRate * Math.abs(diff);
@@ -145,7 +221,7 @@ const ReservationList = () => {
         res.id === formData.reservationId ? { ...res, ...response.data } : res
       );
       setReservations(updated);
-      await fetchReservations();
+      setFilteredReservations(updated); // actualizar filtro también
       setShowModal(false);
       setSelectedReservation(null);
     } catch (error) {
@@ -179,6 +255,7 @@ const ReservationList = () => {
         res.id === reservationId ? { ...res, ...response.data } : res
       );
       setReservations(updated);
+      setFilteredReservations(updated);
     } catch (error) {
       console.error('Error al confirmar:', error);
       setError('Error al confirmar la reserva.');
@@ -189,11 +266,11 @@ const ReservationList = () => {
     try {
       const token = await getAccessTokenSilently();
       await reservationService.cancelReservationByAdmin(id, token);
-      setReservations(
-        reservations.map((res) =>
-          res.id === id ? { ...res, status: 'cancelled' } : res
-        )
+      const updated = reservations.map((res) =>
+        res.id === id ? { ...res, status: 'cancelled' } : res
       );
+      setReservations(updated);
+      setFilteredReservations(updated);
     } catch (error) {
       console.error('Error al cancelar:', error);
     }
@@ -207,37 +284,137 @@ const ReservationList = () => {
         token
       );
 
-      setReservations(
-        reservations.map((res) =>
-          res.id === id
-            ? {
-                ...res,
-                status: 'cancelled',
-                refundAmount: response.refundAmount,
-              }
-            : res
-        )
+      const updated = reservations.map((res) =>
+        res.id === id
+          ? {
+              ...res,
+              status: 'cancelled',
+              refundAmount: response.refundAmount,
+            }
+          : res
       );
+      setReservations(updated);
+      setFilteredReservations(updated);
     } catch (error) {
       console.error('Error al cancelar con reembolso:', error);
     }
   };
 
   return (
-    <div className="pt-4 px-6 pb-10 bg-neutral-oscuro min-h-screen font-body text-neutral-800 dark:text-neutral-100">
-      <h2 className="text-3xl font-heading text-playa-arena dark:text-mar-espuma mb-8">
+    <div className="pt-4 px-6 pb-4 bg-neutral-oscuro min-h-screen font-body text-neutral-800
+     dark:text-neutral-100">
+      <h2 className="text-3xl font-heading text-playa-arena dark:text-mar-espuma mb-2">
         Lista de Reservas
       </h2>
+<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6 items-start">
+
+  {/* Desde */}
+  <div className="flex flex-col text-sm text-neutral-700 dark:text-neutral-300 w-full">
+    <label htmlFor="since" className="mb-1">Desde:</label>
+    <input
+      id="since"
+      type="date"
+      value={sinceDate}
+      onChange={(e) => setSinceDate(e.target.value)}
+      className="h-10 w-3/4 border border-gray-300 dark:border-neutral-600 bg-white
+       dark:bg-neutral-800 text-black dark:text-white px-2 rounded"
+    />
+  </div>
+
+  {/* Hasta */}
+  <div className="flex flex-col text-sm text-neutral-700 dark:text-neutral-300 w-full">
+    <label htmlFor="until" className="mb-1">Hasta:</label>
+    <input
+      id="until"
+      type="date"
+      value={untilDate}
+      onChange={(e) => setUntilDate(e.target.value)}
+      className="h-10 w-3/4 border border-neutral-claro dark:border-neutral-oscuro bg-white
+       dark:bg-neutral-800 text-black dark:text-white px-2 rounded"
+    />
+  </div>
+
+  {/* Aplicar rango */}
+  <div className="flex flex-col w-full">
+    <label className="invisible mb-1">Aplicar</label>
+    <button
+      onClick={filterByRangeReservations}
+      className="h-10 w-3/4 bg-mar-claro text-neutral-claro px-4 rounded font-semibold
+       hover:text-neutral-oscuro transition text-left"
+    >
+      Aplicar
+    </button>
+  </div>
+
+  {/* Quitar filtros */}
+  <div className="flex flex-col w-full">
+    <label className="invisible mb-1">Quitar</label>
+    <button
+      onClick={() => setFilteredReservations(reservations)}
+       className="h-10 w-3/4 bg-mar-claro text-neutral-claro px-4 rounded font-semibold
+       hover:text-neutral-oscuro transition text-left"
+    >
+      Quitar
+    </button>
+  </div>
+
+  {/* Filtrar Saldados */}
+  <div className="flex flex-col w-full">
+    <label className="invisible mb-1">Saldados</label>
+    <button
+       className="h-10 w-3/4 bg-mar-claro text-neutral-claro px-4 rounded font-semibold
+       hover:text-neutral-oscuro transition text-left"
+    >
+      Saldados
+    </button>
+  </div>
+
+  {/* Pendientes de Pago */}
+  <div className="flex flex-col w-full">
+    <label className="invisible mb-1">Pendientes</label>
+    <button
+      onClick={filterByNoTotalPayment}
+      className="h-10 w-3/4 bg-mar-claro text-neutral-claro px-4 rounded font-semibold
+       hover:text-neutral-oscuro transition text-left"
+    >
+      Pendientes
+    </button>
+  </div>
+
+  {/* Filtrar por Nombre */}
+  <div className="flex flex-col w-full">
+    <label className="invisible mb-1">Nombre</label>
+    <button
+      onClick={() => filterByName(prompt('Ingrese el nombre del cliente:'))}
+      className="h-10 w-3/4 bg-mar-claro text-neutral-claro px-4 rounded font-semibold
+       hover:text-neutral-oscuro transition text-left"
+    >
+      Por Nombre
+    </button>
+  </div>
+
+  {/* Filtrar por Habitación */}
+  <div className="flex flex-col w-full">
+    <label className="invisible mb-1">Habitación</label>
+    <button
+      onClick={() => filterByRoomId(prompt('Ingrese el ID de la habitación:'))}
+       className="h-10 w-3/4 bg-mar-claro text-neutral-claro px-4 rounded font-semibold
+       hover:text-neutral-oscuro transition text-left"
+    >
+      Por Habitación
+    </button>
+  </div>
+</div>
 
       {loading ? (
         <p className="text-mar-claro">Cargando reservas...</p>
       ) : error ? (
         <p className="text-red-600">{error}</p>
-      ) : reservations.length === 0 ? (
+      ) : filteredReservations.length === 0 ? (
         <p className="text-neutral-300">No hay reservas disponibles</p>
       ) : (
         <div className="grid gap-6">
-          {reservations.map((r) => (
+          {filteredReservations.map((r) => (
             <div
               key={r.id}
               className="bg-neutral-claro rounded-xl shadow-lg border border-mar-claro p-6"
@@ -264,16 +441,21 @@ const ReservationList = () => {
                   <p>
                     <strong>Estado:</strong> {r.status}
                   </p>
-                    <p>
+                  <p>
                     <strong>Precio:</strong> ${r.totalPrice}
                   </p>
                   <p>
                     <strong>Pagó:</strong> ${r.amountPaid}
                   </p>
                   <p>
-                    <strong className='text-red-600'>Saldo pendiente:</strong> ${r.totalPrice - r.amountPaid} 
+                    {r.totalPrice - r.amountPaid === 0 ? (
+                      <span className="text-green-600">Saldado</span>
+                    ) : (
+                      <span className="text-red-600">
+                        Saldo: ${r.totalPrice - r.amountPaid}
+                      </span>
+                    )}
                   </p>
-                
                 </div>
                 <div>
                   <h3 className="font-semibold text-mar-profundo">
@@ -317,9 +499,7 @@ const ReservationList = () => {
 
                 <button
                   onClick={() => handleConfirm(r.id)}
-                  disabled={['confirmed', 'cancelled'].includes(
-                    r.status.trim()
-                  )}
+                  disabled={['confirmed', 'cancelled'].includes(r.status.trim())}
                   className={`text-white px-4 py-2 rounded font-semibold transition ${
                     ['confirmed', 'cancelled'].includes(r.status.trim())
                       ? 'bg-gray-400 cursor-not-allowed'
