@@ -301,12 +301,13 @@ const ReservationList = () => {
   };
 
   return (
-    <div className="pt-4 px-6 pb-4 bg-neutral-oscuro min-h-screen font-body text-neutral-800
-     dark:text-neutral-100">
-      <h2 className="text-3xl font-heading text-playa-arena dark:text-mar-espuma mb-2">
+    <div className="pt-4 px-6 pb-4 bg-neutral-claro dark:bg-neutral-oscuro min-h-screen font-body
+     text-neutral-800 dark:text-neutral-100">
+      <h2 className="text-3xl font-heading text-neutral-oscuro dark:text-mar-espuma mb-2">
         Lista de Reservas
       </h2>
-<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6 items-start">
+<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6 items-start 
+border border-mar-claro rounded-lg p-8 ">
 
   {/* Desde */}
   <div className="flex flex-col text-sm text-neutral-700 dark:text-neutral-300 w-full">
@@ -417,7 +418,7 @@ const ReservationList = () => {
           {filteredReservations.map((r) => (
             <div
               key={r.id}
-              className="bg-neutral-claro rounded-xl shadow-lg border border-mar-claro p-6"
+              className="bg-neutral-claro dark:bg-neutral-oscuro rounded-xl shadow-lg border border-mar-claro p-6"
             >
               <div className="grid md:grid-cols-2 gap-4 mb-4">
                 <div>

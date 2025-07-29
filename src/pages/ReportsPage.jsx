@@ -1,18 +1,29 @@
 import { useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 
-const ReportsPage = () => {
+const ReportsPage = ({ darkMode }) => {
   const { getAccessTokenSilently } = useAuth0();
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+
+  const containerStyle = darkMode
+    ? 'bg-neutral-oscuro text-neutral-claro'
+    : 'bg-neutral-claro text-neutral-oscuro';
+
+  const inputStyle = darkMode
+    ? 'bg-neutral-claro text-neutral-oscuro border border-neutral-claro'
+    : 'bg-white text-black border border-gray-300';
+
+  const buttonBase = `mb-2 w-60 px-4 py-2 rounded font-body text-base transition-colors`;
+  const buttonColor = darkMode
+    ? 'bg-mar-espuma text-neutral-oscuro hover:text-neutral-claro'
+    : 'bg-mar-claro text-neutral-claro hover:text-neutral-oscuro';
 
   const handleDownload = async () => {
     try {
       const token = await getAccessTokenSilently();
 
-      // Construir la URL con los parámetros de fecha
-     let url = 'http://localhost:3000/api/admin/export/excel/analytics';
-
+      let url = 'http://localhost:3000/api/admin/export/excel/analytics';
       if (startDate && endDate) {
         url += `?startDate=${startDate}&endDate=${endDate}`;
       }
@@ -40,10 +51,9 @@ const ReportsPage = () => {
   };
 
   return (
-    <div className="p-4">
+    <div className={`p-4 min-h-screen transition-colors duration-300 ${containerStyle}`}>
       <h1 className="text-xl font-bold mb-4">Reportes y Análisis</h1>
 
-      {/* Agregar campos para seleccionar fechas */}
       <div className="mb-4">
         <div className="flex gap-4 mb-2">
           <div>
@@ -54,7 +64,7 @@ const ReportsPage = () => {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="border px-2 py-1 rounded"
+              className={`px-2 py-1 rounded ${inputStyle}`}
             />
           </div>
           <div>
@@ -63,7 +73,7 @@ const ReportsPage = () => {
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="border px-2 py-1 rounded"
+              className={`px-2 py-1 rounded ${inputStyle}`}
             />
           </div>
         </div>
@@ -71,7 +81,7 @@ const ReportsPage = () => {
 
       <button
         onClick={handleDownload}
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+        className={`${buttonBase} ${buttonColor}`}
       >
         Descargar Reporte Excel
       </button>
