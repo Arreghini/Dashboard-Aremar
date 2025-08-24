@@ -164,6 +164,37 @@ const RoomList = ({ onUpdate }) => {
     setSuccessMessage('');
   };
 
+  const handleUpdateSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+
+    try {
+      const token = await getAccessTokenSilently();
+      const formData = new FormData();
+      formData.append('description', editFormData.description);
+      formData.append('capacity', editFormData.capacity);
+      formData.append('roomTypeId', editFormData.roomTypeId);
+      formData.append('detailRoomId', editFormData.detailRoomId);
+      formData.append('price', editFormData.price);
+      formData.append('status', editFormData.status);
+      if (existingPhotos.length > 0) {
+        formData.append('existingPhotos', JSON.stringify(existingPhotos));
+      }
+      if (newPhotos.length > 0) {
+        newPhotos.forEach(file => formData.append('newPhotos', file));
+      }
+
+      await roomService.updateRoom(editingRoom.id, formData, token);
+      setSuccessMessage('Habitación actualizada con éxito');
+      closeEditModal();
+      await fetchRooms();
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      setError('Error al actualizar la habitación');
+    }
+  };
+
   if (loading) return <p>Cargando habitaciones...</p>;
 
   return (
@@ -249,7 +280,7 @@ const RoomList = ({ onUpdate }) => {
         <div className="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded w-96">
             <h3>Editar habitación {editingRoom.id}</h3>
-            <form>
+            <form onSubmit={handleUpdateSubmit}>
               <label htmlFor="description">Descripción</label>
               <input
                 id="description"
@@ -267,6 +298,58 @@ const RoomList = ({ onUpdate }) => {
                 onChange={e => setEditFormData({ ...editFormData, price: e.target.value })}
                 className="w-full border p-1 mb-2"
               />
+
+              {/* Amenities (detalles de habitación) */}
+              <label htmlFor="detailRoomId">Detalles / Amenities</label>
+              <select
+                id="detailRoomId"
+                value={editFormData.detailRoomId}
+                onChange={e => setEditFormData({ ...editFormData, detailRoomId: e.target.value })}
+                className="w-full border p-1 mb-2"
+                required
+              >
+                <option value="">Seleccione un detalle</option>
+                {roomDetailsList.map(detail => (
+                  <option key={detail.id} value={detail.id}>
+                    {detail.description || detail.name || `Detalle ${detail.id}`}
+                  </option>
+                ))}
+              </select>
+
+              {/* Fotos existentes */}
+              <div className="mb-2">
+                <label>Fotos actuales:</label>
+                <div className="flex gap-2 flex-wrap">
+                  {existingPhotos.map((photo, idx) => (
+                    <img
+                      key={idx}
+                      src={photo}
+                      alt={`Foto ${idx + 1}`}
+                      className="w-16 h-16 object-cover rounded border"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Agregar nuevas fotos */}
+              <label htmlFor="newPhotos">Agregar nuevas fotos</label>
+              <input
+                type="file"
+                id="newPhotos"
+                multiple
+                accept="image/*"
+                onChange={e => setNewPhotos(Array.from(e.target.files))}
+                className="w-full border p-1 mb-2"
+              />
+              {newPhotos.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {newPhotos.map((file, idx) => (
+                    <span key={idx} className="text-xs bg-gray-200 px-2 py-1 rounded">
+                      {file.name}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               <button
                 type="button"
