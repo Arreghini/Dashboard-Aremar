@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { FaSun as LightModeIcon, FaMoon as DarkModeIcon } from 'react-icons/fa';
+import { FaComments } from 'react-icons/fa';
 import UserForm from '../components/UserForm';
 import UserList from '../components/UserList';
 import RoomForm from '../components/RoomForm';
@@ -12,6 +13,7 @@ import RoomDetailForm from '../components/RoomDetailForm';
 import Modal from '../components/Modal';
 import ReportsPage from './ReportsPage';
 import RoomTypeList from '../components/RoomTypeList';
+import ChatIA from '../components/ChatIA';
 
 const DashboardPage = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -29,6 +31,8 @@ const DashboardPage = () => {
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
   const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
   const [showReports, setShowReports] = useState(false);
+  const [chatResponse, setChatResponse] = useState("");
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
 
   const { user } = useAuth0();
 
@@ -292,6 +296,55 @@ const DashboardPage = () => {
                 <ReportsPage />
               </div>
             )}
+            {/* BOTÓN CHAT */}
+<>
+  {/* Ícono de chat flotante */}
+<button
+  onClick={() => setIsChatModalOpen(!isChatModalOpen)}
+  className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full
+    shadow-lg flex items-center justify-center transition-colors
+    ${darkMode 
+      ? 'bg-mar-espuma text-neutral-oscuro hover:text-neutral-claro' 
+      : 'bg-mar-claro text-neutral-claro hover:text-neutral-oscuro'
+    }`}
+>
+  <FaComments className="w-8 h-8" />
+</button>
+
+  {/* Modal del chat */}
+  <Modal
+    isOpen={isChatModalOpen}
+    onClose={() => setIsChatModalOpen(false)}
+    width="w-11/12 md:w-2/3 lg:w-1/2 xl:w-1/3"
+    className={`fixed inset-0 flex items-center justify-center z-50
+     ${darkMode 
+      ? 'bg-neutral-oscuro text-neutral-claro' 
+      : 'bg-mar-claro text-neutral-oscuro'
+    }`}
+  >
+    <ChatIA
+      onNewChunk={(chunk) => setChatResponse((prev) => prev + chunk)}
+      onClear={() => setChatResponse("")}
+    />
+  </Modal>
+</>
+
+{/* RESPUESTA DEL CHAT */}
+{chatResponse && (
+  <div
+    className={`w-full mt-4 p-4 rounded
+      ${darkMode
+        ? "bg-neutral-oscuro text-neutral-claro" 
+        : "bg-gray-100 text-neutral-oscuro"
+      }`}
+  >
+    <h3 className="font-heading text-lg font-bold mb-2">
+      Respuesta del Chat:
+    </h3>
+    <pre className="whitespace-pre-wrap">{chatResponse}</pre>
+  </div>
+)}
+        
           </div>
         </div>
       </div>

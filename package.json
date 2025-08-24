@@ -9,7 +9,10 @@
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",
-    "format": "prettier --write \"src/**/*.{js,jsx,json,css,scss,md}\""
+    "format": "prettier --write \"src/**/*.{js,jsx,json,css,scss,md}\"",
+    "test": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.2.4",
@@ -21,8 +24,14 @@
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/typography": "^0.5.16",
     "axios": "^1.7.3",
+    "diff": "^8.0.2",
+    "express-jwt": "^8.5.1",
+    "express-validator": "^7.2.1",
     "file-saver": "^2.0.5",
+    "jwks-rsa": "^3.2.0",
     "jwt-decode": "^4.0.0",
+    "morgan": "^1.10.1",
+    "node-fetch": "^3.3.2",
     "react": "^18.3.1",
     "react-datepicker": "^8.4.0",
     "react-dom": "^18.3.1",
@@ -31,19 +40,17 @@
     "uuid": "^11.1.0",
     "xlsx": "^0.18.5"
   },
-  "devDependencies": {
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.1",
-    "autoprefixer": "^10.4.19",
-    "eslint": "^8.57.0",
-    "eslint-plugin-react": "^7.34.3",
-    "eslint-plugin-react-hooks": "^4.6.2",
-    "eslint-plugin-react-refresh": "^0.4.7",
-    "nodemon": "^3.1.9",
-    "postcss": "^8.4.39",
-    "prettier": "^3.6.2",
-    "tailwindcss": "^3.4.6",
-    "vite": "^5.4.11"
-  }
+ "devDependencies": {
+  "@testing-library/react": "^14.0.0",
+  "@testing-library/jest-dom": "^6.0.0",
+  "@vitejs/plugin-react": "^4.3.1",
+  "vitest": "^0.36.0",
+  "jsdom": "^26.1.0",
+  "nodemon": "^3.1.9",
+  "eslint": "^8.57.0",
+  "eslint-plugin-react": "^7.34.3",
+  "eslint-plugin-react-hooks": "^4.6.2",
+  "prettier": "^3.6.2",
+  "vite": "^5.4.11"
 }
+  }

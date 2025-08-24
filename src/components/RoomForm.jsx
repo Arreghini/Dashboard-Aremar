@@ -16,11 +16,12 @@ const RoomForm = ({ onRoomCreated }) => {
   const { getAccessTokenSilently } = useAuth0();
   const [roomData, setRoomData] = useState({
     id: '',
+    capacity: '',
     description: '',
     roomTypeId: '',
     price: '',
     status: 'available',
-    detailRoomId: '', // Aquí se guarda la combinación elegida
+    detailRoomId: '', 
   });
 
   const [roomTypes, setRoomTypes] = useState([]);
@@ -43,7 +44,7 @@ const RoomForm = ({ onRoomCreated }) => {
   const fetchRoomDetails = useCallback(async () => {
     try {
       const token = await getAccessTokenSilently();
-      const details = await roomClasifyService.getRoomDetail(token);
+      const details = await roomClasifyService.getAllRoomDetails(token);
       setRoomDetailsList(details || []);
     } catch (error) {
       console.error('Error al obtener combinaciones de detalles:', error);
@@ -105,6 +106,7 @@ const RoomForm = ({ onRoomCreated }) => {
       // Crear el FormData para enviar al backend
       const formData = new FormData();
       formData.append('id', roomData.id.trim());
+      formData.append('capacity', roomData.capacity);
       formData.append('description', roomData.description);
       formData.append('roomTypeId', roomData.roomTypeId);
       formData.append('price', roomData.price || '0');
@@ -145,6 +147,7 @@ const RoomForm = ({ onRoomCreated }) => {
   const resetForm = () => {
     setRoomData({
       id: '',
+      capacity: '',
       description: '',
       roomTypeId: '',
       price: '',
@@ -200,6 +203,20 @@ const RoomForm = ({ onRoomCreated }) => {
               className="w-full border border-gray-300 dark:border-gray-600 p-2 rounded-lg focus:ring-2 focus:ring-mar-profundo dark:bg-neutral-oscuro dark:text-white text-sm"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-mar-profundo dark:text-mar-espuma mb-1">
+              Capacidad (número de personas)
+            </label>
+            <input
+              type="number"
+              name="capacity"
+              min="1"
+              value={roomData.capacity}
+              onChange={handleRoomDataChange}
+              placeholder="Ej: 2"
+              className="w-full border border-gray-300 dark:border-gray-600 p-2 rounded-lg focus:ring-2 focus:ring-mar-profundo dark:bg-neutral-oscuro dark:text-white text-sm"
+            />
+          </div>  
 
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-mar-profundo dark:text-mar-espuma mb-1">

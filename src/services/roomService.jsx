@@ -12,7 +12,8 @@ const getHeaders = (token) => ({
 const roomService = {
   getRoom: async (id, token) => {
     try {
-      const response = await axios.get(`${BASE_URL}/${id}`, getHeaders(token));
+      const response = await axios.get(`${BASE_URL}/${id}`, 
+        getHeaders(token));
       return response.data;
     } catch (error) {
       if (error.response?.status !== 404) {
@@ -89,8 +90,11 @@ const roomService = {
 
   deleteRoom: async (id, token) => {
     try {
-      await axios.delete(`${BASE_URL}/${id}`, getHeaders(token));
-      console.log('Habitación eliminada con éxito');
+      const response = await axios.delete(
+      `${BASE_URL}/${id}`, 
+      getHeaders(token)
+    );
+      return response.data;
     } catch (error) {
       console.error('Error al eliminar la habitación:', error);
       throw error;
@@ -180,6 +184,7 @@ const roomService = {
   // 🔧 USAR FETCH PARA VERIFICACIÓN SILENCIOSA (no aparece en consola)
   checkRoomIdAvailability: async (id, token) => {
     try {
+      console.log('ID a verificar:', id);
       const response = await fetch(`${BASE_URL}/${id}`, {
         method: 'GET',
         headers: {
@@ -216,7 +221,9 @@ const roomService = {
         console.log(`${pair[0]}: ${pair[1]}`);
       }
 
-      const response = await axios.post(`${BASE_URL}`, formData, {
+      const response = await axios.post(
+        `${BASE_URL}`, 
+        formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
