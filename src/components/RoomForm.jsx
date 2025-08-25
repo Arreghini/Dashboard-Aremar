@@ -12,7 +12,7 @@ const detailNames = {
   pava_electrica: 'Pava eléctrica',
 };
 
-const RoomForm = ({ onRoomCreated }) => {
+const RoomForm = ({ onSubmit }) => {
   const { getAccessTokenSilently } = useAuth0();
   const [roomData, setRoomData] = useState({
     id: '',
@@ -21,11 +21,11 @@ const RoomForm = ({ onRoomCreated }) => {
     roomTypeId: '',
     price: '',
     status: 'available',
-    detailRoomId: '', 
+    detailRoomId: '',
   });
 
   const [roomTypes, setRoomTypes] = useState([]);
-  const [roomDetailsList, setRoomDetailsList] = useState([]); // Combinaciones existentes
+  const [roomDetailsList, setRoomDetailsList] = useState([]);
   const [newPhotos, setNewPhotos] = useState([]);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -84,7 +84,6 @@ const RoomForm = ({ onRoomCreated }) => {
         return;
       }
 
-      // Verificar disponibilidad del ID
       const result = await roomService.checkRoomIdAvailability(
         roomData.id.trim(),
         token
@@ -103,7 +102,6 @@ const RoomForm = ({ onRoomCreated }) => {
         return;
       }
 
-      // Crear el FormData para enviar al backend
       const formData = new FormData();
       formData.append('id', roomData.id.trim());
       formData.append('capacity', roomData.capacity);
@@ -113,23 +111,15 @@ const RoomForm = ({ onRoomCreated }) => {
       formData.append('status', roomData.status);
       formData.append('detailRoomId', roomData.detailRoomId);
 
-      // Agregar fotos
-      if (newPhotos && newPhotos.length > 0) {
-        newPhotos.forEach((file) => {
-          formData.append('photoRoom', file);
-        });
+      if (newPhotos.length > 0) {
+        newPhotos.forEach((file) => formData.append('photoRoom', file));
       }
 
       await roomService.createRoomWithFormData(formData, token);
 
-      setSuccessMessage(
-        '✅ Habitación creada con éxito con servicios vinculados'
-      );
+      setSuccessMessage('✅ Habitación creada con éxito con servicios vinculados');
       resetForm();
-
-      if (onRoomCreated) {
-        onRoomCreated();
-      }
+      if (onSubmit) onSubmit();
     } catch (error) {
       console.error('Error al crear habitación:', error);
       if (error.response?.data?.message?.includes('already exists')) {
@@ -159,15 +149,11 @@ const RoomForm = ({ onRoomCreated }) => {
     setSuccessMessage('');
   };
 
-  // Utilidad para mostrar los servicios de una combinación
-  const renderDetailSummary = (detail) => {
-    return (
-      Object.entries(detailNames)
-        .filter(([key]) => detail[key])
-        .map(([, label]) => label)
-        .join(', ') || 'Sin servicios'
-    );
-  };
+  const renderDetailSummary = (detail) =>
+    Object.entries(detailNames)
+      .filter(([key]) => detail[key])
+      .map(([, label]) => label)
+      .join(', ') || 'Sin servicios';
 
   return (
     <div className="p-4 border border-mar-profundo rounded-2xl bg-neutral-claro dark:bg-neutral-oscuro w-full max-w-9xl mx-auto shadow-xl max-h-[90vh] overflow-y-auto">
@@ -180,20 +166,20 @@ const RoomForm = ({ onRoomCreated }) => {
           {error}
         </div>
       )}
-
       {successMessage && (
         <div className="bg-green-100 border border-green-400 text-green-700 px-3 py-2 rounded mb-3 text-sm">
           {successMessage}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" data-testid="room-form">
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3">
           <div>
-            <label className="block text-sm font-medium text-mar-profundo dark:text-mar-espuma mb-1">
+            <label htmlFor="roomId" className="block text-sm font-medium text-mar-profundo dark:text-mar-espuma mb-1">
               🏷️ ID de la Habitación *
             </label>
             <input
+              id="roomId"
               type="text"
               name="id"
               value={roomData.id}
@@ -203,11 +189,13 @@ const RoomForm = ({ onRoomCreated }) => {
               className="w-full border border-gray-300 dark:border-gray-600 p-2 rounded-lg focus:ring-2 focus:ring-mar-profundo dark:bg-neutral-oscuro dark:text-white text-sm"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-mar-profundo dark:text-mar-espuma mb-1">
+            <label htmlFor="capacity" className="block text-sm font-medium text-mar-profundo dark:text-mar-espuma mb-1">
               Capacidad (número de personas)
             </label>
             <input
+              id="capacity"
               type="number"
               name="capacity"
               min="1"
@@ -216,13 +204,14 @@ const RoomForm = ({ onRoomCreated }) => {
               placeholder="Ej: 2"
               className="w-full border border-gray-300 dark:border-gray-600 p-2 rounded-lg focus:ring-2 focus:ring-mar-profundo dark:bg-neutral-oscuro dark:text-white text-sm"
             />
-          </div>  
+          </div>
 
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-mar-profundo dark:text-mar-espuma mb-1">
+            <label htmlFor="description" className="block text-sm font-medium text-mar-profundo dark:text-mar-espuma mb-1">
               Descripción *
             </label>
             <input
+              id="description"
               type="text"
               name="description"
               value={roomData.description}
@@ -234,10 +223,11 @@ const RoomForm = ({ onRoomCreated }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-mar-profundo dark:text-mar-espuma mb-1">
+            <label htmlFor="roomTypeId" className="block text-sm font-medium text-mar-profundo dark:text-mar-espuma mb-1">
               Tipo *
             </label>
             <select
+              id="roomTypeId"
               name="roomTypeId"
               value={roomData.roomTypeId}
               onChange={handleRoomDataChange}
@@ -254,10 +244,11 @@ const RoomForm = ({ onRoomCreated }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-mar-profundo dark:text-mar-espuma mb-1">
+            <label htmlFor="price" className="block text-sm font-medium text-mar-profundo dark:text-mar-espuma mb-1">
               💰 Precio/noche
             </label>
             <input
+              id="price"
               type="number"
               name="price"
               min="0"
@@ -270,10 +261,11 @@ const RoomForm = ({ onRoomCreated }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-mar-profundo dark:text-mar-espuma mb-1">
+            <label htmlFor="status" className="block text-sm font-medium text-mar-profundo dark:text-mar-espuma mb-1">
               Estado
             </label>
             <select
+              id="status"
               name="status"
               value={roomData.status}
               onChange={handleRoomDataChange}
@@ -288,10 +280,11 @@ const RoomForm = ({ onRoomCreated }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-mar-profundo dark:text-mar-espuma mb-2">
+          <label htmlFor="detailRoomId" className="block text-sm font-medium text-mar-profundo dark:text-mar-espuma mb-2">
             🛠️ Combinación de Servicios
           </label>
           <select
+            id="detailRoomId"
             name="detailRoomId"
             value={roomData.detailRoomId}
             onChange={handleRoomDataChange}
@@ -308,10 +301,11 @@ const RoomForm = ({ onRoomCreated }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-mar-profundo dark:text-mar-espuma mb-2">
+          <label htmlFor="photos" className="block text-sm font-medium text-mar-profundo dark:text-mar-espuma mb-2">
             📷 Fotos de la habitación
           </label>
           <input
+            id="photos"
             type="file"
             accept="image/*"
             multiple
@@ -350,8 +344,9 @@ const RoomForm = ({ onRoomCreated }) => {
     </div>
   );
 };
+
 RoomForm.propTypes = {
-  onRoomCreated: PropTypes.func,
+  onSubmit: PropTypes.func,
 };
 
 export default RoomForm;

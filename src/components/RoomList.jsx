@@ -88,22 +88,30 @@ const RoomList = ({ onUpdate }) => {
   }, [getAccessTokenSilently]);
 
   // --- Load individual detail
-  const loadRoomDetail = useCallback(
-    async detailRoomId => {
-      if (!detailRoomId || loadedDetails[detailRoomId]) return loadedDetails[detailRoomId] || null;
-      try {
-        const token = await getAccessTokenSilently();
-        const detail = await roomClasifyService.getRoomDetailById(detailRoomId, token);
-        setLoadedDetails(prev => ({ ...prev, [detailRoomId]: detail }));
-        return detail;
-      } catch {
-        setLoadedDetails(prev => ({ ...prev, [detailRoomId]: null }));
-        return null;
-      }
-    },
-    [getAccessTokenSilently, loadedDetails]
-  );
+const loadRoomDetail = useCallback(
+  async detailRoomId => {
+    if (!detailRoomId || loadedDetails[detailRoomId]) return loadedDetails[detailRoomId] || null;
 
+    setLoadingDetails(prev => new Set(prev).add(detailRoomId)); // 🔹 marcar que está cargando
+
+    try {
+      const token = await getAccessTokenSilently();
+      const detail = await roomClasifyService.getRoomDetailById(detailRoomId, token);
+      setLoadedDetails(prev => ({ ...prev, [detailRoomId]: detail }));
+      return detail;
+    } catch {
+      setLoadedDetails(prev => ({ ...prev, [detailRoomId]: null }));
+      return null;
+    } finally {
+      setLoadingDetails(prev => {
+        const updated = new Set(prev);
+        updated.delete(detailRoomId); // 🔹 quitar de cargando
+        return updated;
+      });
+    }
+  },
+  [getAccessTokenSilently, loadedDetails]
+);
   // --- Initial fetch
   useEffect(() => {
     fetchRooms();

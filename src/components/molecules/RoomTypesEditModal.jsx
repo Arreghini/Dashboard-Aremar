@@ -39,7 +39,12 @@ const RoomTypeEditModal = ({
             </div>
           )}
 
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form
+  onSubmit={onSubmit}
+  aria-label="formulario-editar-habitacion"
+  className="space-y-4"
+>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Nombre del tipo de habitación *
@@ -97,16 +102,21 @@ const RoomTypeEditModal = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                📷 Agregar nuevas fotos
-              </label>
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={(e) => setNewPhotos(Array.from(e.target.files))}
-                className="w-full border border-gray-300 p-3 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-              />
+             <label
+  htmlFor="new-photos"
+  className="block text-sm font-medium text-gray-700 mb-1"
+>
+  📷 Agregar nuevas fotos
+</label>
+<input
+  id="new-photos"
+  type="file"
+  multiple
+  accept="image/*"
+  onChange={(e) => setNewPhotos(Array.from(e.target.files))}
+  className="w-full border border-gray-300 p-3 rounded-lg ..."
+/>
+
             </div>
 
             {existingPhotos.length > 0 && (

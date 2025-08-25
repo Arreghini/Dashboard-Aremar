@@ -27,7 +27,6 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
     try {
       const token = await getAccessTokenSilently();
 
-      // Crear FormData con todos los datos
       const formData = new FormData();
       formData.append('name', roomTypeData.name);
       formData.append('simpleBeds', roomTypeData.simpleBeds || '0');
@@ -36,11 +35,8 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
       formData.append('windows', roomTypeData.windows || '0');
       formData.append('price', roomTypeData.price || '0');
 
-      // Agregar archivos de fotos
-      if (newPhotos && newPhotos.length > 0) {
-        newPhotos.forEach((file) => {
-          formData.append('photos', file);
-        });
+      if (newPhotos.length > 0) {
+        newPhotos.forEach((file) => formData.append('photos', file));
       }
 
       await roomClasifyService.createRoomTypeWithFiles(formData, token);
@@ -48,9 +44,7 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
       setSuccessMessage('Tipo de habitación creado con éxito');
       resetForm();
 
-      if (onRoomTypeCreated) {
-        onRoomTypeCreated();
-      }
+      if (onRoomTypeCreated) onRoomTypeCreated();
     } catch (error) {
       console.error('Error al crear tipo de habitación:', error);
       setError(`Error: ${error.response?.data?.message || error.message}`);
@@ -92,6 +86,7 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Nombre */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Nombre del tipo de habitación *
@@ -99,15 +94,14 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
           <input
             type="text"
             value={roomTypeData.name}
-            onChange={(e) =>
-              setRoomTypeData({ ...roomTypeData, name: e.target.value })
-            }
+            onChange={(e) => setRoomTypeData({ ...roomTypeData, name: e.target.value })}
             placeholder="Ej: Suite Deluxe, Habitación Estándar..."
             required
             className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
           />
         </div>
 
+        {/* Camas y Ventanas */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -117,9 +111,7 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
               type="number"
               min="0"
               value={roomTypeData.simpleBeds}
-              onChange={(e) =>
-                setRoomTypeData({ ...roomTypeData, simpleBeds: e.target.value })
-              }
+              onChange={(e) => setRoomTypeData({ ...roomTypeData, simpleBeds: e.target.value })}
               className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             />
           </div>
@@ -132,12 +124,7 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
               type="number"
               min="0"
               value={roomTypeData.trundleBeds}
-              onChange={(e) =>
-                setRoomTypeData({
-                  ...roomTypeData,
-                  trundleBeds: e.target.value,
-                })
-              }
+              onChange={(e) => setRoomTypeData({ ...roomTypeData, trundleBeds: e.target.value })}
               className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             />
           </div>
@@ -150,9 +137,7 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
               type="number"
               min="0"
               value={roomTypeData.kingBeds}
-              onChange={(e) =>
-                setRoomTypeData({ ...roomTypeData, kingBeds: e.target.value })
-              }
+              onChange={(e) => setRoomTypeData({ ...roomTypeData, kingBeds: e.target.value })}
               className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             />
           </div>
@@ -165,14 +150,13 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
               type="number"
               min="0"
               value={roomTypeData.windows}
-              onChange={(e) =>
-                setRoomTypeData({ ...roomTypeData, windows: e.target.value })
-              }
+              onChange={(e) => setRoomTypeData({ ...roomTypeData, windows: e.target.value })}
               className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             />
           </div>
         </div>
 
+        {/* Precio */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             💰 Precio por noche
@@ -182,14 +166,13 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
             min="0"
             step="0.01"
             value={roomTypeData.price}
-            onChange={(e) =>
-              setRoomTypeData({ ...roomTypeData, price: e.target.value })
-            }
+            onChange={(e) => setRoomTypeData({ ...roomTypeData, price: e.target.value })}
             placeholder="0.00"
             className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
           />
         </div>
 
+        {/* Fotos */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             📷 Fotos de la habitación
@@ -202,12 +185,11 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
             className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
           />
           {newPhotos.length > 0 && (
-            <p className="text-sm text-gray-500 mt-1">
-              {newPhotos.length} archivo(s) seleccionado(s)
-            </p>
+            <p className="text-sm text-gray-500 mt-1">{newPhotos.length} archivo(s) seleccionado(s)</p>
           )}
         </div>
 
+        {/* Botones */}
         <div className="flex justify-end gap-3 pt-4">
           <button
             type="button"
@@ -228,6 +210,7 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
     </div>
   );
 };
+
 RoomTypeForm.propTypes = {
   onRoomTypeCreated: PropTypes.func,
 };
