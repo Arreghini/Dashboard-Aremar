@@ -68,7 +68,7 @@ describe('RoomTypeForm', () => {
     fireEvent.click(resetButton);
 
     expect(screen.getByLabelText(/Nombre del tipo de habitación/i).value).toBe('');
-    expect(screen.getByLabelText(/🛏️ Camas simples/i).value).toBe('');
+    expect(screen.getByLabelText(/🛏️ Camas simples/i).value).toBe('0');
   });
 
   it('muestra el número de archivos seleccionados', () => {

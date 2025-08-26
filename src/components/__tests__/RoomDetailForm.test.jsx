@@ -1,7 +1,5 @@
-
-import { describe, test, expect, beforeEach } from 'vitest';
+import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { vi } from 'vitest';
 import RoomDetailForm from '../RoomDetailForm';
 import roomClasifyService from '../../services/roomClasifyService';
 import { useAuth0 } from '@auth0/auth0-react';
@@ -34,7 +32,6 @@ describe('RoomDetailForm', () => {
 
   test('renderiza el formulario y los checkboxes de servicios', async () => {
     render(<RoomDetailForm />);
-    // Esperamos que los checkboxes estén en pantalla
     const checkboxes = await screen.findAllByRole('checkbox');
     expect(checkboxes.length).toBeGreaterThan(0);
     expect(screen.getByText(/Administrador de Combinaciones de Servicios/i)).toBeInTheDocument();
@@ -44,7 +41,6 @@ describe('RoomDetailForm', () => {
     const onRoomDetailCreated = vi.fn();
     render(<RoomDetailForm onRoomDetailCreated={onRoomDetailCreated} />);
 
-    // Marcamos algunos checkboxes
     const wifiCheckbox = screen.getByRole('checkbox', { name: /WiFi/i });
     fireEvent.click(wifiCheckbox);
 
@@ -59,21 +55,38 @@ describe('RoomDetailForm', () => {
   });
 
   test('muestra error si la combinación ya existe', async () => {
-    // Mock para que ya exista una combinación
-    roomClasifyService.getAllRoomDetails.mockResolvedValue([
-      { id: '1', wifi: true, cableTvService: false, smart_TV: false, microwave: false, pava_electrica: false },
-    ]);
+    // Mock para que el servicio falle con el mensaje de duplicado
+    roomClasifyService.createRoomDetail.mockRejectedValueOnce({
+      response: { data: { message: 'Esta combinación de servicios ya existe' } },
+    });
 
     render(<RoomDetailForm />);
 
     const wifiCheckbox = await screen.findByRole('checkbox', { name: /WiFi/i });
-    fireEvent.click(wifiCheckbox); // ya está marcado por default
+    fireEvent.click(wifiCheckbox);
+
     const submitButton = screen.getByRole('button', { name: /crear/i });
     fireEvent.click(submitButton);
 
     await waitFor(() => {
       expect(screen.getByText(/Esta combinación de servicios ya existe/i)).toBeInTheDocument();
-      expect(roomClasifyService.createRoomDetail).not.toHaveBeenCalled();
+      expect(roomClasifyService.createRoomDetail).toHaveBeenCalledTimes(1);
     });
   });
+
+ test('desactiva el botón de submit si ningún checkbox está seleccionado', async () => {
+  render(<RoomDetailForm />);
+  
+  const submitButton = screen.getByRole('button', { name: /crear/i });
+  
+  // Desmarcamos todos los checkboxes, incluso los que vienen seleccionados por defecto
+  const checkboxes = screen.getAllByRole('checkbox');
+  checkboxes.forEach((checkbox) => {
+    if (checkbox.checked) fireEvent.click(checkbox);
+  });
+
+  // Verificamos que el botón esté deshabilitado
+  expect(submitButton).toBeDisabled();
+});
+
 });

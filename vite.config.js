@@ -3,14 +3,21 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-   server: {
-    port: 4000,      // <- forzar puerto
-    strictPort: true // <- si el puerto 4000 está ocupado, falla en vez de buscar otro
+  server: {
+    port: 4000,
+    strictPort: true
   },
-test: {
-  globals: true,
-  environment: 'jsdom',
-  setupFiles: './src/setupTests.js',
-  include: ['src/**/*.test.{js,jsx,ts,tsx}'],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/setupTests.js',
+    include: ['src/**/*.test.{js,jsx,ts,tsx}'],
+    coverage: {
+      provider: 'istanbul',                // usar istanbul en Windows
+      reporter: ['text', 'html', 'lcov'],  // formatos de reporte
+      all: true,                            // incluir todos los archivos
+      include: ['src/**/*.{js,jsx}'],      // qué archivos medir
+      exclude: ['src/**/*.test.{js,jsx}', 'node_modules/'] // excluir tests y node_modules
+    },
   },
 });

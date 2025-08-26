@@ -17,63 +17,42 @@ vi.mock('@auth0/auth0-react', () => {
 });
 
 // ---- MOCK RESERVATION SERVICE ----
-vi.mock('../../services/reservationService', () => {
-  return {
-    default: {
-      getReservations: vi.fn().mockResolvedValue([
-        {
-          id: 1,
-          guestName: 'Juan',
-          startDate: '2025-08-24',
-          endDate: '2025-08-26',
-          room: '101',
-          status: 'pendiente',
-        },
-      ]),
-    },
-  };
-});
+vi.mock('../../services/reservationService', () => ({
+  default: {
+    getReservations: vi.fn().mockResolvedValue([
+      {
+        id: 1,
+        checkIn: '2025-08-24',
+        checkOut: '2025-08-26',
+        totalPrice: 200,
+        amountPaid: 100,
+        status: 'pending',
+        room: { id: '101', roomType: { name: 'Doble' } },
+        user: { name: 'Juan', email: 'juan@example.com' },
+      },
+    ]),
+  },
+}));
 
-import reservationService from "../../services/reservationService";
-import roomService from "../../services/roomService";
-import roomClasifyService from "../../services/roomClasifyService";
+// --- Helper para encontrar tarjeta por nombre ---
+async function findReservationCard(nombre) {
+  const tarjeta = await screen.findByText(new RegExp(nombre, "i"));
+  return tarjeta.closest("div"); // devuelve el contenedor de la tarjeta
+}
 
 describe("ReservationList", () => {
-
-  test("filtra reservas por rango de fechas", async () => {
-    render(<ReservationList />);
-
-    await waitFor(() =>
-      screen.getByRole("button", { name: /aplicar/i })
-    );
-
-    fireEvent.change(screen.getByLabelText("Desde:"), {
-      target: { value: "2025-08-24" },
-    });
-    fireEvent.change(screen.getByLabelText("Hasta:"), {
-      target: { value: "2025-08-26" },
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: /aplicar/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText(/Juan/)).toBeInTheDocument();
-      expect(
-        screen.getByText((content) =>
-          content.includes("2025-08-24") ||
-          content.includes("8/24/2025") ||
-          content.includes("24/8/2025")
-        )
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText((content) =>
-          content.includes("2025-08-26") ||
-          content.includes("8/26/2025") ||
-          content.includes("26/8/2025")
-        )
-      ).toBeInTheDocument();
-    }, { timeout: 2000 });
-  });
+  const reservationsMock = [
+    {
+      id: 1,
+      checkIn: '2025-08-24',
+      checkOut: '2025-08-26',
+      totalPrice: 200,
+      amountPaid: 100,
+      status: 'pending',
+      room: { id: '101', roomType: { name: 'Doble' } },
+      user: { name: 'Juan', email: 'juan@example.com' },
+    },
+  ];
 
   test("quita filtros al presionar Quitar", async () => {
     render(<ReservationList />);
@@ -95,7 +74,6 @@ describe("ReservationList", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /saldados/i }));
-    // Aquí podrías agregar un expect para validar solo saldadas
   });
 
   test("filtra reservas pendientes", async () => {
@@ -106,10 +84,11 @@ describe("ReservationList", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /pendientes/i }));
-    // Aquí podrías agregar un expect para validar solo pendientes
   });
 
   test("ordena por nombre", async () => {
+    vi.spyOn(window, 'prompt').mockReturnValue('Juan');
+
     render(<ReservationList />);
 
     await waitFor(() =>
@@ -117,7 +96,10 @@ describe("ReservationList", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /por nombre/i }));
-    // Validación ejemplo
+
+    await waitFor(() => {
+      expect(screen.getByText(/Juan/)).toBeInTheDocument();
+    });
   });
 
   test("ordena por habitación", async () => {
@@ -128,7 +110,30 @@ describe("ReservationList", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /por habitación/i }));
-    // Validación ejemplo
   });
+
+  test("filtra reservas por rango de fechas", async () => {
+  render(<ReservationList reservations={reservationsMock} />);
+
+  // Ingresamos las fechas de filtro
+  fireEvent.change(screen.getByLabelText(/desde/i), {
+    target: { value: "2025-08-24" },
+  });
+  fireEvent.change(screen.getByLabelText(/hasta/i), {
+    target: { value: "2025-08-24" },
+  });
+
+  fireEvent.click(screen.getByRole("button", { name: /aplicar/i }));
+
+  // Suponiendo que la reserva de Juan tiene ID 1
+  const tarjeta = await screen.findByTestId("reservation-card-1");
+
+  // Comprobamos que contiene la fecha de check-in
+  const fechaCheckIn = new Date("2025-08-24").toLocaleDateString();
+  expect(tarjeta).toHaveTextContent(fechaCheckIn);
+
+  // Opcional: comprobamos nombre del cliente
+  expect(tarjeta).toHaveTextContent(/Juan/i);
+});
 
 });

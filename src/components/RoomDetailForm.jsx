@@ -6,18 +6,15 @@ import PropTypes from 'prop-types';
 const RoomDetailForm = ({ onRoomDetailCreated }) => {
   const { getAccessTokenSilently } = useAuth0();
 
-  // 🔹 Lista de servicios con sus íconos 
+  // Lista de servicios con sus íconos
   const servicesList = [
     { key: 'cableTvService', label: '📺 TV por Cable', default: false },
     { key: 'smart_TV', label: '📱 Smart TV', default: false },
-    { key: 'wifi', label: '📶 WiFi', default: true },
+    { key: 'wifi', label: '📶 WiFi', default: false },
     { key: 'microwave', label: '🔥 Microondas', default: false },
     { key: 'pava_electrica', label: '☕ Pava Eléctrica', default: false },
-    // ✅ Para agregar nuevos servicios:
-    // { key: 'mini_bar', label: '🍾 Mini Bar', default: false },
   ];
 
-  // 🔹 Estado inicial basado en servicesList
   const initialRoomDetailData = servicesList.reduce(
     (acc, service) => ({ ...acc, [service.key]: service.default }),
     {}
@@ -90,7 +87,6 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
         setSuccessMessage('✅ Nueva combinación de servicios creada con éxito');
       }
 
-      // Resetear formulario
       setRoomDetailData(initialRoomDetailData);
       setDetailId(null);
 
@@ -147,7 +143,6 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
 
   return (
     <div className="p-6 border border-gray-300 rounded-2xl bg-white dark:bg-gray-800 shadow-xl">
-      {/* Encabezado */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2 text-gray-800 dark:text-white">
           🛠️ Administrador de Combinaciones de Servicios
@@ -157,11 +152,9 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
         </p>
       </div>
 
-      {/* Mensajes */}
       {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
       {successMessage && <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">{successMessage}</div>}
 
-      {/* Formulario */}
       <form onSubmit={handleSubmit} className="mb-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
@@ -186,7 +179,7 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
             <div className="flex gap-3 mt-4">
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !Object.values(roomDetailData).some((v) => v === true)}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-2 px-4 rounded-lg transition-colors"
               >
                 {isSubmitting ? 'Guardando...' : detailId ? '✏️ Actualizar' : '➕ Crear'}
@@ -199,7 +192,6 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
             </div>
           </div>
 
-          {/* Vista previa */}
           <div>
             <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">📋 Vista Previa</h3>
             <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -219,7 +211,6 @@ const RoomDetailForm = ({ onRoomDetailCreated }) => {
         </div>
       </form>
 
-      {/* Combinaciones existentes */}
       <div>
         <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">
           📋 Combinaciones Existentes ({details.length})

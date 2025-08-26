@@ -7,11 +7,11 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
   const { getAccessTokenSilently } = useAuth0();
   const [roomTypeData, setRoomTypeData] = useState({
     name: '',
-    simpleBeds: '',
-    trundleBeds: '',
-    kingBeds: '',
-    windows: '',
-    price: '',
+    simpleBeds: 0,
+    trundleBeds: 0,
+    kingBeds: 0,
+    windows: 0,
+    price: 0,
   });
   const [newPhotos, setNewPhotos] = useState([]);
   const [error, setError] = useState('');
@@ -29,15 +29,13 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
 
       const formData = new FormData();
       formData.append('name', roomTypeData.name);
-      formData.append('simpleBeds', roomTypeData.simpleBeds || '0');
-      formData.append('trundleBeds', roomTypeData.trundleBeds || '0');
-      formData.append('kingBeds', roomTypeData.kingBeds || '0');
-      formData.append('windows', roomTypeData.windows || '0');
-      formData.append('price', roomTypeData.price || '0');
+      formData.append('simpleBeds', roomTypeData.simpleBeds);
+      formData.append('trundleBeds', roomTypeData.trundleBeds);
+      formData.append('kingBeds', roomTypeData.kingBeds);
+      formData.append('windows', roomTypeData.windows);
+      formData.append('price', roomTypeData.price);
 
-      if (newPhotos.length > 0) {
-        newPhotos.forEach((file) => formData.append('photos', file));
-      }
+      newPhotos.forEach((file) => formData.append('photos', file));
 
       await roomClasifyService.createRoomTypeWithFiles(formData, token);
 
@@ -45,9 +43,9 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
       resetForm();
 
       if (onRoomTypeCreated) onRoomTypeCreated();
-    } catch (error) {
-      console.error('Error al crear tipo de habitación:', error);
-      setError(`Error: ${error.response?.data?.message || error.message}`);
+    } catch (err) {
+      console.error('Error al crear tipo de habitación:', err);
+      setError(`Error: ${err.response?.data?.message || err.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -56,15 +54,19 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
   const resetForm = () => {
     setRoomTypeData({
       name: '',
-      simpleBeds: '',
-      trundleBeds: '',
-      kingBeds: '',
-      windows: '',
-      price: '',
+      simpleBeds: 0,
+      trundleBeds: 0,
+      kingBeds: 0,
+      windows: 0,
+      price: 0,
     });
     setNewPhotos([]);
     setError('');
-    setSuccessMessage('');
+  };
+
+  const handleNumberChange = (field) => (e) => {
+    const value = Number(e.target.value);
+    setRoomTypeData({ ...roomTypeData, [field]: isNaN(value) ? 0 : value });
   };
 
   return (
@@ -88,10 +90,11 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Nombre */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="room-type-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Nombre del tipo de habitación *
           </label>
           <input
+            id="room-type-name"
             type="text"
             value={roomTypeData.name}
             onChange={(e) => setRoomTypeData({ ...roomTypeData, name: e.target.value })}
@@ -104,80 +107,85 @@ const RoomTypeForm = ({ onRoomTypeCreated }) => {
         {/* Camas y Ventanas */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="simple-beds" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               🛏️ Camas simples
             </label>
             <input
+              id="simple-beds"
               type="number"
               min="0"
               value={roomTypeData.simpleBeds}
-              onChange={(e) => setRoomTypeData({ ...roomTypeData, simpleBeds: e.target.value })}
+              onChange={handleNumberChange('simpleBeds')}
               className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="trundle-beds" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               🛏️ Camas cucheta
             </label>
             <input
+              id="trundle-beds"
               type="number"
               min="0"
               value={roomTypeData.trundleBeds}
-              onChange={(e) => setRoomTypeData({ ...roomTypeData, trundleBeds: e.target.value })}
+              onChange={handleNumberChange('trundleBeds')}
               className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="king-beds" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               👑 Camas matrimoniales
             </label>
             <input
+              id="king-beds"
               type="number"
               min="0"
               value={roomTypeData.kingBeds}
-              onChange={(e) => setRoomTypeData({ ...roomTypeData, kingBeds: e.target.value })}
+              onChange={handleNumberChange('kingBeds')}
               className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="windows" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               🪟 Ventanas
             </label>
             <input
+              id="windows"
               type="number"
               min="0"
               value={roomTypeData.windows}
-              onChange={(e) => setRoomTypeData({ ...roomTypeData, windows: e.target.value })}
+              onChange={handleNumberChange('windows')}
               className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             />
           </div>
-        </div>
 
-        {/* Precio */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            💰 Precio por noche
-          </label>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={roomTypeData.price}
-            onChange={(e) => setRoomTypeData({ ...roomTypeData, price: e.target.value })}
-            placeholder="0.00"
-            className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-          />
+          <div>
+            <label htmlFor="price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              💰 Precio por noche
+            </label>
+            <input
+              id="price"
+              type="number"
+              min="0"
+              step="0.01"
+              value={roomTypeData.price}
+              onChange={handleNumberChange('price')}
+              placeholder="0.00"
+              className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            />
+          </div>
         </div>
 
         {/* Fotos */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="room-photos" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             📷 Fotos de la habitación
           </label>
           <input
+            id="room-photos"
             type="file"
             accept="image/*"
             multiple

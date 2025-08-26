@@ -57,10 +57,11 @@ const ReportsPage = ({ darkMode }) => {
       <div className="mb-4">
         <div className="flex gap-4 mb-2">
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label htmlFor ="startDate" className="block text-sm font-medium mb-1">
               Fecha inicio:
             </label>
             <input
+              id="startDate"
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
@@ -68,9 +69,10 @@ const ReportsPage = ({ darkMode }) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Fecha fin:</label>
+            <label htmlFor='endDate' className="block text-sm font-medium mb-1">Fecha fin:</label>
             <input
               type="date"
+              id="endDate"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               className={`px-2 py-1 rounded ${inputStyle}`}

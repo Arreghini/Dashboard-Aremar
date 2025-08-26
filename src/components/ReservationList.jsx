@@ -418,6 +418,7 @@ border border-mar-claro rounded-lg p-8 ">
           {filteredReservations.map((r) => (
             <div
               key={r.id}
+              data-testid={`reservation-card-${r.id}`} // <- agregado
               className="bg-neutral-claro dark:bg-neutral-oscuro rounded-xl shadow-lg border border-mar-claro p-6"
             >
               <div className="grid md:grid-cols-2 gap-4 mb-4">

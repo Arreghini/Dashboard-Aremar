@@ -1,86 +1,75 @@
+// ChatIA.jsx
 import { useState } from "react";
 
 export default function ChatIA() {
-  const [respuesta, setRespuesta] = useState("");
-  const [consulta, setConsulta] = useState("");
+  const [input, setInput] = useState("");
+  const [responseText, setResponseText] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleConsultar = async () => {
-    if (!consulta.trim()) return;
+  const handleClick = async () => {
+    if (!input.trim()) return;
 
-    setRespuesta("");
     setLoading(true);
+    setErrorMessage("");
+    setResponseText("");
 
     try {
-      const response = await fetch("http://localhost:3001/v1/chat/completions", {
+      const res = await fetch("/api/chat", { 
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          messages: [{ role: "user", content: consulta }],
-        }),
+        body: JSON.stringify({ message: input }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error en proxy:", errorText);
-        setRespuesta("Error en la conexión con la IA.");
-        setLoading(false);
-        return;
-      }
+      if (!res.ok) throw new Error("API error");
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder("utf-8");
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
 
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n").filter((line) => line.startsWith("data:"));
-        for (let line of lines) {
-          const data = line.replace(/^data: /, "");
-          if (data === "[DONE]") continue;
-
-          try {
-            const parsed = JSON.parse(data);
-            const text = parsed.choices?.[0]?.delta?.content;
-            if (text) setRespuesta((prev) => prev + text);
-          } catch (err) {
-            console.error("Error parsing chunk:", err, data);
+        try {
+          const chunk = JSON.parse(decoder.decode(value));
+          if (chunk?.choices?.[0]?.delta?.content) {
+            setResponseText(prev => prev + chunk.choices[0].delta.content);
           }
+        } catch {
+          setErrorMessage("Error en la conexión con la IA");
         }
       }
-    } catch (err) {
-      console.error("Error general:", err);
-      setRespuesta("Error en la conexión con la IA.");
+    } catch {
+      setErrorMessage("Error en la conexión con la IA");
+    } finally {
+      setLoading(false);
+      setInput("");
     }
-
-    setLoading(false);
   };
 
   return (
     <div className="p-4">
       <div className="mb-2">
         <input
-          type="text"
-          value={consulta}
-          onChange={(e) => setConsulta(e.target.value)}
           placeholder="Escribe tu mensaje..."
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
           className="w-full px-3 py-2 border rounded"
         />
       </div>
-
       <button
-        onClick={handleConsultar}
-        className="px-4 py-2 bg-blue-600 text-white rounded mb-4"
+        onClick={handleClick}
         disabled={loading}
+        className="px-4 py-2 bg-blue-600 text-white rounded mb-4"
       >
         {loading ? "Consultando..." : "Consultar"}
       </button>
-
       <div className="mt-2 p-4 border rounded bg-gray-100 min-h-[100px]">
-        <pre className="whitespace-pre-wrap">{respuesta}</pre>
+        <pre
+          data-testid="chat-output"
+          className="whitespace-pre-wrap"
+        >
+          {errorMessage || responseText}
+        </pre>
       </div>
     </div>
   );
