@@ -1,23 +1,26 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [react()],
   server: {
     port: 4000,
-    strictPort: true
+    strictPort: true,
   },
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: './src/setupTests.js',
+    setupFiles: resolve(__dirname, 'src/setupTests.js'),
     include: ['src/**/*.test.{js,jsx,ts,tsx}'],
     coverage: {
-      provider: 'istanbul',                // usar istanbul en Windows
-      reporter: ['text', 'html', 'lcov'],  // formatos de reporte
-      all: true,                            // incluir todos los archivos
-      include: ['src/**/*.{js,jsx}'],      // qué archivos medir
-      exclude: ['src/**/*.test.{js,jsx}', 'node_modules/'] // excluir tests y node_modules
-    },
+  provider: 'istanbul',
+  reporter: ['text', 'text-summary', 'html', 'lcov'],
+  all: true,
+  include: ['src/**/*.{js,jsx}'],
+  exclude: ['src/**/*.test.{js,jsx}', 'node_modules/'],
+  reportsDirectory: './coverage', // carpeta donde se guardará
+  clean: false,                   // NO limpiar la carpeta
+}
   },
 });

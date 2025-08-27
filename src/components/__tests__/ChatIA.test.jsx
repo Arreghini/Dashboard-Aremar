@@ -1,22 +1,22 @@
 import { expect, describe, it, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import ChatIA from "../ChatIA.jsx";
+import { TextEncoder } from "util";
+
+global.TextEncoder = TextEncoder;
 
 // Helper para simular streaming
 function createMockStream(chunks) {
   let i = 0;
-  return {
-    getReader() {
-      return {
-        read: async () => {
-          if (i < chunks.length) {
-            return { value: new TextEncoder().encode(chunks[i++]), done: false };
-          }
-          return { done: true };
-        }
-      };
+  return new ReadableStream({
+    pull(controller) {
+      if (i < chunks.length) {
+        controller.enqueue(new TextEncoder().encode(chunks[i++]));
+      } else {
+        controller.close();
+      }
     }
-  };
+  });
 }
 
 describe("ChatIA", () => {
@@ -39,7 +39,8 @@ describe("ChatIA", () => {
   it("envía consulta y muestra respuesta parcial del streaming", async () => {
     const chunks = [
       'data: {"choices":[{"delta":{"content":"Hola "}}]}\n',
-      'data: {"choices":[{"delta":{"content":"mundo"}}]}\n'
+      'data: {"choices":[{"delta":{"content":"mundo"}}]}\n',
+      'data: [DONE]\n'
     ];
 
     fetch.mockResolvedValueOnce({
@@ -77,7 +78,8 @@ describe("ChatIA", () => {
   it("acumula varias respuestas consecutivas", async () => {
     const chunks = [
       'data: {"choices":[{"delta":{"content":"Hola"}}]}\n',
-      'data: {"choices":[{"delta":{"content":" mundo"}}]}\n'
+      'data: {"choices":[{"delta":{"content":" mundo"}}]}\n',
+      'data: [DONE]\n'
     ];
 
     fetch.mockResolvedValueOnce({
