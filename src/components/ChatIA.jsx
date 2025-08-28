@@ -1,47 +1,54 @@
-// ChatIA.jsx
-import { useState } from "react";
+import React, { useState } from "react";
 
 export default function ChatIA() {
   const [input, setInput] = useState("");
-  const [responseText, setResponseText] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState(""); // acumula todas las respuestas
 
-  const handleClick = async () => {
+  const handleSubmit = async () => {
     if (!input.trim()) return;
 
-    setLoading(true);
-    setErrorMessage("");
-    setResponseText("");
-
     try {
-      const res = await fetch("/api/chat", { 
-        method: "POST",
-        body: JSON.stringify({ message: input }),
-      });
+       const res = await fetch("http://localhost:3001/v1/chat/completions", {
+  method: "POST",
+  body: JSON.stringify({ 
+    messages: [{ role: "user", content: input }]  // La API del proxy espera un array de mensajes
+  }),
+  headers: { "Content-Type": "application/json" },
+});
 
-      if (!res.ok) throw new Error("API error");
+      if (!res.ok || !res.body) {
+        throw new Error("Error en la conexión con la IA");
+      }
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
+      let accumulated = "";
 
       while (true) {
-        const { value, done } = await reader.read();
+        const { done, value } = await reader.read();
         if (done) break;
-        try {
-          const chunk = JSON.parse(decoder.decode(value));
-          if (chunk?.choices?.[0]?.delta?.content) {
-            setResponseText(prev => prev + chunk.choices[0].delta.content);
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split("\n").filter(Boolean);
+
+        for (const line of lines) {
+          if (line.trim() === "data: [DONE]") break;
+
+          if (line.startsWith("data:")) {
+            try {
+              const json = JSON.parse(line.replace(/^data:\s*/, ""));
+              const content = json?.choices?.[0]?.delta?.content || "";
+              accumulated += content;
+              setMessages((prev) => prev + content);
+            } catch (err) {
+              throw new Error("Error en la conexión con la IA");
+            }
           }
-        } catch {
-          setErrorMessage("Error en la conexión con la IA");
         }
       }
-    } catch {
-      setErrorMessage("Error en la conexión con la IA");
-    } finally {
-      setLoading(false);
-      setInput("");
+
+      setInput(""); // limpia input al terminar
+    } catch (err) {
+      setMessages("Error en la conexión con la IA");
     }
   };
 
@@ -49,26 +56,25 @@ export default function ChatIA() {
     <div className="p-4">
       <div className="mb-2">
         <input
+          className="w-full px-3 py-2 border rounded"
           placeholder="Escribe tu mensaje..."
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          className="w-full px-3 py-2 border rounded"
         />
       </div>
       <button
-        onClick={handleClick}
-        disabled={loading}
         className="px-4 py-2 bg-blue-600 text-white rounded mb-4"
+        onClick={handleSubmit}
       >
-        {loading ? "Consultando..." : "Consultar"}
+        Consultar
       </button>
       <div className="mt-2 p-4 border rounded bg-gray-100 min-h-[100px]">
         <pre
-          data-testid="chat-output"
           className="whitespace-pre-wrap"
+          data-testid="chat-output"
         >
-          {errorMessage || responseText}
+          {messages}
         </pre>
       </div>
     </div>

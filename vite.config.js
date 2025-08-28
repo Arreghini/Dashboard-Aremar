@@ -7,6 +7,13 @@ export default defineConfig({
   server: {
     port: 4000,
     strictPort: true,
+    proxy: {
+      "/api": {
+        target: "http://localhost:3001", // tu backend
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   test: {
     globals: true,
@@ -14,13 +21,13 @@ export default defineConfig({
     setupFiles: resolve(__dirname, 'src/setupTests.js'),
     include: ['src/**/*.test.{js,jsx,ts,tsx}'],
     coverage: {
-  provider: 'istanbul',
-  reporter: ['text', 'text-summary', 'html', 'lcov'],
-  all: true,
-  include: ['src/**/*.{js,jsx}'],
-  exclude: ['src/**/*.test.{js,jsx}', 'node_modules/'],
-  reportsDirectory: './coverage', // carpeta donde se guardará
-  clean: false,                   // NO limpiar la carpeta
-}
+      provider: 'istanbul',
+      reporter: ['text', 'text-summary', 'html', 'lcov'],
+      all: true,
+      include: ['src/**/*.{js,jsx}'],
+      exclude: ['src/**/*.test.{js,jsx}', 'node_modules/'],
+      reportsDirectory: './coverage',
+      clean: false,
+    },
   },
 });

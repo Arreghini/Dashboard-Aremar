@@ -5,17 +5,13 @@ import { TextEncoder } from "util";
 
 global.TextEncoder = TextEncoder;
 
-// Helper para simular streaming
-function createMockStream(chunks) {
-  let i = 0;
+// Mock de ReadableStream compatible
+function createMockReadableStream(chunks) {
   return new ReadableStream({
-    pull(controller) {
-      if (i < chunks.length) {
-        controller.enqueue(new TextEncoder().encode(chunks[i++]));
-      } else {
-        controller.close();
-      }
-    }
+    start(controller) {
+      chunks.forEach(chunk => controller.enqueue(new TextEncoder().encode(chunk)));
+      controller.close();
+    },
   });
 }
 
@@ -45,7 +41,7 @@ describe("ChatIA", () => {
 
     fetch.mockResolvedValueOnce({
       ok: true,
-      body: createMockStream(chunks)
+      body: createMockReadableStream(chunks)
     });
 
     render(<ChatIA />);
@@ -55,13 +51,16 @@ describe("ChatIA", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("chat-output")).toHaveTextContent(/Hola mundo/i);
-    });
+    }, { timeout: 3000 });
   });
 
   it("limpia el input después de enviar mensaje", async () => {
     fetch.mockResolvedValueOnce({
       ok: true,
-      body: createMockStream(['data: {"choices":[{"delta":{"content":"Respuesta"}}]}\n'])
+      body: createMockReadableStream([
+        'data: {"choices":[{"delta":{"content":"Respuesta"}}]}\n',
+        'data: [DONE]\n'
+      ])
     });
 
     render(<ChatIA />);
@@ -72,29 +71,43 @@ describe("ChatIA", () => {
     await waitFor(() => {
       expect(screen.getByTestId("chat-output")).toHaveTextContent(/Respuesta/i);
       expect(input.value).toBe("");
-    });
+    }, { timeout: 3000 });
   });
 
   it("acumula varias respuestas consecutivas", async () => {
-    const chunks = [
+    const chunks1 = [
       'data: {"choices":[{"delta":{"content":"Hola"}}]}\n',
       'data: {"choices":[{"delta":{"content":" mundo"}}]}\n',
       'data: [DONE]\n'
     ];
+    const chunks2 = [
+      'data: {"choices":[{"delta":{"content":"Otra"}}]}\n',
+      'data: {"choices":[{"delta":{"content":" respuesta"}}]}\n',
+      'data: [DONE]\n'
+    ];
 
-    fetch.mockResolvedValueOnce({
-      ok: true,
-      body: createMockStream(chunks)
-    });
+    fetch
+      .mockResolvedValueOnce({ ok: true, body: createMockReadableStream(chunks1) })
+      .mockResolvedValueOnce({ ok: true, body: createMockReadableStream(chunks2) });
 
     render(<ChatIA />);
     const input = screen.getByPlaceholderText(/escribe tu mensaje/i);
-    fireEvent.change(input, { target: { value: "Test" } });
+
+    // Primera consulta
+    fireEvent.change(input, { target: { value: "Primera" } });
     fireEvent.click(screen.getByText(/Consultar/i));
 
     await waitFor(() => {
       expect(screen.getByTestId("chat-output")).toHaveTextContent(/Hola mundo/i);
-    });
+    }, { timeout: 3000 });
+
+    // Segunda consulta
+    fireEvent.change(input, { target: { value: "Segunda" } });
+    fireEvent.click(screen.getByText(/Consultar/i));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("chat-output")).toHaveTextContent(/Hola mundoOtra respuesta/i);
+    }, { timeout: 3000 });
   });
 
   it("muestra error si la API devuelve error", async () => {
@@ -122,7 +135,7 @@ describe("ChatIA", () => {
   it("maneja stream vacío sin romperse", async () => {
     fetch.mockResolvedValueOnce({
       ok: true,
-      body: createMockStream([])
+      body: createMockReadableStream([])
     });
 
     render(<ChatIA />);
@@ -139,12 +152,12 @@ describe("ChatIA", () => {
     const mockChunks = ['data: {not-valid-json}\n', 'data: [DONE]\n'];
     fetch.mockResolvedValueOnce({
       ok: true,
-      body: createMockStream(mockChunks)
+      body: createMockReadableStream(mockChunks)
     });
 
     render(<ChatIA />);
     const input = screen.getByPlaceholderText(/escribe tu mensaje/i);
-    fireEvent.change(input, { target: { value: "Probando JSON inválido" } });
+    fireEvent.change(input, { target: { value: "JSON inválido" } });
     fireEvent.click(screen.getByRole("button", { name: /consultar/i }));
 
     await waitFor(() => {

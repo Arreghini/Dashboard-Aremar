@@ -1,110 +1,129 @@
-// import { describe, test, expect, vi } from "vitest";
-// import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-// import ReservationForm from "../ReservationForm";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import ReservationForm from "../ReservationForm.jsx";
+import { useAuth0 } from "@auth0/auth0-react";
+import userService from "../../services/userService";
+import roomService from "../../services/roomService";
+import reservationService from "../../services/reservationService";
 
-// // ---- MOCK AUTH0 ----
-// vi.mock("@auth0/auth0-react", () => ({
-//   Auth0Provider: ({ children }) => children,
-//   useAuth0: () => ({
-//     isAuthenticated: true,
-//     user: { sub: "123", name: "Tester", ["https://aremar.com/roles"]: ["admin"] },
-//     getAccessTokenSilently: vi.fn(() => Promise.resolve("fake-token")),
-//     loginWithRedirect: vi.fn(),
-//     logout: vi.fn(),
-//   }),
-// }));
+// Mocks
+vi.mock("@auth0/auth0-react");
+vi.mock("../../services/userService");
+vi.mock("../../services/roomService");
+vi.mock("../../services/reservationService");
 
-// // ---- MOCK SERVICES ----
-// vi.mock("../services/userService", () => ({
-//   default: {
-//     getUsers: vi.fn(() =>
-//       Promise.resolve([
-//         { id: "u1", name: "Juan" },
-//         { id: "u2", name: "Ana" },
-//       ])
-//     ),
-//   },
-// }));
+describe("ReservationForm", () => {
+  const mockOnClose = vi.fn();
+  const mockOnSave = vi.fn();
 
-// vi.mock("../services/roomService", () => ({
-//   default: {
-//     getRoomTypes: vi.fn(() =>
-//       Promise.resolve([
-//         { id: "r1", name: "Simple" },
-//         { id: "r2", name: "Doble" },
-//       ])
-//     ),
-//     getAvailableRoomsByType: vi.fn(() =>
-//       Promise.resolve({
-//         rooms: [
-//           { id: "101", description: "Simple con vista al mar" },
-//           { id: "102", description: "Simple interior" },
-//         ],
-//       })
-//     ),
-//   },
-// }));
+  beforeEach(() => {
+    vi.clearAllMocks();
 
-// vi.mock("../services/reservationService", () => ({
-//   default: {
-//     createReservation: vi.fn(() => Promise.resolve({ success: true })),
-//   },
-// }));
+    useAuth0.mockReturnValue({
+      user: { sub: "user123", name: "Juan", "https://aremar.com/roles": ["admin"] },
+      getAccessTokenSilently: vi.fn().mockResolvedValue("mock-token"),
+    });
 
-// describe("ReservationForm", () => {
-//   test("crea una reserva correctamente como admin", async () => {
-//     const onClose = vi.fn();
-//     const onSave = vi.fn();
+    userService.getUsers.mockResolvedValue([
+      { id: "u1", name: "Usuario 1" },
+      { id: "u2", name: "Usuario 2" },
+    ]);
 
-//     // Renderizar
-//     await act(async () => {
-//       render(<ReservationForm onClose={onClose} onSave={onSave} />);
-//     });
+    roomService.getRoomTypes.mockResolvedValue([
+      { id: "rt1", name: "Doble" },
+      { id: "rt2", name: "Suite" },
+    ]);
 
-//     // Esperar a que carguen usuarios y tipos de habitación
-//     await waitFor(() => screen.getByText("Seleccione un usuario"));
-//     await waitFor(() => screen.getByText("Seleccione un tipo"));
+    roomService.getAvailableRoomsByType.mockResolvedValue({
+      rooms: [{ id: "r1", description: "Habitación 1" }],
+    });
 
-//     // Seleccionar usuario
-//     await act(async () => {
-//       fireEvent.change(screen.getByLabelText("Usuario"), { target: { value: "u1" } });
-//     });
+    reservationService.createReservation.mockResolvedValue({});
+  });
 
-//     // Seleccionar tipo de habitación
-//     await act(async () => {
-//       fireEvent.change(screen.getByLabelText("Tipo de Habitación"), { target: { value: "r1" } });
-//     });
+  it("renderiza correctamente el formulario y campos de admin", async () => {
+    render(<ReservationForm onClose={mockOnClose} onSave={mockOnSave} />);
 
-//     // Fechas
-//     await act(async () => {
-//       fireEvent.change(screen.getByLabelText("Fecha de Ingreso"), { target: { value: "2025-08-24" } });
-//       fireEvent.change(screen.getByLabelText("Fecha de Egreso"), { target: { value: "2025-08-26" } });
-//     });
+    // Espera a que se carguen usuarios y tipos de habitación
+    await waitFor(() => {
+      expect(userService.getUsers).toHaveBeenCalled();
+      expect(roomService.getRoomTypes).toHaveBeenCalled();
+    });
 
-//     // Cantidad de huéspedes
-//     await act(async () => {
-//       fireEvent.change(screen.getByLabelText("Cantidad de Huéspedes"), { target: { value: "2" } });
-//     });
+    // Campos básicos
+    expect(screen.getByText("Crear Nueva Reserva")).toBeInTheDocument();
+    expect(screen.getByLabelText("Usuario")).toBeInTheDocument();
+    expect(screen.getByLabelText("Tipo de Habitación")).toBeInTheDocument();
+    expect(screen.getByLabelText("Fecha de Ingreso")).toBeInTheDocument();
+    expect(screen.getByLabelText("Fecha de Egreso")).toBeInTheDocument();
+    expect(screen.getByLabelText("Cantidad de Huéspedes")).toBeInTheDocument();
+  });
 
-//     // Esperar habitaciones disponibles
-//     await waitFor(() => screen.getByText("101 - Simple con vista al mar"));
+  it("permite seleccionar datos y envía la reserva correctamente", async () => {
+    render(<ReservationForm onClose={mockOnClose} onSave={mockOnSave} />);
 
-//     // Seleccionar habitación
-//     await act(async () => {
-//       fireEvent.change(screen.getByLabelText("Habitación Disponible"), { target: { value: "101" } });
-//     });
+    const userSelect = await screen.findByLabelText("Usuario");
+    fireEvent.change(userSelect, { target: { value: "u1" } });
 
-//     // Guardar reserva
-//     await act(async () => {
-//       fireEvent.click(screen.getByRole("button", { name: /guardar/i }));
-//     });
+    const roomTypeSelect = screen.getByLabelText("Tipo de Habitación");
+    fireEvent.change(roomTypeSelect, { target: { value: "rt1" } });
 
-//     // Comprobaciones finales
-//     await waitFor(() => {
-//       const reservationService = require("../services/reservationService").default;
-//       expect(reservationService.createReservation).toHaveBeenCalledOnce();
-//       expect(onSave).toHaveBeenCalled();
-//       expect(onClose).toHaveBeenCalled();
-//     });
-//   });
-// });
+    const checkInInput = screen.getByLabelText("Fecha de Ingreso");
+    const checkOutInput = screen.getByLabelText("Fecha de Egreso");
+    const numberGuestsInput = screen.getByLabelText("Cantidad de Huéspedes");
+
+    fireEvent.change(checkInInput, { target: { value: "2025-09-01" } });
+    fireEvent.change(checkOutInput, { target: { value: "2025-09-03" } });
+    fireEvent.change(numberGuestsInput, { target: { value: "2" } });
+
+    // Esperar a que se carguen habitaciones disponibles
+    await waitFor(() => {
+      expect(roomService.getAvailableRoomsByType).toHaveBeenCalled();
+    });
+
+    const roomSelect = screen.getByLabelText("Habitación Disponible");
+    fireEvent.change(roomSelect, { target: { value: "r1" } });
+
+    const saveButton = screen.getByRole("button", { name: "Guardar" });
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(reservationService.createReservation).toHaveBeenCalled();
+      expect(mockOnSave).toHaveBeenCalled();
+      expect(mockOnClose).toHaveBeenCalled();
+    });
+  });
+
+  it("muestra mensaje de alerta si checkOut es antes que checkIn", async () => {
+    global.alert = vi.fn();
+
+    render(<ReservationForm onClose={mockOnClose} onSave={mockOnSave} />);
+
+    const checkInInput = screen.getByLabelText("Fecha de Ingreso");
+    const checkOutInput = screen.getByLabelText("Fecha de Egreso");
+
+    fireEvent.change(checkInInput, { target: { value: "2025-09-03" } });
+    fireEvent.change(checkOutInput, { target: { value: "2025-09-01" } });
+
+    const saveButton = screen.getByRole("button", { name: "Guardar" });
+    fireEvent.click(saveButton);
+
+    expect(global.alert).toHaveBeenCalledWith(
+      "La fecha de egreso debe ser posterior a la de ingreso."
+    );
+  });
+
+  it("muestra mensaje si no hay habitaciones disponibles", async () => {
+    roomService.getAvailableRoomsByType.mockResolvedValueOnce({ rooms: [] });
+
+    render(<ReservationForm onClose={mockOnClose} onSave={mockOnSave} />);
+
+    fireEvent.change(screen.getByLabelText("Tipo de Habitación"), { target: { value: "rt1" } });
+    fireEvent.change(screen.getByLabelText("Fecha de Ingreso"), { target: { value: "2025-09-01" } });
+    fireEvent.change(screen.getByLabelText("Fecha de Egreso"), { target: { value: "2025-09-03" } });
+
+    await waitFor(() => {
+      expect(screen.getByText(/No hay habitaciones disponibles/i)).toBeInTheDocument();
+    });
+  });
+});
