@@ -154,8 +154,9 @@ const ReservationForm = ({ onClose, onSave }) => {
       <form onSubmit={handleSubmit} className="space-y-4">
         {isAdmin ? (
           <div>
-            <label className="block text-sm font-medium mb-1">Usuario</label>
+            <label htmlFor="userId" className="block text-sm font-medium mb-1">Usuario</label>
             <select
+              id="userId"
               name="userId"
               value={formData.userId}
               onChange={handleChange}
@@ -177,10 +178,11 @@ const ReservationForm = ({ onClose, onSave }) => {
         )}
 
         <div>
-          <label className="block text-sm font-medium mb-1">
+          <label htmlFor='roomTypeId' className="block text-sm font-medium mb-1">
             Tipo de Habitación
           </label>
           <select
+            id="roomTypeId"
             name="roomTypeId"
             value={formData.roomTypeId}
             onChange={handleChange}
@@ -197,10 +199,11 @@ const ReservationForm = ({ onClose, onSave }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">
+          <label htmlFor='checkIn' className="block text-sm font-medium mb-1">
             Fecha de Ingreso
           </label>
           <input
+            id="checkIn"
             type="date"
             name="checkIn"
             value={formData.checkIn}
@@ -211,10 +214,11 @@ const ReservationForm = ({ onClose, onSave }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">
+          <label htmlFor='checkOut' className="block text-sm font-medium mb-1">
             Fecha de Egreso
           </label>
           <input
+            id="checkOut"
             type="date"
             name="checkOut"
             value={formData.checkOut}
@@ -226,10 +230,11 @@ const ReservationForm = ({ onClose, onSave }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">
+          <label htmlFor='numberOfGuests' className="block text-sm font-medium mb-1">
             Cantidad de Huéspedes
           </label>
           <input
+            id="numberOfGuests"
             type="number"
             name="numberOfGuests"
             value={formData.numberOfGuests}
@@ -243,10 +248,11 @@ const ReservationForm = ({ onClose, onSave }) => {
 
         {formData.roomTypeId && formData.checkIn && formData.checkOut && (
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label htmlFor='roomId' className="block text-sm font-medium mb-1">
               Habitación Disponible
             </label>
             <select
+              id="roomId"
               name="roomId"
               value={formData.roomId}
               onChange={handleChange}
@@ -269,7 +275,7 @@ const ReservationForm = ({ onClose, onSave }) => {
           </div>
         )}
 
-        <div className="flex justify-end space-x-2 pt-4">
+        <div htmlFor='roomId' className="flex justify-end space-x-2 pt-4">
           <button
             type="button"
             onClick={onClose}
